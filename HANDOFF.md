@@ -1,0 +1,149 @@
+# HANDOFF — نظام الورشة (ملف التسليم للمساعد)
+
+> **الإصدار:** v0.3.0 — **آخر تحديث:** 2026-10-16
+> **لأي مساعد ذكي جديد:** اقرأ الملف ده كامل قبل ما تعمل أي حاجة. هو المرجع الأساسي للمشروع وللتفضيلات والقرارات اللي اتاخدت. بعد ما تقراه كمّل مباشرة من قسم "الخطوات الجاية". ولما تسلّم أي شغل جديد: **حدّث الملف ده** (قسم الحالة + سجل التغييرات + رفع الإصدار) وسلّم المستخدم الزيب المحدّث ومعاه نسخة من الملف.
+
+---
+
+## 1) الهدف النهائي
+
+بناء **SaaS لإدارة الورش (ورشة سيارات أولاً)** بنظام أوامر الشغل، متعدد الورش (Multi-tenant)، تقدر تبيعه لأكتر من ورشة. مستوحى من نظام **سيستم اتش (hsys.io)** المصري (كاشير/إدارة بالعربي لـ 60+ نشاط)، لكن بتصميم وأسماء خاصة بنا مش نسخ حرفي.
+
+**المكوّنات المطلوبة:**
+1. تطبيق ويب عربي RTL بـ **HTML/CSS/JavaScript عادي** على **Cloudflare Pages**، والكود على **GitHub**.
+2. **Supabase**: Postgres + Auth + RLS لعزل بيانات كل ورشة.
+3. **تسجيل حساب ودخول** لكل مستخدم، وكل مستخدم يشوف بيانات ورشته بس.
+4. **صفحة إدارة `admin.html` لصاحب المشروع (الأدمن)** يشوف فيها كل اللي سجّلوا ويفعّل/يوقف/يمدّد التجربة.
+
+## 2) صاحب المشروع وتفضيلاته
+
+- بيتكلم **عربي مصري**؛ الرد يكون بالعامية المصرية المهذبة، **مختصر**، يبدأ بالإجابة (بيستخدم موبايل).
+- **خلفيته HTML وJavaScript عادي. أول مرة يشوف React.** قرار صريح منه: *"خلينا في الـ HTML علشان أعرفها."* ← **ماترجعش لـ React/Vite/npm ولا تضيف خطوة بناء.** اكتب كود بسيط يقدر يقراه ويتعلّم منه (ES5 مع `var` و`function` زي الموجود، تعليقات عربي، من غير مكتبات إلا لو لازم).
+- مش مبرمج متعمّق: عايز المساعد يقرر ويتابع الشغل بنفسه ويسلّمه **زيب جاهز للرفع على GitHub**.
+- مع كل تسليم عايز: **زيب محدّث + ملف HANDOFF.md ده** (عشان يبدأ محادثة جديدة ويكمّل).
+- **قرار صريح منه:** *"مش هربط Supabase دلوقتي إلا لما تعمل كل الواجهات."* ← **ماتلمسش أي مشروع Supabase ولا تطبّق أي SQL إلا لما يقول بوضوح إنه ربطك/سمح.** (اتعمل قراءة فقط لقائمة المشاريع مرة واحدة، ومفيش أي تعديل.)
+- الحساب فيه مشروع Supabase اسمه `rollex-system` (id: `ykkhkgajzyxsgoamtmnn`, region eu-west-2). **ماتفترضش إنه مشروع الورشة** — اسأله أي مشروع يستخدم، أو هل يعمل مشروع جديد (تكلفة → لازم موافقته).
+
+## 3) الحالة الحالية
+
+| الجزء | الحالة |
+|---|---|
+| كل الصفحات (دخول، تسجيل، رئيسية، أوامر شغل + جديد + تفاصيل، عملاء وسيارات، مخزون، تقارير، إعدادات/فنيين، إدارة) | ✅ مكتوبة **ومجرّبة في متصفح حقيقي** (Chromium/Playwright) في وضع Demo: 34/34 فحص نجح |
+| وضع Demo (بدون Supabase، بيانات في localStorage + داتا تجريبية) | ✅ |
+| حماية XSS (قالب `html` بيعمل escape) | ✅ مجرّبة بحقن `<img onerror>` في اسم عميل — اتعرض كنص ومتنفّذش |
+| ترويسات الأمان + CSP (`_headers`) | ✅ مجرّبة: صفر مخالفات CSP في الكونسول |
+| الموبايل (390px): مفيش سكرول أفقي في أي صفحة | ✅ (اتصلّح في v0.3.0: `minmax(0,1fr)` في الـ grid) |
+| ملف SQL الأساسي (جداول + RLS + دوال الأدمن + trigger التسجيل) | ✅ مكتوب في `supabase/migrations/20261015000001_init.sql` — ⚠️ **غير مطبّق وغير مجرّب على Postgres حقيقي** |
+| **الوضع الحقيقي (مع Supabase)**: الدخول، التسجيل، RLS، RPC الأدمن | ⚠️ **غير مجرّب** (مفيش اتصال/مشروع). الكود في `js/db.js` مكتوب على واجهة supabase-js المعروفة، لكن لازم يتجرّب أول ما نربط. |
+| تطبيق SQL وربط الفرونت (تعبئة `js/config.js`) | ⏳ ينتظر إذن المستخدم |
+| تعيين المستخدم كأدمن | ⏳ `supabase/admin_setup.sql` (محتاج إيميله) |
+| النشر على Cloudflare Pages / GitHub | ⏳ على المستخدم (الخطوات في README) |
+
+## 4) المعمارية
+
+```
+المتصفح (صفحات HTML + JS عادي) ──supabase-js من CDN (anon key)──▶ Supabase (Postgres + Auth + RLS)
+        │
+        └── Cloudflare Pages (استضافة ثابتة، بدون build، + _headers للأمان)
+```
+
+- **لا يوجد سيرفر خاص ولا خطوة بناء ولا npm.** كل الحماية في الداتابيز (RLS + دوال SECURITY DEFINER). الصفحات تستخدم **anon/publishable key فقط**؛ `service_role` ممنوع في الفرونت نهائياً.
+- **ترتيب تحميل السكريبتات في كل صفحة:** `supabase.js (CDN)` ← `config.js` ← `db.js` ← `ui.js` ← `pages/<الصفحة>.js` (صفحتي login/signup بدون `ui.js`).
+- **`js/db.js` → `window.DB`**: الطبقة الوحيدة اللي بتكلّم الداتابيز: `list / insert / update / remove` + `auth.signIn/signUp/signOut/getSession` + `isAdmin / adminListShops / adminUpdateShop` + `resetDemo` + `demoMode`. لو `SUPABASE_URL` و`SUPABASE_ANON_KEY` في `js/config.js` فاضيين → `demoMode = true` وكل شيء يشتغل على localStorage (مفاتيحها `demo:<table>`). **أي ميزة جديدة تتعمل فوق DB.\*** عشان الـ Demo يفضل شغال.
+- **`js/ui.js` → `window.UI`**: القالب الآمن `html\`...\``، `esc`، `money`، `dateAr`، `STATUSES`، `PAY_METHODS`، `byId`، `option`، `flash` (toast)، `guard` (يمسك الأخطاء ويعرضها)، `init(active, {adminOnly})` (يرسم الشريط الجانبي، يفرض تسجيل الدخول خارج الـ Demo، يحوّل غير الأدمن من صفحة الإدارة). ومستمع click عام لـ `data-action` و`tr[data-href]`.
+- **نمط كل صفحة:** `var page = await UI.init("key"); if (!page) return;` ← جلب البيانات بـ `DB.list` ← `page.innerHTML = html\`...\`` ← event listeners. الهيكل الثابت (الفورمز) بيتكتب مرة واحدة وبيتحدّث بس الجداول، عشان اللي المستخدم بيكتبه ما يضيعش.
+
+### خريطة الملفات
+
+```
+index.html (الرئيسية), work-orders.html, work-order-new.html, work-order.html (?id=),
+customers.html, inventory.html, reports.html, settings.html, admin.html, login.html, signup.html
+css/style.css
+js/  config.js, db.js, ui.js
+js/pages/  dashboard, work-orders, work-order-new, work-order, customers, inventory,
+           reports, settings, admin, login, signup  (.js)
+_headers (ترويسات Cloudflare + CSP), favicon.svg
+supabase/migrations/20261015000001_init.sql   المخطط + RLS + الأدمن (غير مطبّق)
+supabase/admin_setup.sql                       تعيين الأدمن (يدوي مرة واحدة)
+HANDOFF.md, README.md
+```
+
+## 5) نموذج البيانات (مطابق للـ SQL ولداتا الـ Demo في `js/db.js`)
+
+`shops`, `profiles`, `shop_members(role: owner|staff|technician)`, `platform_admins`,
+`customers`, `vehicles`, `technicians`, `parts`, `work_orders`, `work_order_lines(kind: part|labor)`, `payments`.
+
+- كل جدول للورشة فيه `shop_id uuid not null default public.current_shop_id()` ← **الصفحات لا ترسل shop_id أبداً**.
+- حالات أمر الشغل: `received → inspecting → awaiting_approval → in_progress → ready → delivered` (+ `cancelled`). الأسماء العربية في `UI.STATUSES`.
+- ترقيم أوامر الشغل لكل ورشة يبدأ من 1001 بـ trigger (قفل advisory) — في الـ Demo بيتحسب في `db.js`.
+- طرق الدفع: cash, card, instapay, wallet, transfer.
+- **ورشة واحدة لكل مستخدم حالياً** (`current_shop_id()` يرجّع أول عضوية).
+
+## 6) قواعد الأمان (ممنوع كسرها)
+
+1. العزل بين الورش بـ **RLS** على كل جدول (`shop_id = current_shop_id()`)، مش بكود الصفحات.
+2. الورشة الموقوفة (`status='suspended'`) **قراءة فقط** (`shop_writable()`).
+3. الأدمن: `platform_admins` + دوال `is_platform_admin()` و`admin_list_shops()` و`admin_update_shop()`؛ كلها تتأكد من الصلاحية جوه الداتابيز. الأدمن يشوف بيانات الحسابات فقط (ورشة/إيميل/حالة) **مش بيانات شغل العملاء** (قرار افتراضي — اسأل المستخدم لو عايز دخول للدعم).
+4. `revoke ... from anon` على الجداول والدوال؛ جدول `platform_admins` من غير policies.
+5. **ممنوع تلزّق نصوص من المستخدم في `innerHTML` بـ `+` أو template عادي.** استخدم دايماً `html\`...\`` أو `UI.esc()`. وماتضيفش inline scripts ولا `onclick=` (الـ CSP هيحجبهم).
+6. أي مكتبة خارجية جديدة لازم دومينها يتضاف في `_headers` (`script-src`).
+7. بعد أي تغيير في الداتابيز: شغّل `get_advisors` (security + performance) وصلّح التحذيرات.
+8. اختبر العزل بحسابين تجريبيين قبل ما تعتبره جاهز.
+
+## 7) قرارات مؤجلة / مشاكل معروفة (TODO)
+
+- **خصم المخزون حالياً من الصفحة** (`js/pages/work-order.js`: قراءة ثم تعديل) → فيه سباق (race condition) مع أكتر من مستخدم. الأفضل: trigger في الداتابيز على `work_order_lines` (خصم عند الإضافة، استرجاع عند الحذف، رفض لو الكمية غير كافية)، وبعدها إزالة التعديل من `work-order.js` **في وضع Supabase فقط** (وضع الـ Demo يفضل بالـ JS).
+- **مكتبة Supabase بتتحمّل من CDN بـ `@supabase/supabase-js@2` (إصدار عائم، من غير SRI).** قبل الإنتاج: ثبّت إصدار محدد وأضف `integrity` + `crossorigin` (أو انسخ الملف جوه المشروع وشيل jsdelivr من الـ CSP).
+- **trigger التسجيل** (`handle_new_user`) بينشئ ورشة لكل مستخدم جديد. عند إضافة دعوة موظفين لازم يفرّق بين مالك جديد وموظف مدعو.
+- **انتهاء التجربة** (`trial_ends_at`) لا يمنع الكتابة حالياً؛ الإيقاف يدوي من الأدمن. قرّر مع المستخدم هل التجربة المنتهية تتحول لقراءة فقط تلقائياً.
+- إدارة الموظفين وأدوارهم (owner/staff/technician) والصلاحيات الفعلية في الواجهة: لسه.
+- حذف عميل (الواجهة فيها حذف سيارة فقط)، تعديل بيانات (العميل/السيارة/القطعة)، pagination للقوائم الكبيرة.
+- تصميم/طباعة الفاتورة (الحالي `window.print()` بسيط)، شعار وبيانات الورشة.
+- الاشتراك والدفع (تفعيل الحسابات حالياً يدوي من الأدمن). لاحقاً: إنستاباي/فودافون كاش.
+- **مؤجل بقرار:** الأوفلاين مع مزامنة (IndexedDB/Service Worker)، قراءة واتساب (في hsys.io عبر MacroDroid)، تعريف المتصل، الفاتورة الإلكترونية لمصلحة الضرائب (ETA)، متجر QR، شبكة التجار.
+- PWA: لسه محتاج `manifest.json` وأيقونات (hsys.io عنده).
+
+## 8) الخطوات الجاية (بالترتيب)
+
+1. المستخدم يجرّب النسخة محلياً (README: `python3 -m http.server`) ويقول إيه اللي يتعدّل في الواجهات.
+2. لما المستخدم يقول إنه ربط Supabase: اسأله أي مشروع (أو مشروع جديد → `get_cost` + `confirm_cost` بموافقته).
+3. طبّق `20261015000001_init.sql` بـ `apply_migration` (بعد `list_tables` للتأكد إن مفيش تعارض مع جداول موجودة، خصوصاً لو المشروع موجود وفيه بيانات). **ده أول تجربة للـ SQL على Postgres حقيقي — توقّع تصليحات صغيرة.**
+4. `get_advisors` ← صلّح التحذيرات. اختبر العزل بحسابين.
+5. خد من المستخدم **إيميل الأدمن**، سجّله من `signup.html`، ثم نفّذ `admin_setup.sql` بإيميله.
+6. `get_project_url` + `get_publishable_keys` ← ادّي المستخدم القيمتين يحطهم في `js/config.js` (مش أسرار).
+7. جرّب الوضع الحقيقي end-to-end (تسجيل ← دخول ← عميل/سيارة/أمر شغل ← عزل بين حسابين ← صفحة الأدمن). وصلّح أي حاجة في `db.js`.
+8. فعّل في Supabase Auth: تأكيد الإيميل، وعطّل الـ anonymous sign-ins، وراجع rate limits.
+9. نفّذ بنود TODO بالأولوية: ثبّت مكتبة CDN ← trigger المخزون ← إدارة الموظفين ← تعديل/حذف ← تحسين الفاتورة.
+10. سلّم زيب + HANDOFF محدّثين مع كل خطوة.
+
+## 9) أوامر
+
+```bash
+python3 -m http.server 8000     # أو: npx serve .   ← وافتح http://localhost:8000 (وضع Demo لو config.js فاضي)
+```
+Cloudflare Pages: Framework preset **None**، Build command **فاضي**، Output directory **`/`**. مفيش متغيرات بيئة — الإعدادات في `js/config.js`.
+
+## 10) مرجع: تحليل موقع hsys.io
+
+- React SPA بـ Create React App (`asset-manifest.json` بأسماء hash، chunks لكل مجال `ind-*` منها `ind-work_orders`)، source maps منشورة، PWA (`manifest.json` RTL/ar)، SEO قوي (sitemap, llms.txt, صفحات حسب الدولة)، `/api/` للباك إند (التقنية غير ظاهرة).
+- قراءة واتساب عبر **MacroDroid** على موبايل المحل (بدون رد تلقائي)، مش WhatsApp Business API.
+- صفحة نظام الورشة (`/systems/general/car_workshop`) و الديمو **لا يمكن قراءتهم آلياً** (JS rendering + الديمو محجوب في robots.txt). **ماتفترضش شكلهم**؛ لو المستخدم بعت صور/وصف للشاشات استخدمها.
+- ممنوع نسخ تصميمهم أو شاشاتهم حرفياً؛ نبني تصميمنا وأسماءنا.
+
+## 11) ملاحظات بيئة المساعد
+
+- في الجلسة السابقة `registry.npmjs.org` كان محجوب بـ 403 من الـ proxy. **ماتحاولش تلف حوالين الحجب.** (مبقاش مهم: النسخة الحالية مفيهاش npm.)
+- **طريقة التجربة المتاحة في الـ sandbox:** Chromium + Playwright متثبتين (`NODE_PATH=/home/claude/.npm-global/lib/node_modules`). شغّل سيرفر ثابت محلي بيطبّق ترويسات `_headers` (عشان CSP تتجرّب) وجرّب الصفحات بمتصفح حقيقي. `cdn.jsdelivr.net` وGoogle Fonts مش متاحين هناك (طبيعي — الـ Demo مش محتاجهم). حط سكريبتات التجربة في الـ scratchpad مش في المشروع.
+- وجود ملف `HANDOFF.md` و`README.md` من إصدار React القديم: اتحدّثوا. لو لقيت أي إشارة لـ `src/` أو `vite` أو `npm run` فهي قديمة.
+
+## 12) سجل التغييرات
+
+- **v0.3.0** — التحويل من React إلى **HTML/JS عادي** بطلب المستخدم (بيتعلّم). نفس الشاشات ونفس الـ SQL. اتجرّبت كلها في متصفح حقيقي (34/34). إصلاح السكرول الأفقي على الموبايل. إضافة `_headers` (CSP). تحديث README وHANDOFF. حُذفت ملفات React/Vite/TS.
+- **v0.2.0** — كل الواجهات (React) + وضع Demo + `db.ts` + صفحة الأدمن + صفحة التسجيل + SQL الأساسي (غير مطبّق). لم يتم التحقق من `npm run build`.
+- **v0.1.0** — هيكل Vite/React أولي: دخول، لوحة بسيطة، قائمة أوامر شغل.
+
+---
+
+### نص جاهز تنسخه في بداية أي محادثة جديدة
+
+> أنا بابني نظام ورشة (SaaS) بـ HTML/JS عادي (مش React — أنا بتعلّم) على GitHub + Cloudflare Pages + Supabase. مرفق الزيب وملف HANDOFF.md. اقرأ HANDOFF.md كامل أولاً ثم كمّل من قسم "الخطوات الجاية". ماتلمسش Supabase ولا تطبّق SQL إلا بعد إذني الصريح. رد بالعامية المصرية باختصار، وسلّمني مع كل تحديث زيب جديد + HANDOFF.md محدّث.

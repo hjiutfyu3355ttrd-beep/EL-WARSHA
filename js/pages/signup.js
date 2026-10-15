@@ -1,0 +1,35 @@
+(function () {
+  if (DB.demoMode) {
+    location.replace("index.html");
+    return;
+  }
+  var msg = document.getElementById("msg");
+  if (DB.fatal) {
+    msg.textContent = DB.fatal;
+    return;
+  }
+
+  document.getElementById("form").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    var btn = document.getElementById("btn");
+    btn.disabled = true;
+    msg.textContent = "";
+    try {
+      var session = await DB.auth.signUp(
+        document.getElementById("email").value,
+        document.getElementById("password").value,
+        document.getElementById("shop").value.trim()
+      );
+      if (session) {
+        location.href = "index.html";
+      } else {
+        // التأكيد بالإيميل مفعّل: نطلب منه يأكد ثم يسجّل دخول
+        document.getElementById("form").style.display = "none";
+        document.getElementById("info").style.display = "block";
+      }
+    } catch (err) {
+      msg.textContent = err.message;
+      btn.disabled = false;
+    }
+  });
+})();
