@@ -9,6 +9,6 @@
 // ممنوع تحط هنا service_role أبداً.
 // ============================================================
 window.APP_CONFIG = {
-  SUPABASE_URL: "",
-  SUPABASE_ANON_KEY: "",
+  SUPABASE_URL: "https://blspjpghimjpyczxkvvs.supabase.co",
+  SUPABASE_ANON_KEY: "sb_publishable_6jlfYSTp8-1qBNOMfL7V9A_hWxhEXDf",
 };
