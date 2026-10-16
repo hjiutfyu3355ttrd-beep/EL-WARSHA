@@ -201,7 +201,10 @@
     app.innerHTML = html`
       <div class="layout" id="layout">
         <aside class="sidebar">
-          <div class="brand"><img src="assets/img/logo.svg" alt="" /><div><b>الورشة</b><span>نظام إدارة الورش</span></div></div>
+          <div class="brand">
+            <img src="assets/img/logo.svg" alt="" />
+            <div><b>الورشة</b><span>Garage Master Style</span></div>
+          </div>
           <input class="menu-search" id="menu-search" type="search" placeholder="بحث في القائمة..." />
           ${navHtml}
           ${admin
