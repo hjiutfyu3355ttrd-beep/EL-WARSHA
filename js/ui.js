@@ -186,19 +186,10 @@
       return null;
     }
 
-    if (!DB.demoMode) {
-      var session = await DB.auth.getSession();
-      if (!session) {
-        location.replace("login.html");
-        return null;
-      }
-    }
-
-    var admin = await DB.isAdmin();
-    if (opts.adminOnly && !admin) {
-      location.replace("index.html");
-      return null;
-    }
+    // الأدمن بيتخزّن مؤقتًا في الجلسة عشان الشريط الجانبي يتبني فورًا من غير وميض
+    var admin = false;
+    try { admin = sessionStorage.getItem("ws_admin") === "1"; } catch (e) {}
+    var needCheck = !DB.demoMode;
 
     var title = TITLES[opts.key || active] || TITLES[active] || ["", ""];
     var navHtml = NAV.map(function (g) {
@@ -250,6 +241,20 @@
     if (admin) flat.push("admin");
     for (var i = 0; i < ics.length; i++) ics[i].outerHTML = icon(flat[i]);
 
+    // حفظ/استرجاع مكان سكرول السايدبار عشان القائمة ما تقفزش بين الصفحات
+    var sb = app.querySelector(".sidebar");
+    try { sb.scrollTop = parseInt(sessionStorage.getItem("ws_sb_scroll") || "0", 10); } catch (e) {}
+    window.addEventListener("pagehide", function () { try { sessionStorage.setItem("ws_sb_scroll", String(sb.scrollTop)); } catch (e) {} });
+
+    // التحقق الحقيقي بعد ما الهيكل ظهر (الصفحة هتفضل شغالة لو تمام)
+    if (needCheck) {
+      var session = await DB.auth.getSession();
+      if (!session) { location.replace("login.html"); return null; }
+    }
+    var realAdmin = await DB.isAdmin();
+    try { sessionStorage.setItem("ws_admin", realAdmin ? "1" : "0"); } catch (e) {}
+    if (opts.adminOnly && !realAdmin) { location.replace("index.html"); return null; }
+    if (realAdmin !== admin) { location.reload(); return null; } // الكاش كان غلط (نادر): أعد الرسم مرة
     return document.getElementById("page");
   }
 

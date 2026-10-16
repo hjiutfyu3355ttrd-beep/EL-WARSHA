@@ -83,7 +83,10 @@
 
     page.innerHTML = html`
       <div class="stack">
-        <h2 class="page-head">لوحة تحكم الورشة</h2>
+        <div class="hero">
+          <div><div class="eyebrow">لوحة التحكم</div><h1>أهلاً بيك في نظام الورشة</h1><p>ملخص أوامر الشغل والإيرادات والمخزون النهاردة.</p></div>
+          <a class="btn" href="work-order-new.html">＋ استقبال سيارة</a>
+        </div>
 
         <div class="grid">
           ${stats.map(function (s) {
