@@ -22,6 +22,11 @@
           <label>الفني المسؤول (اختياري)</label>
           <select id="tech"></select>
         </div>
+        <div class="form-grid">
+          <div class="field"><label>الأولوية</label>
+            <select id="priority">${UI.PRIORITIES.map(function (p) { return UI.option(p.key, p.label, p.key === "normal"); })}</select></div>
+          <div class="field"><label>موعد التسليم المتوقع (اختياري)</label><input id="expected" type="date"></div>
+        </div>
         <div class="field">
           <label>وصف العطل / الشكوى</label>
           <textarea id="complaint"></textarea>
@@ -76,6 +81,9 @@
         vehicle_id: elVehicle.value,
         technician_id: elTech.value || null,
         status: "received",
+        priority: document.getElementById("priority").value,
+        expected_delivery_at: document.getElementById("expected").value
+          ? new Date(document.getElementById("expected").value + "T23:59:00").toISOString() : null,
         complaint: document.getElementById("complaint").value.trim(),
       });
       location.href = "work-order.html?id=" + encodeURIComponent(row.id);

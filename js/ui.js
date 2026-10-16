@@ -57,6 +57,12 @@
     { key: "delivered", label: "تم التسليم" },
     { key: "cancelled", label: "ملغي" },
   ];
+  var PRIORITIES = [
+    { key: "low", label: "منخفضة" },
+    { key: "normal", label: "عادية" },
+    { key: "high", label: "عالية" },
+    { key: "critical", label: "حرجة" },
+  ];
   var INV_STATUSES = [
     { key: "draft", label: "مسودة" },
     { key: "issued", label: "صادرة" },
@@ -77,6 +83,12 @@
     return f ? f.label : key;
   }
   function statusLabel(k) { return labelOf(STATUSES, k); }
+  function priorityLabel(k) { return labelOf(PRIORITIES, k || "normal"); }
+  // متأخر = ليه موعد تسليم متوقع عدّى والأمر لسه مفتوح
+  function isOverdue(o) {
+    return !!o.expected_delivery_at && UI_isOpen(o.status) && new Date(o.expected_delivery_at).getTime() < Date.now();
+  }
+  function UI_isOpen(s) { return s !== "delivered" && s !== "cancelled"; }
   function invStatusLabel(k) { return labelOf(INV_STATUSES, k); }
   function methodLabel(k) { return labelOf(PAY_METHODS, k); }
   function isOpen(status) { return status !== "delivered" && status !== "cancelled"; }
@@ -152,7 +164,7 @@
   ];
   var TITLES = {
     dashboard: ["لوحة التحكم", "نظرة سريعة على الورشة اليوم"],
-    "work-orders": ["أوامر الشغل", "متابعة كل أوامر الإصلاح"],
+    "work-orders": ["أوامر الشغل", "إدارة ومتابعة أوامر الصيانة"],
     "work-order-new": ["استقبال سيارة", "فتح أمر شغل جديد"],
     customers: ["العملاء والسيارات", "بيانات العملاء وسياراتهم"],
     inventory: ["قطع الغيار", "المخزون والنواقص"],
@@ -198,7 +210,8 @@
     app.innerHTML = html`
       <div class="layout" id="layout">
         <aside class="sidebar">
-          <div class="brand"><img src="assets/img/logo.png" alt="" /><div><b>EL WARSHA</b><span>نظام إدارة الورش</span></div></div>
+          <div class="brand"><img src="assets/img/logo.svg" alt="" /><div><b>الورشة</b><span>نظام إدارة الورش</span></div></div>
+          <input class="menu-search" id="menu-search" type="search" placeholder="بحث في القائمة..." />
           ${navHtml}
           ${admin
             ? html`<div class="nav-group">المنصة</div><a class="nav ${active === "admin" ? "active" : ""}" href="admin.html"><span class="ic"></span>الإدارة</a>`
@@ -209,7 +222,7 @@
         <div class="main">
           <header class="topbar no-print">
             <button class="menu-btn" data-action="toggle-nav" aria-label="القائمة">☰</button>
-            <div class="ttl"><b>${title[0]}</b><span>${title[1]}</span></div>
+            <div class="crumbs"><a href="index.html">الرئيسية</a><i>›</i><b>${title[0]}</b></div>
             <a class="btn" href="work-order-new.html">＋ استقبال سيارة</a>
           </header>
           <main class="content">
@@ -221,6 +234,14 @@
           </main>
         </div>
       </div>`;
+
+    // بحث في القائمة الجانبية
+    var ms = document.getElementById("menu-search");
+    ms.addEventListener("input", function () {
+      var q = ms.value.trim();
+      var links = app.querySelectorAll(".sidebar a.nav");
+      for (var k = 0; k < links.length; k++) links[k].style.display = !q || links[k].textContent.indexOf(q) !== -1 ? "" : "none";
+    });
 
     // الأيقونات: SVG ثابت من عندنا (مش من المستخدم) فبنحقنها بعد الرسم عشان قالب html بيعمل escape
     var ics = app.querySelectorAll(".sidebar a.nav .ic");
@@ -278,6 +299,9 @@
     STATUSES: STATUSES,
     PAY_METHODS: PAY_METHODS,
     INV_STATUSES: INV_STATUSES,
+    PRIORITIES: PRIORITIES,
+    priorityLabel: priorityLabel,
+    isOverdue: isOverdue,
     invStatusLabel: invStatusLabel,
     statusLabel: statusLabel,
     methodLabel: methodLabel,

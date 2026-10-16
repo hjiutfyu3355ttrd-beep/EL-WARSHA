@@ -51,8 +51,8 @@
       { id: "p3", name: "تيل فرامل أمامي", sku: "BRK-F", qty: 10, min_qty: 4, cost: 420, price: 600, created_at: ago(40) },
     ],
     work_orders: [
-      { id: "w1", number: 1001, customer_id: "c1", vehicle_id: "v1", technician_id: "t1", status: "in_progress", complaint: "صوت في الفرامل وتغيير زيت", created_at: ago(1) },
-      { id: "w2", number: 1002, customer_id: "c2", vehicle_id: "v2", technician_id: "t2", status: "ready", complaint: "كشف كهرباء", created_at: ago(3) },
+      { id: "w1", number: 1001, customer_id: "c1", vehicle_id: "v1", technician_id: "t1", status: "in_progress", priority: "high", expected_delivery_at: ago(-1), complaint: "صوت في الفرامل وتغيير زيت", created_at: ago(1) },
+      { id: "w2", number: 1002, customer_id: "c2", vehicle_id: "v2", technician_id: "t2", status: "awaiting_approval", priority: "normal", expected_delivery_at: ago(1), complaint: "كشف كهرباء", created_at: ago(3) },
     ],
     work_order_lines: [
       { id: "l1", work_order_id: "w1", kind: "part", description: "تيل فرامل أمامي", qty: 1, unit_price: 600, part_id: "p3", created_at: ago(1) },

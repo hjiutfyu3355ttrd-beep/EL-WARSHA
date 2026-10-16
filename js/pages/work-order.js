@@ -69,19 +69,21 @@
     $("head").innerHTML = html`
       <div class="row between">
         <h2 style="margin:0">أمر شغل #${o.number}</h2>
-        <span class="badge ${o.status}">${UI.statusLabel(o.status)}</span>
+        <div class="row"><span class="badge prio-${o.priority || "normal"}">أولوية ${UI.priorityLabel(o.priority)}</span>
+          <span class="badge ${o.status}">${UI.statusLabel(o.status)}</span></div>
       </div>
       <p>
         <b>العميل:</b> ${c ? c.name : "—"} (${c ? c.phone : "—"})<br>
         <b>السيارة:</b> ${v ? v.plate + " — " + v.make + " " + v.model + " " + (v.year || "") : "—"}<br>
         <b>الفني:</b> ${S.tech ? S.tech.name : "—"} · <b>التاريخ:</b> ${UI.dateAr(o.created_at)}
+        ${o.expected_delivery_at ? html`<br><b>التسليم المتوقع:</b> ${UI.dateAr(o.expected_delivery_at)}` : ""}
       </p>
       <p><b>الشكوى:</b> ${o.complaint || "—"}</p>
-      <div class="no-print field">
-        <label>تغيير الحالة</label>
-        <select id="status">
-          ${UI.STATUSES.map(function (s) { return UI.option(s.key, s.label, s.key === o.status); })}
-        </select>
+      <div class="no-print form-grid">
+        <div class="field"><label>تغيير الحالة</label>
+          <select id="status">${UI.STATUSES.map(function (s) { return UI.option(s.key, s.label, s.key === o.status); })}</select></div>
+        <div class="field"><label>الأولوية</label>
+          <select id="priority">${UI.PRIORITIES.map(function (p) { return UI.option(p.key, p.label, p.key === (o.priority || "normal")); })}</select></div>
       </div>`;
   }
 
@@ -168,9 +170,11 @@
   // ---------- الأحداث ----------
   // تغيير الحالة (الـ select بيتعاد رسمه مع كل تحديث، فبنسمع على الصفحة كلها)
   page.addEventListener("change", function (e) {
-    if (e.target.id !== "status") return;
+    if (e.target.id !== "status" && e.target.id !== "priority") return;
+    var patch = {};
+    patch[e.target.id] = e.target.value;
     UI.guard(async function () {
-      await DB.update("work_orders", orderId, { status: e.target.value });
+      await DB.update("work_orders", orderId, patch);
       await reload();
     });
   });
