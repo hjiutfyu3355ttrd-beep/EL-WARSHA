@@ -62,7 +62,7 @@ css/style.css
 js/  config.js, db.js, ui.js
 js/pages/  dashboard, work-orders, work-order-new, work-order, customers, inventory,
            reports, settings, admin, login, signup  (.js)
-_headers (ترويسات Cloudflare + CSP), favicon.svg
+_headers (ترويسات Cloudflare + CSP), favicon.ico + manifest.webmanifest
 supabase/migrations/20261015000001_init.sql   المخطط + RLS + الأدمن (غير مطبّق)
 supabase/admin_setup.sql                       تعيين الأدمن (يدوي مرة واحدة)
 HANDOFF.md, README.md
@@ -138,6 +138,8 @@ Cloudflare Pages: Framework preset **None**، Build command **فاضي**، Outpu
 - وجود ملف `HANDOFF.md` و`README.md` من إصدار React القديم: اتحدّثوا. لو لقيت أي إشارة لـ `src/` أو `vite` أو `npm run` فهي قديمة.
 
 ## 12) سجل التغييرات
+
+- **v0.6.1** — أيقونة جديدة من المستخدم (`logo.ico`، شعار "راصد RASIED"): `favicon.ico` + `apple-touch-icon` + `manifest.webmanifest` (أيقونات 192/512) للتثبيت كتطبيق من المتصفح. شعار السايدبار/الدخول (`assets/img/logo.png`) لسه شعار الورشة القديم — لم يتغير.
 
 - **v0.6.0** — شاشات **الفواتير والمدفوعات** (على جداول `invoices/invoice_lines` الجديدة): `invoices.html` (قائمة + إحصائيات + إنشاء فاتورة من أمر شغل)، `invoice.html?id=` (بنود، خصم/ضريبة، إصدار/إلغاء، دفعات، طباعة)، `payments.html` (سجل كل المدفوعات + فلتر بالطريقة). المنطق المشترك في `js/finance.js` (`Finance.recalc` و`Finance.createFromWorkOrder`): الإجمالي = البنود − الخصم + الضريبة، والحالة بتتحسب تلقائي (صادرة/جزئي/مدفوعة)، والدفعات القديمة على أمر الشغل بتتربط بالفاتورة، والدفعة اللي أكبر من المتبقي بتترفض. قائمة "المالية" في السايدبار. اتجرّبت كلها في وضع Demo في متصفح حقيقي (إنشاء فاتورة ← رفض دفعة زيادة ← سداد كامل ← الحالة "مدفوعة"). **غير مجرّبة على Supabase الحقيقي** ولا على حسابين (عزل RLS) لسه. ملاحظة: حساب الفاتورة بيتعمل من الصفحة (مش trigger) — لو اتفتحت الصفحة من جهازين في نفس اللحظة ممكن تتضارب؛ نقلها لـ trigger في الداتابيز بند لاحق.
 
