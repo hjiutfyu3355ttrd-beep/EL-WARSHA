@@ -51,9 +51,11 @@
   await UI.guard(async function () {
     var data = await Promise.all([
       DB.list("work_orders"), DB.list("payments"), DB.list("parts"), DB.list("customers"), DB.list("vehicles"),
+      DB.list("quotations"), DB.list("vehicle_taxes"),
     ]);
     var orders = data[0], payments = data[1], parts = data[2];
     var customers = UI.byId(data[3]), vehicles = UI.byId(data[4]);
+    var quotations = data[5], taxes = data[6];
 
     var open = orders.filter(function (o) { return UI.isOpen(o.status); });
     var ready = orders.filter(function (o) { return o.status === "ready"; });
@@ -123,10 +125,36 @@
           </div>
         </div>
 
-        ${low.length > 0
-          ? html`<div class="notice">نواقص: ${low.map(function (p) { return p.name + " (" + p.qty + ")"; }).join(" · ")}
-              — <a class="link" href="inventory.html">المخزون</a></div>`
-          : ""}
+        <div class="two-col">
+          <div class="card">
+            <div class="row between"><h3>آخر عروض الأسعار</h3><a class="link" href="quotations.html">عرض الكل</a></div>
+            ${quotations.slice(0, 5).length === 0
+              ? html`<div class="empty">مفيش عروض</div>`
+              : quotations.slice(0, 5).map(function (q) {
+                  return html`<a class="recent" href="quotations.html">
+                    <div><b>#${q.number} — ${customers[q.customer_id] ? customers[q.customer_id].name : "—"}</b>
+                      <small>${UI.money(q.total)} · ${UI.dateAr(q.created_at)}</small></div>
+                    <span class="badge ${q.status}">${UI.quoteStatusLabel(q.status)}</span></a>`;
+                })}
+          </div>
+          <div class="card">
+            <div class="row between"><h3>تنبيهات</h3><a class="link" href="setup.html">معالج الإعداد</a></div>
+            ${low.length > 0
+              ? html`<div class="notice" style="margin:0 0 8px">نواقص مخزون: ${low.map(function (p) { return p.name + " (" + p.qty + ")"; }).join(" · ")}
+                  — <a class="link" href="inventory.html">المخزون</a></div>`
+              : html`<div class="empty" style="padding:8px">المخزون تمام</div>`}
+            ${taxes.filter(function (x) { return !x.paid && x.due_date && new Date(x.due_date) < new Date(); }).length
+              ? html`<div class="notice" style="margin:0">ضرائب/رخص متأخرة: ${taxes.filter(function (x) { return !x.paid && x.due_date && new Date(x.due_date) < new Date(); }).length}
+                  — <a class="link" href="compliance.html">الامتثال</a></div>`
+              : ""}
+            <div class="row" style="margin-top:12px;flex-wrap:wrap;gap:6px">
+              <a class="btn small secondary" href="quotations.html">عروض الأسعار</a>
+              <a class="btn small secondary" href="gate-pass.html">تصاريح</a>
+              <a class="btn small secondary" href="part-sales.html">بيع قطع</a>
+              <a class="btn small secondary" href="purchases.html">مشتريات</a>
+            </div>
+          </div>
+        </div>
       </div>`;
   });
 })();

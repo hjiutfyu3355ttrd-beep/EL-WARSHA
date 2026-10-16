@@ -140,7 +140,7 @@
     return '<svg viewBox="0 0 24 24" aria-hidden="true">' + (ICONS[name] || "") + "</svg>";
   }
 
-  // نفس مجموعات القائمة في برنامج الورشة (الصفحات الموجودة بس)
+  // مجموعات القائمة على طراز Garage Master
   var NAV = [
     { group: "الرئيسية", items: [{ key: "dashboard", href: "index.html", label: "لوحة التحكم", icon: "dashboard" }] },
     {
@@ -148,32 +148,77 @@
       items: [
         { key: "work-orders", href: "work-orders.html", label: "أوامر الشغل", icon: "workorder" },
         { key: "work-order-new", href: "work-order-new.html", label: "استقبال سيارة", icon: "receive" },
+        { key: "quotations", href: "quotations.html", label: "عروض الأسعار", icon: "invoice" },
+        { key: "observation", href: "observation.html", label: "مكتبة الفحص", icon: "workorder" },
+        { key: "gate-pass", href: "gate-pass.html", label: "تصاريح الخروج", icon: "receive" },
       ],
     },
-    { group: "العملاء والسيارات", items: [{ key: "customers", href: "customers.html", label: "العملاء والسيارات", icon: "customers" }] },
-    { group: "المخزون", items: [{ key: "inventory", href: "inventory.html", label: "قطع الغيار", icon: "parts" }] },
+    { group: "العملاء والسيارات", items: [
+      { key: "customers", href: "customers.html", label: "العملاء", icon: "customers" },
+      { key: "vehicles", href: "vehicles.html", label: "السيارات", icon: "receive" },
+      { key: "compliance", href: "compliance.html", label: "الضرائب والامتثال", icon: "invoice" },
+    ] },
+    {
+      group: "المخزون",
+      items: [
+        { key: "inventory", href: "inventory.html", label: "قطع الغيار", icon: "parts" },
+        { key: "suppliers", href: "suppliers.html", label: "الموردين", icon: "parts" },
+        { key: "purchases", href: "purchases.html", label: "المشتريات", icon: "parts" },
+        { key: "part-sales", href: "part-sales.html", label: "بيع قطع غيار", icon: "parts" },
+      ],
+    },
     {
       group: "المالية",
       items: [
         { key: "invoices", href: "invoices.html", label: "الفواتير", icon: "invoice" },
         { key: "payments", href: "payments.html", label: "المدفوعات", icon: "payments" },
+        { key: "income", href: "income.html", label: "الدخل", icon: "payments" },
+        { key: "expenses", href: "expenses.html", label: "المصروفات", icon: "payments" },
       ],
     },
     { group: "التقارير", items: [{ key: "reports", href: "reports.html", label: "التقارير", icon: "reports" }] },
-    { group: "النظام", items: [{ key: "settings", href: "settings.html", label: "الإعدادات", icon: "settings" }] },
+    { group: "النظام", items: [
+      { key: "settings", href: "settings.html", label: "الإعدادات", icon: "settings" },
+      { key: "tax-rates", href: "tax-rates.html", label: "معدلات الضرائب", icon: "invoice" },
+      { key: "email-templates", href: "email-templates.html", label: "قوالب الإيميل", icon: "settings" },
+      { key: "custom-fields", href: "custom-fields.html", label: "حقول مخصصة", icon: "settings" },
+      { key: "setup", href: "setup.html", label: "معالج الإعداد", icon: "dashboard" },
+    ] },
   ];
   var TITLES = {
     dashboard: ["لوحة التحكم", "نظرة سريعة على الورشة اليوم"],
     "work-orders": ["أوامر الشغل", "إدارة ومتابعة أوامر الصيانة"],
     "work-order-new": ["استقبال سيارة", "فتح أمر شغل جديد"],
-    customers: ["العملاء والسيارات", "بيانات العملاء وسياراتهم"],
+    quotations: ["عروض الأسعار", "إنشاء ومتابعة عروض الأسعار للعملاء"],
+    observation: ["مكتبة الفحص", "نقاط الفحص حسب نوع المركبة"],
+    customers: ["العملاء", "بيانات العملاء وسياراتهم"],
+    vehicles: ["السيارات", "ملفات المركبات والصور وسجل الصيانة"],
     inventory: ["قطع الغيار", "المخزون والنواقص"],
+    suppliers: ["الموردين", "إدارة الموردين وبياناتهم"],
     invoices: ["الفواتير", "إصدار الفواتير ومتابعة التحصيل"],
     payments: ["المدفوعات", "سجل كل المبالغ المحصّلة"],
+    expenses: ["المصروفات", "تسجيل ومتابعة مصروفات الورشة"],
+    "gate-pass": ["تصاريح الخروج", "دخول وخروج المركبات من الورشة"],
+    "part-sales": ["بيع قطع غيار", "بيع مباشر لقطع الغيار بدون أمر شغل"],
+    income: ["الدخل", "سجل الإيرادات الأخرى والمدفوعات"],
     reports: ["التقارير", "الإيرادات والأداء"],
     settings: ["الإعدادات", "الفنيون وبيانات الورشة"],
+    compliance: ["الضرائب والامتثال", "ضرائب ورخص المركبات"],
+    "custom-fields": ["حقول مخصصة", "توسيع نماذج العملاء والمركبات"],
+    setup: ["معالج الإعداد", "خطوات تجهيز الورشة لأول مرة"],
+    purchases: ["المشتريات", "أوامر شراء من الموردين ودخول مخزون"],
+    "tax-rates": ["معدلات الضرائب", "ضرائب الخدمة والمنتجات"],
+    "email-templates": ["قوالب الإيميل", "نصوص الإشعارات للعملاء"],
     admin: ["الإدارة", "كل الورش المسجّلة في المنصة"],
   };
+  var QUOTE_STATUSES = [
+    { key: "draft", label: "مسودة" },
+    { key: "sent", label: "مرسل" },
+    { key: "accepted", label: "مقبول" },
+    { key: "rejected", label: "مرفوض" },
+    { key: "converted", label: "تحوّل لأمر شغل" },
+  ];
+  function quoteStatusLabel(k) { return labelOf(QUOTE_STATUSES, k); }
 
   // كل صفحة بتبدأ بـ: const page = await UI.init("اسم-الصفحة");
   // بترجّع العنصر اللي الصفحة بتكتب فيه، أو null لو المستخدم اتحوّل (مش مسجّل دخول مثلاً).
@@ -313,6 +358,8 @@
     invStatusLabel: invStatusLabel,
     statusLabel: statusLabel,
     methodLabel: methodLabel,
+    quoteStatusLabel: quoteStatusLabel,
+    QUOTE_STATUSES: QUOTE_STATUSES,
     isOpen: isOpen,
     byId: byId,
     option: option,
