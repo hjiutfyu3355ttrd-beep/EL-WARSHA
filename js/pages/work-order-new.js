@@ -1,5 +1,5 @@
 (async function () {
-  var page = await UI.init("work-orders");
+  var page = await UI.init("work-order-new");
   if (!page) return;
   var html = UI.html;
 

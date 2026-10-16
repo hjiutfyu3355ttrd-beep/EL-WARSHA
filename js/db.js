@@ -62,6 +62,8 @@
     payments: [
       { id: "y1", work_order_id: "w1", amount: 300, method: "cash", created_at: new Date().toISOString() },
     ],
+    invoices: [],
+    invoice_lines: [],
     shops: [
       { id: "s1", name: "ورشة النور", owner_email: "nour@example.com", status: "active", trial_ends_at: null, created_at: ago(40) },
       { id: "s2", name: "ورشة الأمل", owner_email: "amal@example.com", status: "trial", trial_ends_at: ago(-4), created_at: ago(3) },
@@ -111,7 +113,7 @@
     if (demoMode) {
       var rows = readLocal(table);
       var rec = Object.assign({}, row, { id: uid(), created_at: new Date().toISOString() });
-      if (table === "work_orders") {
+      if (table === "work_orders" || table === "invoices" || table === "purchases") {
         var max = rows.reduce(function (m, r) { return Math.max(m, Number(r.number) || 0); }, 1000);
         rec.number = max + 1;
       }
@@ -145,25 +147,57 @@
   }
 
   // ---------- تسجيل الدخول ----------
+  // الدخول برقم التليفون: Supabase Auth بيطلب إيميل، فبنحوّل الرقم لإيميل داخلي ثابت
+  // (مثلاً 01012345678@phone.workshop-system.app). المستخدم عمره ما بيشوفه.
+  // لازم "Confirm email" يكون مقفول في Supabase عشان ده يشتغل.
+  var PHONE_DOMAIN = "@phone.workshop-system.app";
+
+  // يوحّد شكل الرقم: أرقام عربية ← إنجليزي، شيل المسافات والرموز، +20 / 0020 ← 0
+  function normalizePhone(input) {
+    var s = String(input || "").replace(/[٠-٩]/g, function (d) {
+      return "٠١٢٣٤٥٦٧٨٩".indexOf(d);
+    });
+    s = s.replace(/\D/g, "");
+    if (s.indexOf("0020") === 0) s = "0" + s.slice(4);
+    else if (s.indexOf("20") === 0 && s.length === 12) s = "0" + s.slice(2);
+    else if (s.length === 10 && s.charAt(0) === "1") s = "0" + s;
+    return s;
+  }
+  function phoneToEmail(input) {
+    var p = normalizePhone(input);
+    if (p.length < 8 || p.length > 15) throw new Error("رقم التليفون غير صحيح");
+    return p + PHONE_DOMAIN;
+  }
+  // للعرض فقط (صفحة الأدمن): يرجّع الرقم من الإيميل الداخلي
+  function emailToPhone(email) {
+    var e = String(email || "");
+    return e.indexOf(PHONE_DOMAIN) > 0 ? e.replace(PHONE_DOMAIN, "") : e;
+  }
+
   var auth = {
+    phoneToEmail: phoneToEmail,
+    emailToPhone: emailToPhone,
     async getSession() {
       if (demoMode) return null;
       var res = await client.auth.getSession();
       return res.data.session;
     },
-    async signIn(email, password) {
-      var res = await client.auth.signInWithPassword({ email: email, password: password });
-      if (res.error) throw new Error("البريد أو كلمة المرور غير صحيحة");
+    async signIn(phone, password) {
+      var res = await client.auth.signInWithPassword({ email: phoneToEmail(phone), password: password });
+      if (res.error) throw new Error("رقم التليفون أو كلمة المرور غير صحيحة");
     },
     // اسم الورشة بيتبعت في metadata، وtrigger في الداتابيز بينشئ الورشة وعضوية المالك تلقائياً
-    async signUp(email, password, shopName) {
+    async signUp(phone, password, shopName) {
       var res = await client.auth.signUp({
-        email: email,
+        email: phoneToEmail(phone),
         password: password,
         options: { data: { shop_name: shopName } },
       });
-      if (res.error) throw new Error(res.error.message);
-      return res.data.session; // null لو لازم تأكيد الإيميل
+      if (res.error) {
+        if (/already|registered/i.test(res.error.message)) throw new Error("الرقم ده مسجّل قبل كده، سجّل دخول");
+        throw new Error(res.error.message);
+      }
+      return res.data.session; // لو null يبقى "Confirm email" لسه مفعّل في Supabase
     },
     async signOut() {
       if (client) await client.auth.signOut();

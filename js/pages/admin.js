@@ -39,18 +39,18 @@
     })}`;
 
     var q = $("q").value.trim().toLowerCase();
-    var shown = shops.filter(function (s) { return (s.name + " " + s.owner_email).toLowerCase().indexOf(q) !== -1; });
+    var shown = shops.filter(function (s) { return (s.name + " " + DB.auth.emailToPhone(s.owner_email)).toLowerCase().indexOf(q) !== -1; });
 
     $("list").innerHTML = html`
       <table>
-        <thead><tr><th>الورشة</th><th>الإيميل</th><th>التسجيل</th><th>الحالة</th><th>نهاية التجربة</th><th></th></tr></thead>
+        <thead><tr><th>الورشة</th><th>التليفون</th><th>التسجيل</th><th>الحالة</th><th>نهاية التجربة</th><th></th></tr></thead>
         <tbody>
           ${shown.length === 0
             ? html`<tr><td colspan="6" class="empty">مفيش حسابات</td></tr>`
             : shown.map(function (s) {
                 return html`<tr>
                   <td>${s.name}</td>
-                  <td dir="ltr" style="text-align:right">${s.owner_email}</td>
+                  <td dir="ltr" style="text-align:right">${DB.auth.emailToPhone(s.owner_email)}</td>
                   <td>${UI.dateAr(s.created_at)}</td>
                   <td><span class="badge ${s.status}">${STATUS_LABEL[s.status] || s.status}</span></td>
                   <td>${s.trial_ends_at ? UI.dateAr(s.trial_ends_at) : "—"}</td>

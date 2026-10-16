@@ -16,14 +16,14 @@
     msg.textContent = "";
     try {
       var session = await DB.auth.signUp(
-        document.getElementById("email").value,
+        document.getElementById("phone").value,
         document.getElementById("password").value,
         document.getElementById("shop").value.trim()
       );
       if (session) {
         location.href = "index.html";
       } else {
-        // التأكيد بالإيميل مفعّل: نطلب منه يأكد ثم يسجّل دخول
+        // مفيش جلسة (تأكيد الإيميل لسه مفعّل في Supabase): نعرض رسالة ونوديه للدخول
         document.getElementById("form").style.display = "none";
         document.getElementById("info").style.display = "block";
       }

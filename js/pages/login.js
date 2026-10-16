@@ -21,7 +21,7 @@
     btn.disabled = true;
     msg.textContent = "";
     try {
-      await DB.auth.signIn(document.getElementById("email").value, document.getElementById("password").value);
+      await DB.auth.signIn(document.getElementById("phone").value, document.getElementById("password").value);
       location.href = "index.html";
     } catch (err) {
       msg.textContent = err.message;
