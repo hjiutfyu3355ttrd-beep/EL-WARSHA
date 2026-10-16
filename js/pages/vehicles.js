@@ -112,12 +112,12 @@
               <button type="button" class="danger small" data-action="del-image" ${imgs.length ? "" : "disabled"}>حذف</button>
             </div>
             <div class="veh-thumbs">
-              ${imgs.map(function (src, i) {
+              ${imgs.length ? imgs.map(function (src, i) {
                 return html`<button type="button" class="veh-thumb ${i === imgIdx ? "on" : ""}" data-action="thumb" data-i="${i}">
                   <img src="${src}" alt="">
                   <span>صورة ${i + 1}</span>
                 </button>`;
-              }).join("") || html`<span class="muted" style="padding:8px">لا توجد صور — اضغط «صورة» للإضافة</span>`}
+              }) : html`<span class="muted" style="padding:8px">لا توجد صور — اضغط «صورة» للإضافة</span>`}
             </div>
           </div>
           <div class="card veh-info-panel">
@@ -158,7 +158,7 @@
                       <td>${w.complaint || "—"}</td>
                       <td dir="ltr">${(w.created_at || "").slice(0, 10)}</td>
                     </tr>`;
-                  }).join("")}
+                  })}
             </tbody>
           </table>
         </div>`;
@@ -178,7 +178,7 @@
                       <td>${i.total != null ? Number(i.total).toLocaleString("ar-EG") : "—"}</td>
                       <td dir="ltr">${(i.created_at || "").slice(0, 10)}</td>
                     </tr>`;
-                  }).join("")}
+                  })}
             </tbody>
           </table>
         </div>`;
@@ -244,7 +244,7 @@
               <select id="e-cust" required>
                 ${customers.map(function (c) {
                   return html`<option value="${c.id}" ${c.id === data.customer_id ? "selected" : ""}>${c.name}</option>`;
-                }).join("")}
+                })}
               </select>
             </div>
             <div class="field"><label>رقم اللوحة</label><input id="e-plate" value="${data.plate || ""}" required></div>
@@ -257,14 +257,14 @@
               <select id="e-fuel">
                 ${["", "بنزين", "ديزل", "هيبريد", "كهرباء", "غاز"].map(function (f) {
                   return html`<option value="${f}" ${f === (data.fuel || "") ? "selected" : ""}>${f || "—"}</option>`;
-                }).join("")}
+                })}
               </select>
             </div>
             <div class="field"><label>صندوق التروس</label>
               <select id="e-trans">
                 ${["", "أوتوماتيك", "مانيوال", "CVT"].map(function (f) {
                   return html`<option value="${f}" ${f === (data.transmission || "") ? "selected" : ""}>${f || "—"}</option>`;
-                }).join("")}
+                })}
               </select>
             </div>
             <div class="field"><label>رقم المحرك</label><input id="e-engine" value="${data.engine_no || ""}"></div>

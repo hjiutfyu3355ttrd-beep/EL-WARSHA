@@ -113,6 +113,11 @@
     setTimeout(function () { d.remove(); }, 4500);
   }
 
+  // اسم بديل لـ flash بيستخدمه vehicles.js: toast(رسالة) = نجاح، toast(رسالة, true) = خطأ
+  function toast(msg, isError) {
+    flash(msg, isError ? "error" : "success");
+  }
+
   // بينفّذ دالة وأي خطأ بيطلع كرسالة بدل ما الصفحة تقف
   async function guard(fn) {
     try {
@@ -364,6 +369,7 @@
     byId: byId,
     option: option,
     flash: flash,
+    toast: toast,
     guard: guard,
     init: init,
   };
