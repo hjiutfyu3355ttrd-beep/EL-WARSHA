@@ -10,27 +10,27 @@
     <div class="stack">
       <div class="head-row">
         <div>
-          <h2>تصاريح الخروج / الدخول</h2>
-          <p>تسجيل دخول وخروج المركبات — تصريح الخروج يتسجل بعد انتهاء الشغل.</p>
+          <h2>${I18N.t("gp_title")}</h2>
+          <p>${I18N.t("gp_sub")}</p>
         </div>
       </div>
       <form class="card" id="gp-form">
-        <h3 style="margin-top:0">تصريح جديد</h3>
+        <h3 style="margin-top:0">${I18N.t("gp_new")}</h3>
         <div class="form-grid">
-          <div class="field"><label>الاتجاه</label>
+          <div class="field"><label>${I18N.t("direction")}</label>
             <select id="gp-dir">
-              <option value="in">دخول</option>
-              <option value="out">خروج</option>
+              <option value="in">${I18N.t("dir_in")}</option>
+              <option value="out">${I18N.t("dir_out")}</option>
             </select>
           </div>
-          <div class="field"><label>أمر الشغل (اختياري)</label><select id="gp-wo"><option value="">— بدون —</option></select></div>
-          <div class="field"><label>السيارة</label><select id="gp-vehicle" required></select></div>
-          <div class="field"><label>ملاحظات</label><input id="gp-notes"></div>
-          <button>تسجيل</button>
+          <div class="field"><label>${I18N.t("wo_optional")}</label><select id="gp-wo"><option value="">${I18N.t("without")}</option></select></div>
+          <div class="field"><label>${I18N.t("vehicle")}</label><select id="gp-vehicle" required></select></div>
+          <div class="field"><label>${I18N.t("notes")}</label><input id="gp-notes"></div>
+          <button>${I18N.t("register")}</button>
         </div>
       </form>
-      <input id="q" placeholder="بحث برقم التصريح أو اللوحة">
-      <div class="table-wrap" id="list"><div class="empty">جارٍ التحميل…</div></div>
+      <input id="q" placeholder="${I18N.t("search_gp")}">
+      <div class="table-wrap" id="list"><div class="empty">${I18N.t("loading")}</div></div>
     </div>`;
 
   function fillSelects() {
@@ -39,12 +39,12 @@
       var v = vehicles[o.vehicle_id];
       return UI.option(id, "#" + o.number + (v ? " — " + v.plate : ""));
     });
-    $("gp-wo").innerHTML = '<option value="">— بدون —</option>' + woOpts.join("");
+    $("gp-wo").innerHTML = '<option value="">${I18N.t("without")}</option>' + woOpts.join("");
     var vOpts = Object.keys(vehicles).map(function (id) {
       var v = vehicles[id];
       return UI.option(id, v.plate + " — " + v.make + " " + v.model);
     });
-    $("gp-vehicle").innerHTML = vOpts.length ? vOpts.join("") : '<option value="">مفيش سيارات</option>';
+    $("gp-vehicle").innerHTML = vOpts.length ? vOpts.join("") : '<option value="">${I18N.t("empty_vehicles")}</option>';
   }
 
   function render() {
@@ -56,21 +56,21 @@
     });
     $("list").innerHTML = html`
       <table>
-        <thead><tr><th>رقم</th><th>الاتجاه</th><th>السيارة</th><th>أمر الشغل</th><th>ملاحظات</th><th>التاريخ</th><th></th></tr></thead>
+        <thead><tr><th>${I18N.t("number_col")}</th><th>${I18N.t("direction")}</th><th>${I18N.t("vehicle")}</th><th>${I18N.t("wo_label")}</th><th>${I18N.t("notes")}</th><th>${I18N.t("date")}</th><th></th></tr></thead>
         <tbody>
           ${shown.length === 0
-            ? html`<tr><td colspan="7" class="empty">مفيش تصاريح</td></tr>`
+            ? html`<tr><td colspan="7" class="empty">${I18N.t("empty_gp")}</td></tr>`
             : shown.map(function (p) {
                 var v = vehicles[p.vehicle_id];
                 var o = p.work_order_id ? orders[p.work_order_id] : null;
                 return html`<tr>
                   <td><b>#${p.number}</b></td>
-                  <td><span class="badge ${p.direction === "out" ? "ready" : "received"}">${p.direction === "out" ? "خروج" : "دخول"}</span></td>
+                  <td><span class="badge ${p.direction === "out" ? "ready" : "received"}">${p.direction === "out" ? I18N.t("dir_out") : I18N.t("dir_in")}</span></td>
                   <td>${v ? v.plate : "—"}</td>
                   <td>${o ? "#" + o.number : "—"}</td>
                   <td>${p.notes || "—"}</td>
                   <td>${UI.dateAr(p.created_at)}</td>
-                  <td><button class="danger small" data-action="del" data-id="${p.id}">حذف</button></td>
+                  <td><button class="danger small" data-action="del" data-id="${p.id}">${I18N.t("delete")}</button></td>
                 </tr>`;
               })}
         </tbody>
@@ -107,7 +107,7 @@
       if (dir === "out" && woId) {
         var o = orders[woId];
         if (o && o.status !== "ready" && o.status !== "delivered") {
-          if (!confirm("أمر الشغل لسه مش جاهز للتسليم. تسجّل تصريح خروج؟")) return;
+          if (!confirm(I18N.t("gp_not_ready"))) return;
         }
       }
       await DB.insert("gate_passes", {
@@ -118,13 +118,13 @@
       });
       $("gp-notes").value = "";
       await load();
-      UI.flash("تم تسجيل التصريح", "success");
+      UI.flash(I18N.t("gp_saved"), "success");
     });
   });
   page.addEventListener("click", function (e) {
     var btn = e.target.closest("[data-action='del']");
     if (!btn) return;
-    if (!confirm("حذف التصريح؟")) return;
+    if (!confirm(I18N.t("del_gp_q"))) return;
     UI.guard(async function () {
       await DB.remove("gate_passes", btn.getAttribute("data-id"));
       await load();

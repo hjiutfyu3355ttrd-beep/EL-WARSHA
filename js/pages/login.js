@@ -10,6 +10,39 @@
     return;
   }
 
+  function applyLoginI18n() {
+    if (!window.I18N) return;
+    var lang = I18N.getLang();
+    var sel = document.getElementById("login-lang");
+    if (sel) sel.value = lang;
+    var map = [
+      ["lbl-lang", "language"], ["login-h2", "login_title"], ["login-sub", "login_sub"],
+      ["lbl-phone", "login_phone"], ["lbl-pass", "login_password"], ["btn", "login_btn"],
+      ["login-reg", "login_register"]
+    ];
+    map.forEach(function (m) {
+      var el = document.getElementById(m[0]);
+      if (el) el.textContent = I18N.t(m[1]);
+    });
+    var foot = document.getElementById("login-foot");
+    if (foot) {
+      foot.innerHTML = I18N.t("login_no_account") + ' <a class="link" href="signup.html" id="login-reg">' + I18N.t("login_register") + '</a>';
+    }
+    var h1 = document.querySelector(".login-hero h1");
+    if (h1) h1.textContent = I18N.t("app_name");
+    var hp = document.querySelector(".login-hero p");
+    if (hp) hp.textContent = I18N.t("login_hero");
+  }
+  applyLoginI18n();
+  var langSel = document.getElementById("login-lang");
+  if (langSel) {
+    langSel.addEventListener("change", function () {
+      I18N.setLang(langSel.value);
+      location.reload();
+    });
+  }
+
+
   // لو مسجّل دخول بالفعل
   DB.auth.getSession().then(function (s) {
     if (s) location.replace("index.html");

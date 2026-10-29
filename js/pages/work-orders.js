@@ -5,24 +5,32 @@
 
   // تقسيم الحالات على التبويبات
   var TABS = [
-    { key: "all", label: "الكل", test: function () { return true; } },
-    { key: "open", label: "مفتوحة", test: function (o) { return ["received", "inspecting", "awaiting_approval", "approved"].indexOf(o.status) !== -1; } },
-    { key: "progress", label: "تحت التنفيذ", test: function (o) { return ["in_progress", "waiting_parts", "testing"].indexOf(o.status) !== -1; } },
-    { key: "done", label: "مكتملة", test: function (o) { return o.status === "ready" || o.status === "delivered"; } },
-    { key: "late", label: "متأخرة", test: function (o) { return UI.isOverdue(o); } },
+    { key: "all", labelKey: "all", test: function () { return true; } },
+    { key: "open", labelKey: "open_tab", test: function (o) { return ["received", "inspecting", "awaiting_approval", "approved"].indexOf(o.status) !== -1; } },
+    { key: "progress", labelKey: "progress_tab", test: function (o) { return ["in_progress", "waiting_parts", "testing"].indexOf(o.status) !== -1; } },
+    { key: "done", labelKey: "done_tab", test: function (o) { return o.status === "ready" || o.status === "delivered"; } },
+    { key: "late", labelKey: "late_tab", test: function (o) { return UI.isOverdue(o); } },
   ];
+  TABS.forEach(function (tab) { tab.label = I18N.t(tab.labelKey); });
 
   var st = { tab: "all", card: "", view: "list", q: "", status: "all", priority: "all" };
+  try {
+    var params = new URLSearchParams(location.search);
+    var tabQ = params.get("tab");
+    if (tabQ && ["all", "open", "progress", "done", "late"].indexOf(tabQ) !== -1) st.tab = tabQ;
+    var viewQ = params.get("view") || sessionStorage.getItem("ws_wo_view");
+    if (viewQ === "grid" || viewQ === "list") st.view = viewQ;
+  } catch (e) {}
   var orders = [], customers = {}, vehicles = {}, techs = {}, lines = [];
 
   page.innerHTML = html`
     <div class="stack">
       <div class="head-row">
-        <div><h2>أوامر الشغل</h2><p>إدارة ومتابعة أوامر الصيانة في الورشة</p></div>
+        <div><h2>${I18N.t("t_work_orders")}</h2><p>${I18N.t("d_work_orders")}</p></div>
         <div class="actions no-print">
-          <button class="secondary" data-act="refresh">⟳ تحديث</button>
-          <button class="secondary" data-act="export">⭳ تصدير</button>
-          <a class="btn" href="work-order-new.html">＋ إنشاء أمر شغل</a>
+          <button class="secondary" data-act="refresh">⟳ ${I18N.t("refresh")}</button>
+          <button class="secondary" data-act="export">⭳ ${I18N.t("export")}</button>
+          <a class="btn primary" href="work-order-new.html">＋ ${I18N.t("create_wo")}</a>
         </div>
       </div>
 
@@ -31,23 +39,23 @@
       <div class="toolbar">
         <div class="tabs" id="tabs"></div>
         <div class="right">
-          <input id="q" type="search" placeholder="بحث برقم الأمر أو العميل أو اللوحة...">
-          <button class="secondary" data-act="filters">⚲ تصفية</button>
-          <button class="secondary icon-btn on" data-act="view" data-v="list" title="قائمة">☰</button>
-          <button class="secondary icon-btn" data-act="view" data-v="grid" title="كروت">▦</button>
+          <input id="q" type="search" placeholder="${I18N.t("search_wo")}">
+          <button class="secondary" data-act="filters">⚲ ${I18N.t("filter")}</button>
+          <button class="secondary icon-btn on" data-act="view" data-v="list" title="${I18N.t("view_list")}">☰</button>
+          <button class="secondary icon-btn" data-act="view" data-v="grid" title="${I18N.t("view_cards")}">▦</button>
         </div>
       </div>
 
       <div class="card filters" id="filters">
-        <div class="field"><label>الحالة</label>
-          <select id="f-status"><option value="all">كل الحالات</option>
-            ${UI.STATUSES.map(function (s) { return html`<option value="${s.key}">${s.label}</option>`; })}</select></div>
-        <div class="field"><label>الأولوية</label>
-          <select id="f-priority"><option value="all">كل الأولويات</option>
-            ${UI.PRIORITIES.map(function (p) { return html`<option value="${p.key}">${p.label}</option>`; })}</select></div>
+        <div class="field"><label>${I18N.t("status_filter")}</label>
+          <select id="f-status"><option value="all">${I18N.t("all_statuses")}</option>
+            ${UI.STATUSES.map(function (s) { return html`<option value="${s.key}">${UI.statusLabel(s.key)}</option>`; })}</select></div>
+        <div class="field"><label>${I18N.t("priority_filter")}</label>
+          <select id="f-priority"><option value="all">${I18N.t("all_priorities")}</option>
+            ${UI.PRIORITIES.map(function (p) { return html`<option value="${p.key}">${UI.priorityLabel(p.key)}</option>`; })}</select></div>
       </div>
 
-      <div id="list"><div class="empty">جارٍ التحميل…</div></div>
+      <div id="list"><div class="empty">${I18N.t("loading")}</div></div>
     </div>`;
 
   var $ = function (id) { return document.getElementById(id); };
@@ -60,11 +68,11 @@
   function renderCards() {
     var live = orders.filter(function (o) { return o.status !== "cancelled"; });
     var items = [
-      { k: "", label: "إجمالي الأوامر", v: String(orders.length), sub: "كل أوامر الشغل", c: "#64748b" },
-      { k: "high", label: "أولوية عالية", v: String(orders.filter(function (o) { return (o.priority === "high" || o.priority === "critical") && UI.isOpen(o.status); }).length), sub: "عالية وحرجة ومفتوحة", c: "#eab308" },
-      { k: "approval", label: "بانتظار الموافقة", v: String(orders.filter(function (o) { return o.status === "awaiting_approval"; }).length), sub: "أوامر بانتظار موافقة العميل", c: "#d97706" },
-      { k: "cost", label: "إجمالي التكلفة", v: UI.money(live.reduce(function (s, o) { return s + total(o.id); }, 0)), sub: "قيمة بنود الأوامر", c: "#10b26c" },
-      { k: "late", label: "أوامر متأخرة", v: String(orders.filter(UI.isOverdue).length), sub: "عدّى موعد تسليمها", c: "#b91c1c" },
+      { k: "", label: I18N.t("total_orders"), v: String(orders.length), sub: I18N.t("all_orders_sub"), c: "#64748b" },
+      { k: "high", label: I18N.t("high_priority"), v: String(orders.filter(function (o) { return (o.priority === "high" || o.priority === "critical") && UI.isOpen(o.status); }).length), sub: I18N.t("high_priority_sub"), c: "#eab308" },
+      { k: "approval", label: I18N.t("awaiting_approval_card"), v: String(orders.filter(function (o) { return o.status === "awaiting_approval"; }).length), sub: I18N.t("awaiting_approval_sub"), c: "#d97706" },
+      { k: "cost", label: I18N.t("total_cost"), v: UI.money(live.reduce(function (s, o) { return s + total(o.id); }, 0)), sub: I18N.t("total_cost_sub"), c: "#10b26c" },
+      { k: "late", label: I18N.t("late_orders"), v: String(orders.filter(UI.isOverdue).length), sub: I18N.t("late_orders_sub"), c: "#b91c1c" },
     ];
     $("cards").innerHTML = html`${items.map(function (i) {
       var pick = i.k !== "cost";
@@ -99,9 +107,9 @@
     if (shown.length === 0) {
       $("list").innerHTML = html`<div class="card empty-state">
         <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4h6a1 1 0 0 1 1 1v1H8V5a1 1 0 0 1 1-1z"/><path d="M8 6H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-2"/><path d="M9 12h6M9 16h4"/></svg>
-        <h3>مفيش أوامر شغل</h3>
-        <p>${orders.length === 0 ? "افتح أول أمر شغل عشان تبدأ" : "جرّب تغيّر البحث أو التصفية"}</p>
-        ${orders.length === 0 ? html`<a class="btn" href="work-order-new.html">＋ إنشاء أول أمر شغل</a>` : ""}</div>`;
+        <h3>${I18N.t("empty_wo")}</h3>
+        <p>${orders.length === 0 ? I18N.t("empty_wo_hint_new") : I18N.t("empty_wo_hint_filter")}</p>
+        ${orders.length === 0 ? html`<a class="btn" href="work-order-new.html">＋ ${I18N.t("create_first_wo")}</a>` : ""}</div>`;
       return;
     }
     if (st.view === "grid") {
@@ -112,12 +120,12 @@
           <div><b>${c ? c.name : "—"}</b></div>
           <p>${v ? v.plate + " — " + v.make + " " + v.model : "—"}</p>
           <p><span class="badge prio-${o.priority || "normal"}">${UI.priorityLabel(o.priority)}</span>
-            · ${UI.money(total(o.id))}${UI.isOverdue(o) ? html` · <span class="late">متأخر</span>` : ""}</p></a>`;
+            · ${UI.money(total(o.id))}${UI.isOverdue(o) ? html` · <span class="late">${I18N.t("late_badge")}</span>` : ""}</p></a>`;
       })}</div>`;
       return;
     }
     $("list").innerHTML = html`<div class="table-wrap"><table class="clickable">
-      <thead><tr><th>رقم</th><th>العميل</th><th>السيارة</th><th>الأولوية</th><th>الحالة</th><th>الفني</th><th>التسليم المتوقع</th><th>الإجمالي</th></tr></thead>
+      <thead><tr><th>${I18N.t("number_col")}</th><th>${I18N.t("customer")}</th><th>${I18N.t("vehicle")}</th><th>${I18N.t("priority_filter")}</th><th>${I18N.t("status_filter")}</th><th>${I18N.t("technician")}</th><th>${I18N.t("expected_delivery")}</th><th>${I18N.t("total")}</th></tr></thead>
       <tbody>${shown.map(function (o) {
         return html`<tr data-href="work-order.html?id=${o.id}">
           <td><b>#${o.number}</b></td>
@@ -141,7 +149,7 @@
   }
 
   function exportCsv() {
-    var rows = [["رقم", "العميل", "اللوحة", "الأولوية", "الحالة", "الفني", "التسليم المتوقع", "الإجمالي", "تاريخ الفتح"]];
+    var rows = [[I18N.t("number_col"), I18N.t("customer"), I18N.t("plate"), I18N.t("priority_filter"), I18N.t("status_filter"), I18N.t("technician"), I18N.t("expected_delivery"), I18N.t("total"), I18N.t("opened_at")]];
     filtered(false).forEach(function (o) {
       rows.push([
         o.number, customers[o.customer_id] ? customers[o.customer_id].name : "", vehicles[o.vehicle_id] ? vehicles[o.vehicle_id].plate : "",
@@ -174,7 +182,7 @@
     else if (a === "export") exportCsv();
     else if (a === "filters") $("filters").classList.toggle("open");
     else if (a === "view") {
-      st.view = t.getAttribute("data-v");
+      st.view = t.getAttribute("data-v"); try { sessionStorage.setItem("ws_wo_view", st.view); } catch (e) {}
       var vb = page.querySelectorAll("[data-act=view]");
       for (var i = 0; i < vb.length; i++) vb[i].classList.toggle("on", vb[i] === t);
       renderList();

@@ -1,7 +1,9 @@
 # HANDOFF — نظام الورشة (ملف التسليم للمساعد)
 
-> **الإصدار:** v0.14.0 — **آخر تحديث:** 2026-10-16
+> **الإصدار:** v0.16.1 — **آخر تحديث:** 2026-10-29
 > **لأي مساعد ذكي جديد:** اقرأ الملف ده كامل قبل ما تعمل أي حاجة. هو المرجع الأساسي للمشروع وللتفضيلات والقرارات اللي اتاخدت. بعد ما تقراه كمّل مباشرة من قسم "الخطوات الجاية". ولما تسلّم أي شغل جديد: **حدّث الملف ده** (قسم الحالة + سجل التغييرات + رفع الإصدار) وسلّم المستخدم الزيب المحدّث ومعاه نسخة من الملف.
+>
+> **طلب المستخدم الحالي (مهم):** دعم **اللغة التركية** بجانب العربي، قائمة لغة في الواجهة، الحفاظ على مظهر EL-WARSHA (برتقالي)، إصلاح زر «استقبال سيارة»، منع ترجمة المتصفح، وتسليم زيب + أساس (HANDOFF) مع كل تحديث.
 
 ---
 
@@ -49,7 +51,8 @@
 ```
 
 - **لا يوجد سيرفر خاص ولا خطوة بناء ولا npm.** كل الحماية في الداتابيز (RLS + دوال SECURITY DEFINER). الصفحات تستخدم **anon/publishable key فقط**؛ `service_role` ممنوع في الفرونت نهائياً.
-- **ترتيب تحميل السكريبتات في كل صفحة:** `supabase.js (CDN)` ← `config.js` ← `db.js` ← `ui.js` ← `pages/<الصفحة>.js` (صفحتي login/signup بدون `ui.js`).
+- **ترتيب تحميل السكريبتات في كل صفحة:** `supabase.js (CDN)` ← `config.js` ← **`i18n.js`** ← `db.js` ← `ui.js` ← `pages/<الصفحة>.js` (login/signup بدون `ui.js` لكن مع `i18n.js`).
+- **`js/i18n.js` → `window.I18N`**: قاموس `ar` / `tr`، `getLang()` / `setLang(lang)` (يحفظ في `localStorage` مفتاح `workshop_lang`)، `applyDir` (ar=RTL، tr=LTR)، `t(key)`. كل صفحة فيها سكربت مبكر في `<head>` يضبط `lang`/`dir`/`translate=no` قبل الرسم. تغيير اللغة يعمل `location.reload()`.
 - **`js/db.js` → `window.DB`**: الطبقة الوحيدة اللي بتكلّم الداتابيز: `list / insert / update / remove` + `auth.signIn/signUp/signOut/getSession` + `isAdmin / adminListShops / adminUpdateShop` + `resetDemo` + `demoMode`. لو `SUPABASE_URL` و`SUPABASE_ANON_KEY` في `js/config.js` فاضيين → `demoMode = true` وكل شيء يشتغل على localStorage (مفاتيحها `demo:<table>`). **أي ميزة جديدة تتعمل فوق DB.\*** عشان الـ Demo يفضل شغال.
 - **`js/ui.js` → `window.UI`**: القالب الآمن `html\`...\``، `esc`، `money`، `dateAr`، `STATUSES`، `PAY_METHODS`، `byId`، `option`، `flash` (toast)، `guard` (يمسك الأخطاء ويعرضها)، `init(active, {adminOnly})` (يرسم الشريط الجانبي، يفرض تسجيل الدخول خارج الـ Demo، يحوّل غير الأدمن من صفحة الإدارة). ومستمع click عام لـ `data-action` و`tr[data-href]`.
 - **نمط كل صفحة:** `var page = await UI.init("key"); if (!page) return;` ← جلب البيانات بـ `DB.list` ← `page.innerHTML = html\`...\`` ← event listeners. الهيكل الثابت (الفورمز) بيتكتب مرة واحدة وبيتحدّث بس الجداول، عشان اللي المستخدم بيكتبه ما يضيعش.
@@ -107,16 +110,11 @@ HANDOFF.md, README.md
 
 ## 8) الخطوات الجاية (بالترتيب)
 
-1. المستخدم يجرّب النسخة محلياً (README: `python3 -m http.server`) ويقول إيه اللي يتعدّل في الواجهات.
-2. لما المستخدم يقول إنه ربط Supabase: اسأله أي مشروع (أو مشروع جديد → `get_cost` + `confirm_cost` بموافقته).
-3. طبّق `20261015000001_init.sql` بـ `apply_migration` (بعد `list_tables` للتأكد إن مفيش تعارض مع جداول موجودة، خصوصاً لو المشروع موجود وفيه بيانات). **ده أول تجربة للـ SQL على Postgres حقيقي — توقّع تصليحات صغيرة.**
-4. `get_advisors` ← صلّح التحذيرات. اختبر العزل بحسابين.
-5. خد من المستخدم **إيميل الأدمن**، سجّله من `signup.html`، ثم نفّذ `admin_setup.sql` بإيميله.
-6. `get_project_url` + `get_publishable_keys` ← ادّي المستخدم القيمتين يحطهم في `js/config.js` (مش أسرار).
-7. جرّب الوضع الحقيقي end-to-end (تسجيل ← دخول ← عميل/سيارة/أمر شغل ← عزل بين حسابين ← صفحة الأدمن). وصلّح أي حاجة في `db.js`.
-8. فعّل في Supabase Auth: تأكيد الإيميل، وعطّل الـ anonymous sign-ins، وراجع rate limits.
-9. نفّذ بنود TODO بالأولوية: ثبّت مكتبة CDN ← trigger المخزون ← إدارة الموظفين ← تعديل/حذف ← تحسين الفاتورة.
-10. سلّم زيب + HANDOFF محدّثين مع كل خطوة.
+1. **إكمال ترجمة التركي** للصفحات ذات الأولوية: `work-order-new.js` → `work-order.js` → `vehicles.js` → `quotations.js` → `inventory.js` → `invoices.js` / `invoice.js` → باقي الصفحات. النمط: أضف مفاتيح في `js/i18n.js` (ar+tr) ثم استبدل النصوص الثابتة بـ `I18N.t("key")` داخل القوالب. الحالات/الأولويات استخدم `UI.statusLabel` / `UI.priorityLabel`.
+2. المستخدم يجرّب محلياً (`python3 -m http.server 8000`) ويبدّل عربي↔تركي من السايدبار ويتأكد من الزر البرتقالي وغياب رسالة ترجمة المتصفح.
+3. لما يطلب ربط Supabase: اتبع البنود القديمة (مشروع، migration، أدمن، config.js) — **بعد إذنه الصريح**.
+4. TODOات أخرى: ثبّت CDN، trigger المخزون، موظفين، فاتورة.
+5. مع **كل** تسليم: زيب + HANDOFF محدّث (ارفع الإصدار في السطر الأول + سجل التغييرات).
 
 ## 9) أوامر
 
@@ -139,6 +137,78 @@ Cloudflare Pages: Framework preset **None**، Build command **فاضي**، Outpu
 - وجود ملف `HANDOFF.md` و`README.md` من إصدار React القديم: اتحدّثوا. لو لقيت أي إشارة لـ `src/` أو `vite` أو `npm run` فهي قديمة.
 
 ## 12) سجل التغييرات
+
+- **v0.16.1** (2026-10-29) — **ثبات التنقل + داشبورد:**
+  - إلغاء `location.reload` عند تغيّر حالة الأدمن (تحديث ناعم).
+  - prefetch لروابط السايدبار عند hover/touch.
+  - تمييز الرابط النشط فور الضغط.
+  - أوامر الشغل تدعم `?tab=open|late|progress|done` + حفظ عرض list/grid.
+  - الداشبورد: KPI قابلة للضغط، إيراد 7 أيام تحت إيراد اليوم، تنبيه متأخر.
+
+- **v0.16.0** (2026-10-29) — **تحسين الأداء:**
+  - كاش ذاكرة لـ Demo DB + كتابة localStorage مجمّعة (debounce 40ms) + flush عند إغلاق الصفحة.
+  - تحميل كسول لمكتبة Supabase (مش بتتحمّل في وضع Demo إطلاقًا).
+  - preload لخط Cairo-Regular.
+  - debounce بحث السايدبار.
+  - `content-visibility` لصفوف الجداول الطويلة.
+  - المظهر والترجمة بدون تغيير وظيفي.
+
+- **v0.15.9** (2026-10-29) — **ترجمة UI مكتملة (residual = 0)** في كل `js/pages/*.js` للنصوص الظاهرة (عربي↔تركي عبر I18N). بيانات معاينة الإيميل صارت محايدة. أي نص عربي جديد لازم يضاف مفتاحه في `js/i18n.js`.
+
+- **v0.15.8** (2026-10-29) — تقريباً اكتمال الترجمة UI:
+  - observation فئات/نموذج، purchases/quotations رسائل وتفاصيل، income/settings/setup، invoice errors، جداول work-orders/invoices/gate-pass.
+  - residual تبقّى نادر (بيانات تجريبية في email-templates preview، بضعة labels).
+
+- **v0.15.7** (2026-10-29) — تنظيف custom-fields / email / purchases / part-sales / compliance / invoices / customers.
+  - residual انخفض أكثر؛ المتبقي غالبًا صفوف جداول أو نصوص نادرة.
+
+- **v0.15.6** (2026-10-29) — تنظيف أقوى:
+  - `invoice.js` شبه كامل (بنود/دفعات/إصدار/إلغاء).
+  - `tax-rates`, `work-orders` فلاتر/فراغات، `dashboard` روابط سريعة، `income` جدول.
+  - `quotations` رسائل حفظ + إجمالي.
+  - residual تناقص؛ متبقي أساسًا: custom-fields تفاصيل، email-templates محتوى، part-sales/purchases حواف، observation/compliance صفوف جداول.
+
+- **v0.15.5** (2026-10-29) — تنظيف residual:
+  - setup checklist + بيانات الورشة، admin (حالات/إحصائيات/جدول)، suppliers، inventory بالكامل تقريباً.
+  - work-order رسائل التحقق + ملخص مالي + بند حر.
+  - متبقي خفيف: quotations edges، invoice details، custom-fields fields، email-templates body، part-sales form edges، dashboard hero leftovers.
+
+- **v0.15.4** (2026-10-29) — دفعة ترجمة رابعة (صفحات ثانوية):
+  - `compliance`, `gate-pass`, `observation`, `expenses`, `payments` مترجمة بشكل جيد.
+  - عناوين/أزرار: setup, admin, custom-fields, email-templates, income, tax-rates.
+  - تحسّن `invoice` + `part-sales`.
+  - صفحات بصفر residual تقريباً: expenses, payments, login, reports, work-order-new, vehicles(~2).
+  - متبقي نصوص داخلية في: setup checklist, invoice details, quotations form edges, purchases, admin table, custom-fields form fields.
+
+- **v0.15.3** (2026-10-29) — دفعة ترجمة ثالثة:
+  - `vehicles.js`: فورم + تبويبات + وقود/قير + toasts/confirms (متبقي ~4 أسطر).
+  - `work-order.js`: هيكل الصفحة (فحص/بنود/مدفوعات/طباعة/عناوين).
+  - `invoice.js` + `part-sales.js`: عناوين وأزرار ورسائل أساسية.
+  - دفعة ثانوية: customers/expenses/payments/suppliers.
+  - متبقي أوضح: compliance, gate-pass, observation, setup, admin, custom-fields, email-templates, income, tax-rates، وتفاصيل invoice/part-sales.
+
+- **v0.15.2** (2026-10-29) — دفعة ترجمة ثانية:
+  - `reports.js` مترجم بالكامل للواجهة.
+  - `purchases.js` أغلب الشاشات (قائمة + نموذج).
+  - `vehicles.js` تفاصيل/تسميات/تبويبات أساسية (لسه فورم الإضافة/التعديل فيه عربي).
+  - `work-order.js` تسميات إضافية (فني/تاريخ/جداول).
+  - `part-sales.js` عناوين أساسية.
+  - إصلاح أخطاء syntax من استبدال خاطئ لسلاسل داخل JS.
+
+- **v0.15.1** (2026-10-29) — إكمال ترجمة إضافية:
+  - `work-order-new.js` مترجم.
+  - `work-order.js` (تفاصيل الأمر): عناوين الجداول، أزرار إضافة/دفع/فحص، فراغات، رجوع، نتائج الفحص — **لسه فيه نصوص عربية متفرقة** (رؤوس فرعية، رسائل خطأ، تسميات فني…).
+  - `quotations.js` أغلب الواجهة مترجمة (قائمة/نموذج/بنود/حالات).
+  - `vehicles.js` / `inventory.js` / `invoices.js`: عناوين وأزرار وplaceholders أساسية.
+  - قاموس `i18n.js` توسّع (~+80 مفتاح مشترك).
+  - **متبقي عربي أوضح:** `vehicles.js` (نموذج كامل)، `work-order.js` (باقي التسميات)، `part-sales`, `purchases`, `reports`, `compliance`, `gate-pass`, `observation`, إلخ.
+
+- **v0.15.0** (2026-10-29) — **دعم اللغة التركية (i18n) + إصلاحات واجهة:**
+  - ملف `js/i18n.js` (عربي/تركي) + قائمة لغة في السايدبار والإعدادات وصفحة الدخول.
+  - `html translate="no"` + سكربت مبكر لمنع رسالة ترجمة المتصفح.
+  - إصلاح زر «استقبال سيارة»: برتقالي ثابت.
+  - مترجم: shell + dashboard + work-orders list + settings + login + جزء customers.
+  - المظهر: EL-WARSHA برتقالي — لا تغيّره إلا بطلب صريح.
 
 - **v0.14.0** — **مطابقة الداتابيز الحقيقية مع الكود** (Supabase `blspjpghimjpyczxkvvs`). المشكلة: الداتابيز كان فيها migration قديم اسمه `garage_master_stage2` بأسماء جداول/أعمدة مختلفة عن اللي الكود بيستخدمه (والملف `20261016000003_garage_master_modules.sql` في الريبو **ماكانش هو اللي اتطبّق**، وكان هيتعارض لو اتشغّل). الحل: migration إضافي `20261016000004_align_with_v014.sql` (اتطبّق + محفوظ في الريبو، الكود هو المرجع). الفروق اللي اتصلّحت:
   - **vehicles:** إعادة تسمية `fuel_type→fuel`, `engine_number→engine_no`, `gearbox_number→gearbox_no`, `vin→chassis_no` + أعمدة جديدة `description`, `images` (jsonb), `image`. (الصور بتتخزّن Data-URL جوه الجدول، حد أقصى 2.5MB للصورة — لو كبرت الصور انقلها لـ Supabase Storage.)

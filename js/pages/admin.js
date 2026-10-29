@@ -5,18 +5,18 @@
   var html = UI.html;
 
   var shops = [];
-  var STATUS_LABEL = { trial: "تجربة", active: "مفعّل", suspended: "موقوف" };
+  var STATUS_LABEL = { trial: I18N.t("st_trial"), active: I18N.t("st_active"), suspended: I18N.t("st_suspended") };
 
   page.innerHTML = html`
     <div class="stack">
-      <h2 class="page-title" style="margin:0">🛡️ لوحة الإدارة</h2>
+      <h2 class="page-title" style="margin:0">🛡️ لوحة ${I18N.t("admin_title")}</h2>
       <div class="notice">
-        الصفحة دي بتعرض بيانات الحسابات فقط (الورشة، الإيميل، الحالة) — مش بيانات شغل العملاء.
-        الصلاحية بتتأكد منها قاعدة البيانات مش الواجهة.
+        ${I18N.t("admin_hint")}
+        ${I18N.t("admin_hint2")}
       </div>
       <div class="grid" id="stats"></div>
-      <input id="q" placeholder="بحث باسم الورشة أو الإيميل">
-      <div class="table-wrap" id="list"><div class="empty">جارٍ التحميل…</div></div>
+      <input id="q" placeholder="${I18N.t("search_shop")}">
+      <div class="table-wrap" id="list"><div class="empty">${I18N.t("loading")}</div></div>
     </div>`;
 
   var $ = function (id) { return document.getElementById(id); };
@@ -27,12 +27,12 @@
     function count(fn) { return shops.filter(fn).length; }
 
     var stats = [
-      { label: "إجمالي الورش", value: shops.length },
-      { label: "مسجّلين اليوم", value: count(function (s) { return new Date(s.created_at).toDateString() === today; }) },
-      { label: "مسجّلين آخر 7 أيام", value: count(function (s) { return new Date(s.created_at).getTime() >= weekAgo; }) },
-      { label: "مفعّلين", value: count(function (s) { return s.status === "active"; }) },
-      { label: "تجربة", value: count(function (s) { return s.status === "trial"; }) },
-      { label: "موقوفين", value: count(function (s) { return s.status === "suspended"; }) },
+      { label: I18N.t("total_shops"), value: shops.length },
+      { label: I18N.t("reg_today"), value: count(function (s) { return new Date(s.created_at).toDateString() === today; }) },
+      { label: I18N.t("reg_week"), value: count(function (s) { return new Date(s.created_at).getTime() >= weekAgo; }) },
+      { label: I18N.t("actives"), value: count(function (s) { return s.status === "active"; }) },
+      { label: I18N.t("trials"), value: count(function (s) { return s.status === "trial"; }) },
+      { label: I18N.t("suspendeds"), value: count(function (s) { return s.status === "suspended"; }) },
     ];
     $("stats").innerHTML = html`${stats.map(function (s) {
       return html`<div class="card"><div class="label">${s.label}</div><div class="value">${s.value}</div></div>`;
@@ -43,10 +43,10 @@
 
     $("list").innerHTML = html`
       <table>
-        <thead><tr><th>الورشة</th><th>التليفون</th><th>التسجيل</th><th>الحالة</th><th>نهاية التجربة</th><th></th></tr></thead>
+        <thead><tr><th>${I18N.t("shop")}</th><th>${I18N.t("shop_phone")}</th><th>${I18N.t("reg_date")}</th><th>${I18N.t("status_filter")}</th><th>${I18N.t("trial_end")}</th><th></th></tr></thead>
         <tbody>
           ${shown.length === 0
-            ? html`<tr><td colspan="6" class="empty">مفيش حسابات</td></tr>`
+            ? html`<tr><td colspan="6" class="empty">${I18N.t("empty_shops")}</td></tr>`
             : shown.map(function (s) {
                 return html`<tr>
                   <td>${s.name}</td>
@@ -55,9 +55,9 @@
                   <td><span class="badge ${s.status}">${STATUS_LABEL[s.status] || s.status}</span></td>
                   <td>${s.trial_ends_at ? UI.dateAr(s.trial_ends_at) : "—"}</td>
                   <td><div class="row">
-                    ${s.status !== "active" ? html`<button class="small" data-action="activate" data-id="${s.id}">تفعيل</button>` : ""}
-                    ${s.status !== "suspended" ? html`<button class="danger small" data-action="suspend" data-id="${s.id}">إيقاف</button>` : ""}
-                    <button class="secondary small" data-action="extend" data-id="${s.id}">تجربة +7 أيام</button>
+                    ${s.status !== "active" ? html`<button class="small" data-action="activate" data-id="${s.id}">${I18N.t("activate")}</button>` : ""}
+                    ${s.status !== "suspended" ? html`<button class="danger small" data-action="suspend" data-id="${s.id}">${I18N.t("suspend")}</button>` : ""}
+                    <button class="secondary small" data-action="extend" data-id="${s.id}">${I18N.t("extend_trial")}</button>
                   </div></td>
                 </tr>`;
               })}

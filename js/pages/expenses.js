@@ -10,22 +10,22 @@
     <div class="stack">
       <div class="head-row">
         <div>
-          <h2>المصروفات</h2>
-          <p>تسجيل مصروفات الورشة وتقارير حسب الفترة.</p>
+          <h2>${I18N.t("nav_expenses")}</h2>
+          <p>${I18N.t("exp_sub")}</p>
         </div>
       </div>
       <form class="card" id="ex-form">
-        <h3 style="margin-top:0">مصروف جديد</h3>
+        <h3 style="margin-top:0">${I18N.t("exp_new")}</h3>
         <div class="form-grid">
-          <div class="field"><label>البيان</label><input id="e-label" required placeholder="مثال: إيجار / كهرباء"></div>
-          <div class="field"><label>المبلغ (ج.م)</label><input id="e-amount" type="number" min="0" step="any" required></div>
-          <div class="field"><label>ملاحظات</label><input id="e-notes"></div>
-          <button>إضافة</button>
+          <div class="field"><label>${I18N.t("exp_label")}</label><input id="e-label" required placeholder="${I18N.t("exp_placeholder")}"></div>
+          <div class="field"><label>${I18N.t("exp_amount")}</label><input id="e-amount" type="number" min="0" step="any" required></div>
+          <div class="field"><label>${I18N.t("notes")}</label><input id="e-notes"></div>
+          <button>${I18N.t("add")}</button>
         </div>
       </form>
       <div class="card" id="summary"></div>
-      <input id="q" placeholder="بحث بالبيان">
-      <div class="table-wrap" id="list"><div class="empty">جارٍ التحميل…</div></div>
+      <input id="q" placeholder="${I18N.t("search_label")}">
+      <div class="table-wrap" id="list"><div class="empty">${I18N.t("loading")}</div></div>
     </div>`;
 
   function render() {
@@ -43,32 +43,32 @@
     $("summary").innerHTML = html`
       <div class="grid">
         <div class="card stat" style="--accent:var(--error)">
-          <div class="label">إجمالي المصروفات</div>
+          <div class="label">إجمالي ${I18N.t("nav_expenses")}</div>
           <div class="value">${UI.money(total)}</div>
         </div>
         <div class="card stat" style="--accent:var(--warning)">
-          <div class="label">مصروفات هذا الشهر</div>
+          <div class="label">${I18N.t("exp_month")}</div>
           <div class="value">${UI.money(monthTotal)}</div>
         </div>
         <div class="card stat" style="--accent:var(--info)">
-          <div class="label">عدد القيود</div>
+          <div class="label">${I18N.t("entries_count")}</div>
           <div class="value">${expenses.length}</div>
         </div>
       </div>`;
 
     $("list").innerHTML = html`
       <table>
-        <thead><tr><th>البيان</th><th>المبلغ</th><th>ملاحظات</th><th>التاريخ</th><th></th></tr></thead>
+        <thead><tr><th>${I18N.t("exp_label")}</th><th>${I18N.t("amount")}</th><th>${I18N.t("notes")}</th><th>${I18N.t("date")}</th><th></th></tr></thead>
         <tbody>
           ${shown.length === 0
-            ? html`<tr><td colspan="5" class="empty">مفيش مصروفات</td></tr>`
+            ? html`<tr><td colspan="5" class="empty">${I18N.t("empty_generic")}</td></tr>`
             : shown.map(function (e) {
                 return html`<tr>
                   <td><b>${e.label}</b></td>
                   <td>${UI.money(e.amount)}</td>
                   <td>${e.notes || "—"}</td>
                   <td>${UI.dateAr(e.created_at)}</td>
-                  <td><button class="danger small" data-action="del" data-id="${e.id}">حذف</button></td>
+                  <td><button class="danger small" data-action="del" data-id="${e.id}">${I18N.t("delete")}</button></td>
                 </tr>`;
               })}
         </tbody>
@@ -96,7 +96,7 @@
   page.addEventListener("click", function (e) {
     var btn = e.target.closest("[data-action='del']");
     if (!btn) return;
-    if (!confirm("حذف المصروف؟")) return;
+    if (!confirm(I18N.t("del_exp_q"))) return;
     UI.guard(async function () {
       await DB.remove("expenses", btn.getAttribute("data-id"));
       await load();

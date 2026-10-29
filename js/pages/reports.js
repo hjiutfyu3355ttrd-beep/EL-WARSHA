@@ -58,33 +58,33 @@
       <div class="stack">
         <div class="head-row">
           <div>
-            <h2>التقارير</h2>
-            <p>ملخص الإيرادات والمصروفات وأداء الورشة.</p>
+            <h2>${I18N.t("rep_title")}</h2>
+            <p>${I18N.t("rep_sub")}</p>
           </div>
         </div>
 
         <div class="grid">
           <div class="card stat" style="--accent:var(--success)">
-            <div class="label">إيراد 7 أيام</div>
+            <div class="label">${I18N.t("rep_rev7")}</div>
             <div class="value">${UI.money(weekTotal)}</div>
           </div>
           <div class="card stat" style="--accent:var(--primary)">
-            <div class="label">صافي (دخل − مصروف)</div>
+            <div class="label">${I18N.t("rep_net")}</div>
             <div class="value">${UI.money(net)}</div>
           </div>
           <div class="card stat" style="--accent:var(--info)">
-            <div class="label">هامش البنود</div>
+            <div class="label">${I18N.t("rep_margin")}</div>
             <div class="value">${UI.money(profit)}</div>
           </div>
           <div class="card stat" style="--accent:var(--purple)">
-            <div class="label">أوامر الشغل</div>
+            <div class="label">${I18N.t("nav_work_orders")}</div>
             <div class="value">${orders.length}</div>
           </div>
         </div>
 
         <div class="two-col">
           <div class="card">
-            <h3 style="margin-top:0">الإيراد اليومي (7 أيام)</h3>
+            <h3 style="margin-top:0">${I18N.t("rep_daily")}</h3>
             ${byDay.map(function (x) {
               var pct = Math.round((x.total / maxDay) * 100);
               return html`<div class="bar-row">
@@ -95,18 +95,18 @@
             })}
           </div>
           <div class="card">
-            <h3 style="margin-top:0">ملخص مالي</h3>
-            <div class="bar-row"><span>إجمالي الدخل</span><div class="bar"><i style="width:100%;background:var(--success)"></i></div><b>${UI.money(incomeTotal)}</b></div>
-            <div class="bar-row"><span>إجمالي المصروف</span><div class="bar"><i style="width:${incomeTotal ? Math.min(100, Math.round((expenseTotal / incomeTotal) * 100)) : 0}%;background:var(--error)"></i></div><b>${UI.money(expenseTotal)}</b></div>
-            <div class="bar-row"><span>بيع قطع غيار</span><div></div><b>${UI.money(partSales.reduce(function (s, x) { return s + (Number(x.total) || 0); }, 0))}</b></div>
-            <div class="bar-row"><span>عروض أسعار</span><div></div><b>${quotations.length}</b></div>
-            <div class="bar-row"><span>ضرائب غير مدفوعة</span><div></div><b>${taxes.filter(function (t) { return !t.paid; }).length}</b></div>
+            <h3 style="margin-top:0">${I18N.t("rep_finance")}</h3>
+            <div class="bar-row"><span>${I18N.t("rep_income_total")}</span><div class="bar"><i style="width:100%;background:var(--success)"></i></div><b>${UI.money(incomeTotal)}</b></div>
+            <div class="bar-row"><span>${I18N.t("rep_expense_total")}</span><div class="bar"><i style="width:${incomeTotal ? Math.min(100, Math.round((expenseTotal / incomeTotal) * 100)) : 0}%;background:var(--error)"></i></div><b>${UI.money(expenseTotal)}</b></div>
+            <div class="bar-row"><span>${I18N.t("rep_part_sales")}</span><div></div><b>${UI.money(partSales.reduce(function (s, x) { return s + (Number(x.total) || 0); }, 0))}</b></div>
+            <div class="bar-row"><span>${I18N.t("rep_quotes")}</span><div></div><b>${quotations.length}</b></div>
+            <div class="bar-row"><span>${I18N.t("rep_unpaid_tax")}</span><div></div><b>${taxes.filter(function (t) { return !t.paid; }).length}</b></div>
           </div>
         </div>
 
         <div class="two-col">
           <div class="card">
-            <h3 style="margin-top:0">أوامر الشغل حسب الحالة</h3>
+            <h3 style="margin-top:0">${I18N.t("rep_wo_by_status")}</h3>
             ${UI.STATUSES.map(function (s) {
               var n = orders.filter(function (o) { return o.status === s.key; }).length;
               var pct = orders.length ? Math.round((n / orders.length) * 100) : 0;
@@ -118,13 +118,13 @@
             })}
           </div>
           <div class="card">
-            <h3 style="margin-top:0">أكتر القطع استهلاكاً</h3>
+            <h3 style="margin-top:0">${I18N.t("rep_top_parts")}</h3>
             <div class="table-wrap">
               <table>
-                <thead><tr><th>القطعة</th><th>الكمية</th></tr></thead>
+                <thead><tr><th>${I18N.t("inv_part")}</th><th>${I18N.t("qty")}</th></tr></thead>
                 <tbody>
                   ${top.length === 0
-                    ? html`<tr><td colspan="2" class="empty">لسه مفيش بيانات</td></tr>`
+                    ? html`<tr><td colspan="2" class="empty">${I18N.t("rep_no_data")}</td></tr>`
                     : top.map(function (x) { return html`<tr><td>${x.name}</td><td>${x.qty}</td></tr>`; })}
                 </tbody>
               </table>

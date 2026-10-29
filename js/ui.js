@@ -88,13 +88,19 @@
   }
   var STATUS_I18N = {
     received: "status_received", inspecting: "status_inspecting", awaiting_approval: "status_awaiting_approval",
-    in_progress: "status_in_progress", ready: "status_ready", delivered: "status_delivered", cancelled: "status_cancelled"
+    approved: "status_approved", in_progress: "status_in_progress", waiting_parts: "status_waiting_parts",
+    testing: "status_testing", ready: "status_ready", delivered: "status_delivered", cancelled: "status_cancelled"
   };
   function statusLabel(k) {
     if (window.I18N && STATUS_I18N[k]) return I18N.t(STATUS_I18N[k]);
     return labelOf(STATUSES, k);
   }
-  function priorityLabel(k) { return labelOf(PRIORITIES, k || "normal"); }
+  var PRIORITY_I18N = { low: "prio_low", normal: "prio_normal", high: "prio_high", critical: "prio_critical" };
+  function priorityLabel(k) {
+    k = k || "normal";
+    if (window.I18N && PRIORITY_I18N[k]) return I18N.t(PRIORITY_I18N[k]);
+    return labelOf(PRIORITIES, k);
+  }
   // متأخر = ليه موعد تسليم متوقع عدّى والأمر لسه مفتوح
   function isOverdue(o) {
     return !!o.expected_delivery_at && UI_isOpen(o.status) && new Date(o.expected_delivery_at).getTime() < Date.now();
@@ -238,7 +244,14 @@
     { key: "rejected", label: "مرفوض" },
     { key: "converted", label: "تحوّل لأمر شغل" },
   ];
-  function quoteStatusLabel(k) { return labelOf(QUOTE_STATUSES, k); }
+  var QUOTE_I18N = {
+    draft: "quote_draft", sent: "quote_sent", accepted: "quote_accepted",
+    rejected: "quote_rejected", converted: "quote_converted"
+  };
+  function quoteStatusLabel(k) {
+    if (window.I18N && QUOTE_I18N[k]) return I18N.t(QUOTE_I18N[k]);
+    return labelOf(QUOTE_STATUSES, k);
+  }
 
   // كل صفحة بتبدأ بـ: const page = await UI.init("اسم-الصفحة");
   // بترجّع العنصر اللي الصفحة بتكتب فيه، أو null لو المستخدم اتحوّل (مش مسجّل دخول مثلاً).
@@ -258,16 +271,18 @@
 
     var title = TITLES[opts.key || active] || TITLES[active] || ["", ""];
     var navLabel = {
-      dashboard: "nav_dashboard", "work-orders": "nav_work_orders", quotations: "nav_quotations",
-      observation: "nav_observation", "gate-pass": "nav_gate_pass", customers: "nav_customers",
-      vehicles: "nav_vehicles", compliance: "nav_compliance", inventory: "nav_inventory",
-      suppliers: "nav_suppliers", purchases: "nav_purchases", "part-sales": "nav_part_sales",
-      invoices: "nav_invoices", payments: "nav_payments", income: "nav_income", expenses: "nav_expenses",
-      reports: "nav_reports", settings: "nav_settings", "tax-rates": "nav_tax_rates",
-      "email-templates": "nav_email_templates", "custom-fields": "nav_custom_fields", setup: "nav_setup"
+      dashboard: "nav_dashboard", "work-orders": "nav_work_orders", "work-order-new": "nav_work_order_new",
+      quotations: "nav_quotations", observation: "nav_observation", "gate-pass": "nav_gate_pass",
+      customers: "nav_customers", vehicles: "nav_vehicles", compliance: "nav_compliance",
+      inventory: "nav_inventory", suppliers: "nav_suppliers", purchases: "nav_purchases",
+      "part-sales": "nav_part_sales", invoices: "nav_invoices", payments: "nav_payments",
+      income: "nav_income", expenses: "nav_expenses", reports: "nav_reports",
+      settings: "nav_settings", "tax-rates": "nav_tax_rates", "email-templates": "nav_email_templates",
+      "custom-fields": "nav_custom_fields", setup: "nav_setup"
     };
     var groupLabel = {
-      "التشغيل": "g_ops", "العملاء والسيارات": "g_customers", "المخزون": "g_stock",
+      "الرئيسية": "g_home", "العمليات": "g_ops", "التشغيل": "g_ops",
+      "العملاء والسيارات": "g_customers", "المخزون": "g_stock",
       "المالية": "g_finance", "التقارير": "g_reports", "النظام": "g_system"
     };
     var titleKey = {
@@ -320,24 +335,30 @@
           <header class="topbar no-print">
             <button class="menu-btn" data-action="toggle-nav" aria-label="القائمة">☰</button>
             <div class="crumbs"><a href="index.html">${I18N.t("home")}</a><i>›</i><b>${title[0]}</b></div>
-            <a class="btn" href="work-order-new.html">${I18N.t("receive_vehicle")}</a>
+            <a class="btn primary" href="work-order-new.html">${I18N.t("receive_vehicle")}</a>
           </header>
           <main class="content">
             ${DB.demoMode
               ? html`<div class="notice no-print">${I18N.t("demo_notice")}
                   <a class="link" href="#" data-action="reset-demo">${I18N.t("demo_reset")}</a></div>`
               : ""}
-            <div id="page"><div class="empty">جارٍ التحميل…</div></div>
+            <div id="page"><div class="empty page-skel">جارٍ التحميل…</div></div>
           </main>
         </div>
       </div>`;
 
-    // بحث في القائمة الجانبية
+    // بحث في القائمة الجانبية (debounce لتقليل شغل DOM أثناء الكتابة)
     var ms = document.getElementById("menu-search");
+    var searchTimer = null;
     ms.addEventListener("input", function () {
-      var q = ms.value.trim();
-      var links = app.querySelectorAll(".sidebar a.nav");
-      for (var k = 0; k < links.length; k++) links[k].style.display = !q || links[k].textContent.indexOf(q) !== -1 ? "" : "none";
+      if (searchTimer) clearTimeout(searchTimer);
+      searchTimer = setTimeout(function () {
+        var q = ms.value.trim();
+        var links = app.querySelectorAll(".sidebar a.nav");
+        for (var k = 0; k < links.length; k++) {
+          links[k].style.display = !q || links[k].textContent.indexOf(q) !== -1 ? "" : "none";
+        }
+      }, 60);
     });
 
     // الأيقونات: SVG ثابت من عندنا (مش من المستخدم) فبنحقنها بعد الرسم عشان قالب html بيعمل escape
@@ -360,7 +381,27 @@
     var realAdmin = await DB.isAdmin();
     try { sessionStorage.setItem("ws_admin", realAdmin ? "1" : "0"); } catch (e) {}
     if (opts.adminOnly && !realAdmin) { location.replace("index.html"); return null; }
-    if (realAdmin !== admin) { location.reload(); return null; }
+    // لو حالة الأدمن اتغيّرت: نحدّث الواجهة من غير reload كامل (ثبات التنقل)
+    if (realAdmin !== admin) {
+      admin = realAdmin;
+      var plat = app.querySelector(".sidebar .nav-group");
+      // إعادة بناء رابط الأدمن فقط لو لزم
+      var side = app.querySelector(".sidebar");
+      if (side && realAdmin && !side.querySelector('a.nav[href="admin.html"]')) {
+        var langBox = side.querySelector(".lang-box");
+        var grp = document.createElement("div");
+        grp.className = "nav-group";
+        grp.textContent = I18N.t("platform");
+        var a = document.createElement("a");
+        a.className = "nav" + (active === "admin" ? " active" : "");
+        a.href = "admin.html";
+        a.innerHTML = '<span class="ic"></span>' + I18N.t("admin");
+        if (langBox) {
+          side.insertBefore(grp, langBox);
+          side.insertBefore(a, langBox);
+        }
+      }
+    }
     var langSel = document.getElementById("sidebar-lang");
     if (langSel) {
       langSel.addEventListener("change", function () {
@@ -369,6 +410,31 @@
         location.reload();
       });
     }
+    // Prefetch صفحات التنقل عند المرور بالماوس → انتقال أسرع وأثبت إحساسًا
+    var navLinks = app.querySelectorAll(".sidebar a.nav[href], .topbar a.btn[href]");
+    var prefetched = {};
+    function prefetch(href) {
+      if (!href || prefetched[href] || href.indexOf("#") === 0) return;
+      prefetched[href] = true;
+      var l = document.createElement("link");
+      l.rel = "prefetch";
+      l.href = href;
+      document.head.appendChild(l);
+    }
+    for (var ni = 0; ni < navLinks.length; ni++) {
+      (function (el) {
+        el.addEventListener("mouseenter", function () { prefetch(el.getAttribute("href")); }, { passive: true });
+        el.addEventListener("touchstart", function () { prefetch(el.getAttribute("href")); }, { passive: true });
+      })(navLinks[ni]);
+    }
+    // تمييز الرابط النشط فور الضغط قبل ما الصفحة تتحمّل (ثبات بصري)
+    app.querySelector(".sidebar") && app.querySelector(".sidebar").addEventListener("click", function (e) {
+      var a = e.target.closest("a.nav");
+      if (!a) return;
+      var all = app.querySelectorAll(".sidebar a.nav");
+      for (var i = 0; i < all.length; i++) all[i].classList.remove("active");
+      a.classList.add("active");
+    });
     return document.getElementById("page");
   }
 

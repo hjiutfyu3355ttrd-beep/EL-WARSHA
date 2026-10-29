@@ -7,33 +7,33 @@
 
   page.innerHTML = html`
     <div class="stack" style="max-width:640px">
-      <h2 class="page-title" style="margin:0">أمر شغل جديد</h2>
+      <h2 class="page-title" style="margin:0">${I18N.t("wo_new_title")}</h2>
       <form class="card stack" id="form">
         <div class="field">
-          <label>العميل</label>
+          <label>${I18N.t("wo_customer")}</label>
           <select id="customer"></select>
-          <small>مش لاقي العميل؟ <a class="link" href="customers.html">ضيفه من هنا</a></small>
+          <small>${I18N.t("wo_no_customer")} <a class="link" href="customers.html">${I18N.t("wo_add_here")}</a></small>
         </div>
         <div class="field">
-          <label>السيارة</label>
+          <label>${I18N.t("wo_vehicle")}</label>
           <select id="vehicle" disabled></select>
         </div>
         <div class="field">
-          <label>الفني المسؤول (اختياري)</label>
+          <label>${I18N.t("wo_tech")}</label>
           <select id="tech"></select>
         </div>
         <div class="form-grid">
-          <div class="field"><label>الأولوية</label>
+          <div class="field"><label>${I18N.t("wo_priority")}</label>
             <select id="priority">${UI.PRIORITIES.map(function (p) { return UI.option(p.key, p.label, p.key === "normal"); })}</select></div>
-          <div class="field"><label>موعد التسليم المتوقع (اختياري)</label><input id="expected" type="date"></div>
+          <div class="field"><label>${I18N.t("wo_delivery")}</label><input id="expected" type="date"></div>
         </div>
         <div class="field">
-          <label>وصف العطل / الشكوى</label>
+          <label>${I18N.t("wo_complaint")}</label>
           <textarea id="complaint"></textarea>
         </div>
         <div class="row">
-          <button id="save">فتح أمر الشغل</button>
-          <a class="btn secondary" href="work-orders.html">إلغاء</a>
+          <button id="save">${I18N.t("wo_open")}</button>
+          <a class="btn secondary" href="work-orders.html">${I18N.t("cancel")}</a>
         </div>
       </form>
     </div>`;
@@ -46,7 +46,7 @@
     var cid = elCustomer.value;
     var list = vehicles.filter(function (v) { return v.customer_id === cid; });
     elVehicle.disabled = !cid;
-    elVehicle.innerHTML = html`<option value="">— اختار —</option>${list.map(function (v) {
+    elVehicle.innerHTML = html`<option value="">— ${I18N.t("choose")} —</option>${list.map(function (v) {
       return UI.option(v.id, v.plate + " — " + v.make + " " + v.model);
     })}`;
   }
@@ -56,10 +56,10 @@
     customers = data[0];
     vehicles = data[1];
     techs = data[2];
-    elCustomer.innerHTML = html`<option value="">— اختار —</option>${customers.map(function (c) {
+    elCustomer.innerHTML = html`<option value="">— ${I18N.t("choose")} —</option>${customers.map(function (c) {
       return UI.option(c.id, c.name + " — " + c.phone);
     })}`;
-    elTech.innerHTML = html`<option value="">— بدون —</option>${techs.map(function (t) {
+    elTech.innerHTML = html`<option value="">— ${I18N.t("none")} —</option>${techs.map(function (t) {
       return UI.option(t.id, t.name);
     })}`;
     renderVehicles();
@@ -70,7 +70,7 @@
   document.getElementById("form").addEventListener("submit", async function (e) {
     e.preventDefault();
     if (!elCustomer.value || !elVehicle.value) {
-      UI.flash("اختار العميل والسيارة");
+      UI.flash(I18N.t("wo_new_pick"));
       return;
     }
     var btn = document.getElementById("save");

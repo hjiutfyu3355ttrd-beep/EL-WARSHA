@@ -10,22 +10,22 @@
     <div class="stack">
       <div class="head-row">
         <div>
-          <h2>الموردين</h2>
-          <p>إدارة موردي قطع الغيار والمواد.</p>
+          <h2>${I18N.t("nav_suppliers")}</h2>
+          <p>${I18N.t("supplier_sub")}</p>
         </div>
       </div>
       <form class="card" id="sup-form">
-        <h3 style="margin-top:0">مورد جديد</h3>
+        <h3 style="margin-top:0">${I18N.t("supplier_new")}</h3>
         <div class="form-grid">
-          <div class="field"><label>الاسم</label><input id="s-name" required></div>
-          <div class="field"><label>الشركة</label><input id="s-company"></div>
-          <div class="field"><label>الموبايل</label><input id="s-phone" dir="ltr"></div>
-          <div class="field"><label>ملاحظات</label><input id="s-notes"></div>
-          <button>إضافة</button>
+          <div class="field"><label>${I18N.t("name")}</label><input id="s-name" required></div>
+          <div class="field"><label>${I18N.t("company")}</label><input id="s-company"></div>
+          <div class="field"><label>${I18N.t("phone")}</label><input id="s-phone" dir="ltr"></div>
+          <div class="field"><label>${I18N.t("notes")}</label><input id="s-notes"></div>
+          <button>${I18N.t("add")}</button>
         </div>
       </form>
-      <input id="q" placeholder="بحث بالاسم أو الشركة أو الموبايل">
-      <div class="table-wrap" id="list"><div class="empty">جارٍ التحميل…</div></div>
+      <input id="q" placeholder="${I18N.t("search_supplier")}">
+      <div class="table-wrap" id="list"><div class="empty">${I18N.t("loading")}</div></div>
     </div>`;
 
   function render() {
@@ -35,17 +35,17 @@
     });
     $("list").innerHTML = html`
       <table>
-        <thead><tr><th>الاسم</th><th>الشركة</th><th>الموبايل</th><th>ملاحظات</th><th></th></tr></thead>
+        <thead><tr><th>${I18N.t("name")}</th><th>${I18N.t("company")}</th><th>${I18N.t("phone")}</th><th>${I18N.t("notes")}</th><th></th></tr></thead>
         <tbody>
           ${shown.length === 0
-            ? html`<tr><td colspan="5" class="empty">مفيش موردين</td></tr>`
+            ? html`<tr><td colspan="5" class="empty">${I18N.t("empty_generic")}</td></tr>`
             : shown.map(function (s) {
                 return html`<tr>
                   <td><b>${s.name}</b></td>
                   <td>${s.company || "—"}</td>
                   <td dir="ltr" style="text-align:right">${s.phone || "—"}</td>
                   <td>${s.notes || "—"}</td>
-                  <td><button class="danger small" data-action="del" data-id="${s.id}">حذف</button></td>
+                  <td><button class="danger small" data-action="del" data-id="${s.id}">${I18N.t("delete")}</button></td>
                 </tr>`;
               })}
         </tbody>
@@ -74,7 +74,7 @@
   page.addEventListener("click", function (e) {
     var btn = e.target.closest("[data-action='del']");
     if (!btn) return;
-    if (!confirm("حذف المورد؟")) return;
+    if (!confirm(I18N.t("del_supplier_q"))) return;
     UI.guard(async function () {
       await DB.remove("suppliers", btn.getAttribute("data-id"));
       await load();

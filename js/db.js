@@ -13,13 +13,39 @@
   var demoMode = !configured;
   var fatal = "";
   var client = null;
+  var clientReady = null;
 
-  if (configured) {
-    if (window.supabase && window.supabase.createClient) {
+  // تحميل كسول لمكتبة Supabase — في وضع Demo مش هنتنزّل حاجة من CDN
+  function loadScript(src) {
+    return new Promise(function (resolve, reject) {
+      var s = document.createElement("script");
+      s.src = src;
+      s.async = true;
+      s.onload = function () { resolve(); };
+      s.onerror = function () { reject(new Error("script load failed")); };
+      document.head.appendChild(s);
+    });
+  }
+
+  function ensureClient() {
+    if (!configured) return Promise.resolve(null);
+    if (client) return Promise.resolve(client);
+    if (clientReady) return clientReady;
+    clientReady = (window.supabase && window.supabase.createClient
+      ? Promise.resolve()
+      : loadScript("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js")
+    ).then(function () {
+      if (!(window.supabase && window.supabase.createClient)) {
+        fatal = "تعذّر تحميل مكتبة Supabase. اتأكد من اتصال الإنترنت وأعد تحميل الصفحة.";
+        throw new Error(fatal);
+      }
       client = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY);
-    } else {
-      fatal = "تعذّر تحميل مكتبة Supabase. اتأكد من اتصال الإنترنت وأعد تحميل الصفحة.";
-    }
+      return client;
+    }).catch(function (e) {
+      fatal = fatal || (e && e.message) || "تعذّر تحميل مكتبة Supabase.";
+      throw e;
+    });
+    return clientReady;
   }
 
   // ---------- أدوات صغيرة ----------
@@ -161,27 +187,57 @@
     ],
   };
 
+  // كاش في الذاكرة: يمنع JSON.parse المتكرر من localStorage في كل list/update
+  var memCache = Object.create(null);
+  var persistTimer = null;
+  var dirtyTables = Object.create(null);
+
   function writeLocal(table, rows) {
-    try {
-      localStorage.setItem("demo:" + table, JSON.stringify(rows));
-    } catch (e) {
-      /* التخزين المحلي مش متاح */
-    }
+    memCache[table] = rows;
+    dirtyTables[table] = true;
+    // كتابة مجمّعة لـ localStorage (debounce) بدل stringify في كل عملية
+    if (persistTimer) clearTimeout(persistTimer);
+    persistTimer = setTimeout(flushLocal, 40);
+  }
+
+  function flushLocal() {
+    persistTimer = null;
+    Object.keys(dirtyTables).forEach(function (table) {
+      try {
+        localStorage.setItem("demo:" + table, JSON.stringify(memCache[table] || []));
+      } catch (e) {
+        /* التخزين المحلي مش متاح أو ممتلئ */
+      }
+    });
+    dirtyTables = Object.create(null);
   }
 
   function readLocal(table) {
+    if (memCache[table]) return memCache[table];
     try {
       var raw = localStorage.getItem("demo:" + table);
-      if (raw) return JSON.parse(raw);
+      if (raw) {
+        memCache[table] = JSON.parse(raw);
+        return memCache[table];
+      }
     } catch (e) {
       /* هنرجع للداتا التجريبية */
     }
     var seed = JSON.parse(JSON.stringify(SEED[table] || []));
-    writeLocal(table, seed);
+    memCache[table] = seed;
+    dirtyTables[table] = true;
+    if (persistTimer) clearTimeout(persistTimer);
+    persistTimer = setTimeout(flushLocal, 40);
     return seed;
   }
 
   function resetDemo() {
+    if (persistTimer) {
+      clearTimeout(persistTimer);
+      persistTimer = null;
+    }
+    memCache = Object.create(null);
+    dirtyTables = Object.create(null);
     Object.keys(SEED).forEach(function (t) {
       try {
         localStorage.removeItem("demo:" + t);
@@ -191,9 +247,16 @@
     });
   }
 
+  // حفظ قبل إغلاق الصفحة عشان مفيش بيانات تضيع بسبب الـ debounce
+  try {
+    window.addEventListener("pagehide", flushLocal);
+    window.addEventListener("beforeunload", flushLocal);
+  } catch (e) {}
+
   // ---------- عمليات الجداول ----------
   async function list(table) {
     if (demoMode) return readLocal(table);
+    await ensureClient();
     var res = await client.from(table).select("*").order("created_at", { ascending: false });
     if (res.error) throw new Error(res.error.message);
     return res.data || [];
@@ -201,7 +264,7 @@
 
   async function insert(table, row) {
     if (demoMode) {
-      var rows = readLocal(table);
+      var rows = readLocal(table).slice();
       var rec = Object.assign({}, row, { id: uid(), created_at: new Date().toISOString() });
       if (table === "work_orders" || table === "invoices" || table === "purchases" || table === "quotations" || table === "gate_passes" || table === "part_sales") {
         var max = rows.reduce(function (m, r) { return Math.max(m, Number(r.number) || 0); }, 1000);
@@ -211,6 +274,7 @@
       writeLocal(table, rows);
       return rec;
     }
+    await ensureClient();
     var res = await client.from(table).insert(row).select().single();
     if (res.error) throw new Error(res.error.message);
     return res.data;
@@ -223,6 +287,7 @@
       }));
       return;
     }
+    await ensureClient();
     var res = await client.from(table).update(patch).eq("id", id);
     if (res.error) throw new Error(res.error.message);
   }
@@ -232,6 +297,7 @@
       writeLocal(table, readLocal(table).filter(function (r) { return r.id !== id; }));
       return;
     }
+    await ensureClient();
     var res = await client.from(table).delete().eq("id", id);
     if (res.error) throw new Error(res.error.message);
   }
@@ -269,15 +335,18 @@
     emailToPhone: emailToPhone,
     async getSession() {
       if (demoMode) return null;
+      await ensureClient();
       var res = await client.auth.getSession();
       return res.data.session;
     },
     async signIn(phone, password) {
+      await ensureClient();
       var res = await client.auth.signInWithPassword({ email: phoneToEmail(phone), password: password });
       if (res.error) throw new Error("رقم التليفون أو كلمة المرور غير صحيحة");
     },
     // اسم الورشة بيتبعت في metadata، وtrigger في الداتابيز بينشئ الورشة وعضوية المالك تلقائياً
     async signUp(phone, password, shopName) {
+      await ensureClient();
       var res = await client.auth.signUp({
         email: phoneToEmail(phone),
         password: password,
@@ -290,6 +359,8 @@
       return res.data.session; // لو null يبقى "Confirm email" لسه مفعّل في Supabase
     },
     async signOut() {
+      if (demoMode) return;
+      await ensureClient();
       if (client) await client.auth.signOut();
     },
   };
@@ -298,12 +369,14 @@
   // الصلاحية بتتأكد منها قاعدة البيانات نفسها (دوال RPC): الواجهة لوحدها مش حماية.
   async function isAdmin() {
     if (demoMode) return true;
+    await ensureClient();
     var res = await client.rpc("is_platform_admin");
     return !res.error && res.data === true;
   }
 
   async function adminListShops() {
     if (demoMode) return readLocal("shops");
+    await ensureClient();
     var res = await client.rpc("admin_list_shops");
     if (res.error) throw new Error(res.error.message);
     return res.data || [];
@@ -313,6 +386,7 @@
     if (demoMode) {
       return update("shops", id, { status: status, trial_ends_at: trialEndsAt });
     }
+    await ensureClient();
     var res = await client.rpc("admin_update_shop", {
       p_id: id,
       p_status: status,

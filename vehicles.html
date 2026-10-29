@@ -1,6 +1,12 @@
 <!doctype html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" translate="no">
   <head>
+  <script>
+    (function(){try{var l=localStorage.getItem("workshop_lang");if(l!=="tr"&&l!=="ar")l="ar";
+      document.documentElement.lang=l;document.documentElement.dir=l==="tr"?"ltr":"rtl";
+      document.documentElement.setAttribute("translate","no");}catch(e){}})();
+  </script>
+
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#e67e22" />
@@ -8,12 +14,12 @@
     <link rel="icon" href="favicon.ico" sizes="any" />
     <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png" />
     <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="preload" href="assets/fonts/Cairo-Regular.ttf" as="font" type="font/ttf" crossorigin />
     <link rel="stylesheet" href="css/style.css" />
   </head>
   <body class="has-shell">
     <div id="app"><div class="empty">جارٍ التحميل…</div></div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="js/config.js"></script>
     <script src="js/i18n.js"></script>
     <script src="js/db.js"></script>

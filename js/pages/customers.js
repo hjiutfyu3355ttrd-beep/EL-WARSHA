@@ -7,20 +7,20 @@
 
   page.innerHTML = html`
     <div class="stack">
-      <h2 class="page-title" style="margin:0">العملاء والسيارات</h2>
+      <h2 class="page-title" style="margin:0">${I18N.t("g_customers")}</h2>
 
       <form class="card" id="cust-form">
-        <h3 style="margin-top:0">عميل جديد</h3>
+        <h3 style="margin-top:0">${I18N.t("add_customer")}</h3>
         <div class="form-grid">
-          <div class="field"><label>الاسم</label><input id="c-name" required></div>
-          <div class="field"><label>الموبايل</label><input id="c-phone" dir="ltr"></div>
-          <div class="field"><label>ملاحظات</label><input id="c-notes"></div>
-          <button>إضافة عميل</button>
+          <div class="field"><label>${I18N.t("name")}</label><input id="c-name" required></div>
+          <div class="field"><label>${I18N.t("phone")}</label><input id="c-phone" dir="ltr"></div>
+          <div class="field"><label>${I18N.t("notes")}</label><input id="c-notes"></div>
+          <button>${I18N.t("add_customer")}</button>
         </div>
       </form>
 
-      <input id="q" placeholder="بحث بالاسم أو الموبايل">
-      <div class="table-wrap" id="list"><div class="empty">جارٍ التحميل…</div></div>
+      <input id="q" placeholder="${I18N.t("search_customer")}">
+      <div class="table-wrap" id="list"><div class="empty">${I18N.t("loading")}</div></div>
       <div id="detail"></div>
     </div>`;
 
@@ -33,10 +33,10 @@
     });
     $("list").innerHTML = html`
       <table class="clickable">
-        <thead><tr><th>العميل</th><th>الموبايل</th><th>السيارات</th></tr></thead>
+        <thead><tr><th>${I18N.t("name")}</th><th>${I18N.t("phone")}</th><th>${I18N.t("vehicles_count")}</th></tr></thead>
         <tbody>
           ${shown.length === 0
-            ? html`<tr><td colspan="3" class="empty">مفيش عملاء</td></tr>`
+            ? html`<tr><td colspan="3" class="empty">${I18N.t("empty_customers")}</td></tr>`
             : shown.map(function (c) {
                 var count = vehicles.filter(function (v) { return v.customer_id === c.id; }).length;
                 return html`<tr class="${c.id === sel ? "sel-row" : ""}" data-action="select" data-id="${c.id}">
@@ -58,19 +58,19 @@
     var mine = vehicles.filter(function (v) { return v.customer_id === sel; });
     $("detail").innerHTML = html`
       <div class="card stack">
-        <h3 style="margin:0">سيارات ${c.name}</h3>
+        <h3 style="margin:0">${I18N.t("cars_of")} ${c.name}</h3>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>اللوحة</th><th>النوع</th><th>السنة</th><th>العداد</th><th></th></tr></thead>
+            <thead><tr><th>${I18N.t("plate")}</th><th>${I18N.t("make_model")}</th><th>${I18N.t("year")}</th><th>${I18N.t("odometer")}</th><th></th></tr></thead>
             <tbody>
               ${mine.length === 0
-                ? html`<tr><td colspan="5" class="empty">مفيش سيارات</td></tr>`
+                ? html`<tr><td colspan="5" class="empty">${I18N.t("no_vehicles")}</td></tr>`
                 : mine.map(function (v) {
                     return html`<tr>
                       <td>${v.plate}</td><td>${v.make} ${v.model}</td>
                       <td>${v.year || "—"}</td>
                       <td>${v.odometer != null ? Number(v.odometer).toLocaleString("ar-EG") : "—"}</td>
-                      <td><button class="danger small" data-action="del-vehicle" data-id="${v.id}">حذف</button></td>
+                      <td><button class="danger small" data-action="del-vehicle" data-id="${v.id}">${I18N.t("delete")}</button></td>
                     </tr>`;
                   })}
             </tbody>
@@ -78,12 +78,12 @@
         </div>
         <form id="veh-form">
           <div class="form-grid">
-            <div class="field"><label>رقم اللوحة</label><input id="v-plate" required></div>
-            <div class="field"><label>الماركة</label><input id="v-make"></div>
-            <div class="field"><label>الموديل</label><input id="v-model"></div>
-            <div class="field"><label>السنة</label><input id="v-year" type="number"></div>
-            <div class="field"><label>العداد (كم)</label><input id="v-odo" type="number"></div>
-            <button>إضافة سيارة</button>
+            <div class="field"><label>رقم ${I18N.t("plate")}</label><input id="v-plate" required></div>
+            <div class="field"><label>${I18N.t("make")}</label><input id="v-make"></div>
+            <div class="field"><label>${I18N.t("model")}</label><input id="v-model"></div>
+            <div class="field"><label>${I18N.t("year")}</label><input id="v-year" type="number"></div>
+            <div class="field"><label>${I18N.t("odometer")} (كم)</label><input id="v-odo" type="number"></div>
+            <button>${I18N.t("add_car")}</button>
           </div>
         </form>
       </div>`;
@@ -131,7 +131,7 @@
         try {
           await DB.remove("vehicles", id);
         } catch (err) {
-          throw new Error("مينفعش تحذف سيارة عليها أوامر شغل");
+          throw new Error(I18N.t("cant_del_car"));
         }
         await load();
       });

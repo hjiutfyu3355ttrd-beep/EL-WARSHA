@@ -3,7 +3,9 @@
   if (!page) return;
   var html = UI.html;
 
-  var MONTHS = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
+  var MONTHS = [1,2,3,4,5,6,7,8,9,10,11,12].map(function (m) {
+    return (window.I18N && I18N.t("month_" + m)) || ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"][m-1];
+  });
 
   // مسار منحنى ناعم (Catmull-Rom → Bézier) بين النقاط
   function smooth(pts, lo, hi) {
@@ -35,7 +37,8 @@
     var y = function (v) { return T + (H - T - B) * (1 - v / max); };
     var pts = buckets.map(function (b, i) { return [Math.round(x(i)), Math.round(y(b.n))]; });
     var ticks = [0, 1, 2, 3, 4].map(function (k) { return Math.round((max * k) / 4); });
-    return html`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;direction:ltr" role="img" aria-label="أوامر الشغل خلال 12 شهر">
+    var trendLabel = I18N.t("dash_trend");
+    return html`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;direction:ltr" role="img" aria-label="${trendLabel}">
       ${ticks.map(function (t) {
         return html`<line x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}" stroke="#eef0f3"/>
           <text x="${L - 8}" y="${y(t) + 4}" font-size="11" text-anchor="end" fill="#6b7280">${t}</text>`;
@@ -59,16 +62,21 @@
 
     var open = orders.filter(function (o) { return UI.isOpen(o.status); });
     var ready = orders.filter(function (o) { return o.status === "ready"; });
+    var late = orders.filter(function (o) { return UI.isOverdue(o); });
     var revenueToday = payments
       .filter(function (p) { return UI.isToday(p.created_at); })
+      .reduce(function (s, p) { return s + p.amount; }, 0);
+    var weekAgo = Date.now() - 7 * 86400000;
+    var revenueWeek = payments
+      .filter(function (p) { return new Date(p.created_at).getTime() >= weekAgo; })
       .reduce(function (s, p) { return s + p.amount; }, 0);
     var low = parts.filter(function (p) { return p.qty <= p.min_qty; });
 
     var stats = [
-      { label: "أوامر شغل مفتوحة", value: String(open.length), c: "var(--primary)", soft: "var(--success-soft)", ic: "M9 11l3 3 8-8M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9" },
-      { label: "سيارات جاهزة للتسليم", value: String(ready.length), c: "var(--info)", soft: "var(--info-soft)", ic: "M5 13l4 4L19 7" },
-      { label: "إيراد اليوم", value: UI.money(revenueToday), c: "var(--orange)", soft: "var(--orange-soft)", ic: "M12 2v20M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" },
-      { label: "نواقص المخزون", value: String(low.length), c: "var(--purple)", soft: "var(--purple-soft)", ic: "M12 9v4M12 17h.01M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" },
+      { label: I18N.t("dash_open_orders"), value: String(open.length), sub: late.length ? (late.length + " " + I18N.t("late_badge")) : "", href: "work-orders.html?tab=open", c: "var(--primary)", soft: "var(--success-soft)", ic: "M9 11l3 3 8-8M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9" },
+      { label: I18N.t("dash_ready_cars"), value: String(ready.length), sub: "", href: "work-orders.html?tab=done", c: "var(--info)", soft: "var(--info-soft)", ic: "M5 13l4 4L19 7" },
+      { label: I18N.t("dash_revenue_today"), value: UI.money(revenueToday), sub: I18N.t("dash_rev_week") + ": " + UI.money(revenueWeek), href: "payments.html", c: "var(--orange)", soft: "var(--orange-soft)", ic: "M12 2v20M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" },
+      { label: I18N.t("dash_low_stock"), value: String(low.length), sub: "", href: "inventory.html", c: "var(--purple)", soft: "var(--purple-soft)", ic: "M12 9v4M12 17h.01M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" },
     ];
 
     var recent = orders.slice(0, 5);
@@ -86,28 +94,31 @@
     page.innerHTML = html`
       <div class="stack">
         <div class="hero">
-          <div><div class="eyebrow">لوحة التحكم</div><h1>أهلاً بيك في نظام الورشة</h1><p>ملخص أوامر الشغل والإيرادات والمخزون النهاردة.</p></div>
-          <a class="btn" href="work-order-new.html">＋ استقبال سيارة</a>
+          <div><div class="eyebrow">${I18N.t("dash_eyebrow")}</div><h1>${I18N.t("dash_welcome")}</h1><p>${I18N.t("dash_subtitle")}</p></div>
+          <a class="btn primary" href="work-order-new.html">${I18N.t("receive_vehicle")}</a>
         </div>
 
         <div class="grid">
           ${stats.map(function (s) {
-            return html`<div class="card stat" style="--accent:${s.c};--accent-soft:${s.soft}">
-              <div class="ico"><svg viewBox="0 0 24 24"><path d="${s.ic}"/></svg></div>
-              <div class="label">${s.label}</div><div class="value">${s.value}</div></div>`;
+            var body = html`<div class="ico"><svg viewBox="0 0 24 24"><path d="${s.ic}"/></svg></div>
+              <div class="label">${s.label}</div><div class="value">${s.value}</div>
+              ${s.sub ? html`<small>${s.sub}</small>` : ""}`;
+            return s.href
+              ? html`<a class="card stat pick" href="${s.href}" style="--accent:${s.c};--accent-soft:${s.soft};text-decoration:none;color:inherit">${body}</a>`
+              : html`<div class="card stat" style="--accent:${s.c};--accent-soft:${s.soft}">${body}</div>`;
           })}
         </div>
 
         <div class="card">
-          <h3>اتجاه أوامر الشغل (آخر 12 شهر)</h3>
+          <h3>${I18N.t("dash_trend")}</h3>
           ${trendChart(orders)}
         </div>
 
         <div class="two-col">
           <div class="card">
-            <div class="row between"><h3>آخر أوامر الشغل</h3><a class="link" href="work-orders.html">عرض الكل</a></div>
+            <div class="row between"><h3>${I18N.t("dash_recent_orders")}</h3><a class="link" href="work-orders.html">${I18N.t("view_all")}</a></div>
             ${recent.length === 0
-              ? html`<div class="empty">مفيش أوامر شغل لسه</div>`
+              ? html`<div class="empty">${I18N.t("empty_orders")}</div>`
               : recent.map(function (o) {
                   return html`<a class="recent" href="work-order.html?id=${o.id}">
                     <div><b>#${o.number} — ${customers[o.customer_id] ? customers[o.customer_id].name : "—"}</b>
@@ -117,7 +128,7 @@
           </div>
 
           <div class="card">
-            <h3>توزيع الحالات</h3>
+            <h3>${I18N.t("dash_status_dist")}</h3>
             ${dist.map(function (d) {
               return html`<div class="bar-row"><span>${d.label}</span>
                 <div class="bar"><i style="width:${d.pct}%;background:${d.c}"></i></div><b>${d.n}</b></div>`;
@@ -127,9 +138,9 @@
 
         <div class="two-col">
           <div class="card">
-            <div class="row between"><h3>آخر عروض الأسعار</h3><a class="link" href="quotations.html">عرض الكل</a></div>
+            <div class="row between"><h3>${I18N.t("dash_recent_quotes")}</h3><a class="link" href="quotations.html">${I18N.t("view_all")}</a></div>
             ${quotations.slice(0, 5).length === 0
-              ? html`<div class="empty">مفيش عروض</div>`
+              ? html`<div class="empty">${I18N.t("empty_quotes")}</div>`
               : quotations.slice(0, 5).map(function (q) {
                   return html`<a class="recent" href="quotations.html">
                     <div><b>#${q.number} — ${customers[q.customer_id] ? customers[q.customer_id].name : "—"}</b>
@@ -138,20 +149,20 @@
                 })}
           </div>
           <div class="card">
-            <div class="row between"><h3>تنبيهات</h3><a class="link" href="setup.html">معالج الإعداد</a></div>
+            <div class="row between"><h3>${I18N.t("dash_alerts")}</h3><a class="link" href="setup.html">${I18N.t("nav_setup")}</a></div>
             ${low.length > 0
-              ? html`<div class="notice" style="margin:0 0 8px">نواقص مخزون: ${low.map(function (p) { return p.name + " (" + p.qty + ")"; }).join(" · ")}
-                  — <a class="link" href="inventory.html">المخزون</a></div>`
-              : html`<div class="empty" style="padding:8px">المخزون تمام</div>`}
+              ? html`<div class="notice" style="margin:0 0 8px">${I18N.t("dash_low_stock")}: ${low.map(function (p) { return p.name + " (" + p.qty + ")"; }).join(" · ")}
+                  — <a class="link" href="inventory.html">${I18N.t("nav_inventory")}</a></div>`
+              : html`<div class="empty" style="padding:8px">${I18N.t("stock_ok")}</div>`}
             ${taxes.filter(function (x) { return !x.paid && x.due_date && new Date(x.due_date) < new Date(); }).length
-              ? html`<div class="notice" style="margin:0">ضرائب/رخص متأخرة: ${taxes.filter(function (x) { return !x.paid && x.due_date && new Date(x.due_date) < new Date(); }).length}
-                  — <a class="link" href="compliance.html">الامتثال</a></div>`
+              ? html`<div class="notice" style="margin:0">${I18N.t("tax_overdue")}: ${taxes.filter(function (x) { return !x.paid && x.due_date && new Date(x.due_date) < new Date(); }).length}
+                  — <a class="link" href="compliance.html">${I18N.t("nav_compliance")}</a></div>`
               : ""}
             <div class="row" style="margin-top:12px;flex-wrap:wrap;gap:6px">
-              <a class="btn small secondary" href="quotations.html">عروض الأسعار</a>
-              <a class="btn small secondary" href="gate-pass.html">تصاريح</a>
-              <a class="btn small secondary" href="part-sales.html">بيع قطع</a>
-              <a class="btn small secondary" href="purchases.html">مشتريات</a>
+              <a class="btn small secondary" href="quotations.html">${I18N.t("quick_quotes")}</a>
+              <a class="btn small secondary" href="gate-pass.html">${I18N.t("quick_gp")}</a>
+              <a class="btn small secondary" href="part-sales.html">${I18N.t("quick_ps")}</a>
+              <a class="btn small secondary" href="purchases.html">${I18N.t("quick_pu")}</a>
             </div>
           </div>
         </div>

@@ -10,40 +10,40 @@
     <div class="stack">
       <div class="head-row">
         <div>
-          <h2>الضرائب والامتثال</h2>
-          <p>رخص التسيير، التأمين الإجباري، وضرائب المركبات.</p>
+          <h2>${I18N.t("comp_title")}</h2>
+          <p>${I18N.t("comp_sub")}</p>
         </div>
       </div>
       <div class="card" id="summary"></div>
       <form class="card" id="tax-form">
-        <h3 style="margin-top:0">سجل ضريبة / رخصة</h3>
+        <h3 style="margin-top:0">${I18N.t("comp_form")}</h3>
         <div class="form-grid">
-          <div class="field"><label>السيارة</label><select id="t-vehicle" required></select></div>
-          <div class="field"><label>النوع</label>
+          <div class="field"><label>${I18N.t("vehicle")}</label><select id="t-vehicle" required></select></div>
+          <div class="field"><label>${I18N.t("type")}</label>
             <select id="t-type">
-              <option>رخصة تسيير</option>
-              <option>تأمين إجباري</option>
-              <option>ضريبة مركبات</option>
-              <option>فحص دوري</option>
-              <option>أخرى</option>
+              <option>${I18N.t("comp_license")}</option>
+              <option>${I18N.t("comp_insurance")}</option>
+              <option>${I18N.t("comp_tax")}</option>
+              <option>${I18N.t("comp_inspect")}</option>
+              <option>${I18N.t("comp_other")}</option>
             </select>
           </div>
-          <div class="field"><label>المبلغ</label><input id="t-amount" type="number" min="0" step="any" value="0"></div>
-          <div class="field"><label>تاريخ الاستحقاق</label><input id="t-due" type="date"></div>
-          <div class="field"><label>مدفوعة؟</label>
-            <select id="t-paid"><option value="false">لا</option><option value="true">نعم</option></select>
+          <div class="field"><label>${I18N.t("amount")}</label><input id="t-amount" type="number" min="0" step="any" value="0"></div>
+          <div class="field"><label>${I18N.t("due_date")}</label><input id="t-due" type="date"></div>
+          <div class="field"><label>${I18N.t("paid_q")}</label>
+            <select id="t-paid"><option value="false">${I18N.t("no")}</option><option value="true">${I18N.t("yes")}</option></select>
           </div>
-          <div class="field"><label>ملاحظات</label><input id="t-notes"></div>
-          <button>إضافة</button>
+          <div class="field"><label>${I18N.t("notes")}</label><input id="t-notes"></div>
+          <button>${I18N.t("add")}</button>
         </div>
       </form>
       <div class="tabs" id="tabs">
-        <button class="on" data-f="all">الكل</button>
-        <button data-f="unpaid">غير مدفوعة</button>
-        <button data-f="overdue">متأخرة</button>
-        <button data-f="paid">مدفوعة</button>
+        <button class="on" data-f="all">${I18N.t("all")}</button>
+        <button data-f="unpaid">${I18N.t("unpaid")}</button>
+        <button data-f="overdue">${I18N.t("filter_overdue")}</button>
+        <button data-f="paid">${I18N.t("filter_paid")}</button>
       </div>
-      <div class="table-wrap" id="list"><div class="empty">جارٍ التحميل…</div></div>
+      <div class="table-wrap" id="list"><div class="empty">${I18N.t("loading")}</div></div>
     </div>`;
 
   var filter = "all";
@@ -59,13 +59,13 @@
     $("summary").innerHTML = html`
       <div class="grid">
         <div class="card stat pick" style="--accent:var(--warning)" data-f="unpaid">
-          <div class="label">غير مدفوعة</div><div class="value">${unpaid.length}</div>
+          <div class="label">${I18N.t("unpaid")}</div><div class="value">${unpaid.length}</div>
         </div>
         <div class="card stat pick" style="--accent:var(--error)" data-f="overdue">
-          <div class="label">متأخرة</div><div class="value">${overdue.length}</div>
+          <div class="label">${I18N.t("filter_overdue")}</div><div class="value">${overdue.length}</div>
         </div>
         <div class="card stat pick" style="--accent:var(--success)" data-f="paid">
-          <div class="label">مدفوعة</div><div class="value">${paid.length}</div>
+          <div class="label">${I18N.t("filter_paid")}</div><div class="value">${paid.length}</div>
         </div>
       </div>`;
 
@@ -78,13 +78,13 @@
 
     $("list").innerHTML = html`
       <table>
-        <thead><tr><th>السيارة</th><th>النوع</th><th>المبلغ</th><th>الاستحقاق</th><th>الحالة</th><th>ملاحظات</th><th></th></tr></thead>
+        <thead><tr><th>السيارة</th><th>النوع</th><th>المبلغ</th><th>${I18N.t("comp_due")}</th><th>الحالة</th><th>ملاحظات</th><th></th></tr></thead>
         <tbody>
           ${shown.length === 0
-            ? html`<tr><td colspan="7" class="empty">مفيش سجلات</td></tr>`
+            ? html`<tr><td colspan="7" class="empty">${I18N.t("empty_records")}</td></tr>`
             : shown.map(function (t) {
                 var v = vehicles[t.vehicle_id];
-                var st = t.paid ? "مدفوعة" : isOverdue(t) ? "متأخرة" : "مستحقة";
+                var st = t.paid ? I18N.t("paid_badge") : isOverdue(t) ? I18N.t("comp_overdue") : I18N.t("comp_due_st");
                 var cls = t.paid ? "paid" : isOverdue(t) ? "cancelled" : "awaiting_approval";
                 return html`<tr>
                   <td>${v ? v.plate + " — " + v.make : "—"}</td>
@@ -94,8 +94,8 @@
                   <td><span class="badge ${cls}">${st}</span></td>
                   <td>${t.notes || "—"}</td>
                   <td class="row">
-                    ${!t.paid ? html`<button class="small" data-action="pay" data-id="${t.id}">تم الدفع</button>` : ""}
-                    <button class="danger small" data-action="del" data-id="${t.id}">حذف</button>
+                    ${!t.paid ? html`<button class="small" data-action="pay" data-id="${t.id}">${I18N.t("mark_paid")}</button>` : ""}
+                    <button class="danger small" data-action="del" data-id="${t.id}">${I18N.t("delete")}</button>
                   </td>
                 </tr>`;
               })}
@@ -111,7 +111,7 @@
     $("t-vehicle").innerHTML = Object.keys(vehicles).map(function (id) {
       var v = vehicles[id];
       return UI.option(id, v.plate + " — " + v.make + " " + v.model);
-    }).join("") || '<option value="">مفيش سيارات</option>';
+    }).join("") || '<option value="">${I18N.t("empty_vehicles")}</option>';
     render();
   }
 
@@ -142,7 +142,7 @@
     }
     var del = e.target.closest("[data-action='del']");
     if (del) {
-      if (!confirm("حذف السجل؟")) return;
+      if (!confirm(I18N.t("del_record_q"))) return;
       UI.guard(async function () {
         await DB.remove("vehicle_taxes", del.getAttribute("data-id"));
         await load();

@@ -1,6 +1,12 @@
 <!doctype html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" translate="no">
   <head>
+  <script>
+    (function(){try{var l=localStorage.getItem("workshop_lang");if(l!=="tr"&&l!=="ar")l="ar";
+      document.documentElement.lang=l;document.documentElement.dir=l==="tr"?"ltr":"rtl";
+      document.documentElement.setAttribute("translate","no");}catch(e){}})();
+  </script>
+
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#e67e22" />
@@ -8,6 +14,7 @@
     <link rel="icon" href="favicon.ico" sizes="any" />
     <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png" />
     <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="preload" href="assets/fonts/Cairo-Regular.ttf" as="font" type="font/ttf" crossorigin />
     <link rel="stylesheet" href="css/style.css" />
   </head>
   <body>
@@ -19,22 +26,28 @@
       </section>
       <section class="login-side">
         <div class="login-card">
-          <h2>تسجيل الدخول</h2>
-          <p class="sub">أدخل رقم تليفونك وكلمة المرور</p>
+          <div class="field" style="margin-bottom:12px;max-width:180px">
+            <label id="lbl-lang">اللغة</label>
+            <select id="login-lang">
+              <option value="ar">العربية</option>
+              <option value="tr">Türkçe</option>
+            </select>
+          </div>
+          <h2 id="login-h2">تسجيل الدخول</h2>
+          <p class="sub" id="login-sub">أدخل رقم تليفونك وكلمة المرور</p>
           <form id="form">
-            <div class="field"><label for="phone">رقم التليفون</label>
+            <div class="field"><label for="phone" id="lbl-phone">رقم التليفون</label>
               <input id="phone" type="tel" inputmode="tel" placeholder="01XXXXXXXXX" required dir="ltr" autocomplete="tel" /></div>
-            <div class="field"><label for="password">كلمة المرور</label>
+            <div class="field"><label for="password" id="lbl-pass">كلمة المرور</label>
               <input id="password" type="password" placeholder="••••••••" required dir="ltr" autocomplete="current-password" /></div>
             <div class="error" id="msg"></div>
             <button id="btn">تسجيل الدخول</button>
           </form>
-          <p style="margin-bottom: 0">ماعندكش حساب؟ <a class="link" href="signup.html">سجّل ورشتك</a></p>
+          <p style="margin-bottom: 0" id="login-foot">ماعندكش حساب؟ <a class="link" href="signup.html" id="login-reg">سجّل ورشتك</a></p>
         </div>
       </section>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="js/config.js"></script>
     <script src="js/i18n.js"></script>
     <script src="js/db.js"></script>

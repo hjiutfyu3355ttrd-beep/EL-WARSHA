@@ -26,14 +26,14 @@
       <div class="stack">
         <div class="head-row">
           <div>
-            <h2>عروض الأسعار</h2>
-            <p>إنشاء عروض للعملاء قبل بدء الشغل، ومتابعة حالتها.</p>
+            <h2>${I18N.t("quote_title")}</h2>
+            <p>${I18N.t("quote_sub")}</p>
           </div>
           <div class="actions">
-            <button id="btn-new">＋ عرض سعر جديد</button>
+            <button id="btn-new">＋ ${I18N.t("quote_new")}</button>
           </div>
         </div>
-        <input id="q" placeholder="بحث برقم العرض أو اسم العميل">
+        <input id="q" placeholder="${I18N.t("quote_search")}">
         <div class="table-wrap" id="list"></div>
       </div>`;
 
@@ -45,10 +45,10 @@
       });
       $("list").innerHTML = html`
         <table class="clickable">
-          <thead><tr><th>رقم العرض</th><th>العميل</th><th>السيارة</th><th>الحالة</th><th>الإجمالي</th><th>التاريخ</th></tr></thead>
+          <thead><tr><th>${I18N.t("quote_number")}</th><th>${I18N.t("customer")}</th><th>${I18N.t("vehicle")}</th><th>${I18N.t("status_filter")}</th><th>${I18N.t("total")}</th><th>التاريخ</th></tr></thead>
           <tbody>
             ${shown.length === 0
-              ? html`<tr><td colspan="6" class="empty">مفيش عروض أسعار</td></tr>`
+              ? html`<tr><td colspan="6" class="empty">${I18N.t("quote_empty")}</td></tr>`
               : shown.map(function (r) {
                   var c = customers[r.customer_id];
                   var v = vehicles[r.vehicle_id];
@@ -83,21 +83,21 @@
     page.innerHTML = html`
       <div class="stack">
         <div class="head-row">
-          <div><h2>عرض سعر جديد</h2><p>املأ البيانات ثم أضف البنود.</p></div>
-          <button class="secondary" id="btn-back">رجوع</button>
+          <div><h2>${I18N.t("quote_new")}</h2><p>${I18N.t("quote_new_hint")}</p></div>
+          <button class="secondary" id="btn-back">${I18N.t("back")}</button>
         </div>
         <form class="card" id="q-form">
           <div class="form-grid">
-            <div class="field"><label>العميل</label><select id="q-customer" required>${custOpts}</select></div>
-            <div class="field"><label>السيارة</label><select id="q-vehicle" required></select></div>
-            <div class="field"><label>ملاحظات</label><input id="q-notes"></div>
+            <div class="field"><label>${I18N.t("customer")}</label><select id="q-customer" required>${custOpts}</select></div>
+            <div class="field"><label>${I18N.t("vehicle")}</label><select id="q-vehicle" required></select></div>
+            <div class="field"><label>${I18N.t("notes")}</label><input id="q-notes"></div>
           </div>
-          <h3 style="margin-top:16px">البنود</h3>
+          <h3 style="margin-top:16px">${I18N.t("quote_lines")}</h3>
           <div id="line-rows" class="stack"></div>
-          <button type="button" class="secondary small" id="add-line" style="margin-top:8px">＋ بند</button>
+          <button type="button" class="secondary small" id="add-line" style="margin-top:8px">${I18N.t("quote_add_line")}</button>
           <div class="row between" style="margin-top:16px">
-            <b id="q-total">الإجمالي: 0 ج.م</b>
-            <button type="submit">حفظ العرض</button>
+            <b id="q-total">${I18N.t("total_prefix")} 0</b>
+            <button type="submit">${I18N.t("quote_save")}</button>
           </div>
         </form>
       </div>`;
@@ -110,7 +110,7 @@
           var v = vehicles[id];
           return UI.option(id, v.plate + " — " + v.make + " " + v.model);
         });
-      $("q-vehicle").innerHTML = opts.length ? opts.join("") : '<option value="">مفيش سيارات</option>';
+      $("q-vehicle").innerHTML = opts.length ? opts.join("") : '<option value="">${I18N.t("empty_vehicles")}</option>';
     }
     fillVehicles();
     $("q-customer").addEventListener("change", fillVehicles);
@@ -119,20 +119,20 @@
     function paintLines() {
       $("line-rows").innerHTML = draftLines.map(function (l, i) {
         return html`<div class="form-grid" data-i="${i}">
-          <div class="field"><label>الوصف</label><input data-f="description" value="${l.description}" required></div>
-          <div class="field"><label>الكمية</label><input data-f="qty" type="number" min="1" step="1" value="${l.qty}"></div>
-          <div class="field"><label>السعر</label><input data-f="unit_price" type="number" min="0" step="any" value="${l.unit_price}"></div>
-          <div class="field"><label>النوع</label>
+          <div class="field"><label>${I18N.t("description")}</label><input data-f="description" value="${l.description}" required></div>
+          <div class="field"><label>${I18N.t("qty")}</label><input data-f="qty" type="number" min="1" step="1" value="${l.qty}"></div>
+          <div class="field"><label>${I18N.t("price")}</label><input data-f="unit_price" type="number" min="0" step="any" value="${l.unit_price}"></div>
+          <div class="field"><label>${I18N.t("type")}</label>
             <select data-f="kind">
-              <option value="labor" ${l.kind === "labor" ? "selected" : ""}>أجرة</option>
-              <option value="part" ${l.kind === "part" ? "selected" : ""}>قطعة</option>
+              <option value="labor" ${l.kind === "labor" ? "selected" : ""}>${I18N.t("labor")}</option>
+              <option value="part" ${l.kind === "part" ? "selected" : ""}>${I18N.t("part")}</option>
             </select>
           </div>
-          <button type="button" class="danger small" data-action="rm-line" data-i="${i}">حذف</button>
+          <button type="button" class="danger small" data-action="rm-line" data-i="${i}">${I18N.t("delete")}</button>
         </div>`;
       }).join("");
       var t = draftLines.reduce(function (s, l) { return s + (Number(l.qty) || 0) * (Number(l.unit_price) || 0); }, 0);
-      $("q-total").textContent = "الإجمالي: " + UI.money(t);
+      $("q-total").textContent = I18N.t("total_prefix") + " " + UI.money(t);
     }
     paintLines();
 
@@ -148,7 +148,7 @@
       if (!f) return;
       draftLines[i][f] = e.target.type === "number" ? Number(e.target.value) : e.target.value;
       var t = draftLines.reduce(function (s, l) { return s + (Number(l.qty) || 0) * (Number(l.unit_price) || 0); }, 0);
-      $("q-total").textContent = "الإجمالي: " + UI.money(t);
+      $("q-total").textContent = I18N.t("total_prefix") + " " + UI.money(t);
     });
     $("line-rows").addEventListener("click", function (e) {
       var btn = e.target.closest("[data-action='rm-line']");
@@ -185,7 +185,7 @@
         await load();
         mode = "list";
         render();
-        UI.flash("تم حفظ عرض السعر #" + rec.number, "success");
+        UI.flash(I18N.t("quote_saved") + " #" + rec.number, "success");
       });
     });
   }
@@ -202,40 +202,40 @@
       <div class="stack">
         <div class="head-row">
           <div>
-            <h2>عرض سعر #${r.number}</h2>
+            <h2>${I18N.t("quote_new")} #${r.number}</h2>
             <div class="detail-meta">
               <span class="badge ${r.status}">${UI.quoteStatusLabel(r.status)}</span>
               <span class="chip">${UI.dateAr(r.created_at)}</span>
             </div>
           </div>
           <div class="actions">
-            <button class="secondary" id="btn-back">رجوع</button>
-            ${r.status === "draft" || r.status === "sent" ? html`<button data-st="accepted">قبول</button>` : ""}
-            ${r.status === "draft" || r.status === "sent" ? html`<button class="secondary" data-st="rejected">رفض</button>` : ""}
-            ${r.status === "draft" ? html`<button class="secondary" data-st="sent">إرسال</button>` : ""}
-            ${r.status === "accepted" ? html`<button id="btn-convert">تحويل لأمر شغل</button>` : ""}
-            <button class="danger" id="btn-del">حذف</button>
+            <button class="secondary" id="btn-back">${I18N.t("back")}</button>
+            ${r.status === "draft" || r.status === "sent" ? html`<button data-st="accepted">${I18N.t("accept_quote")}</button>` : ""}
+            ${r.status === "draft" || r.status === "sent" ? html`<button class="secondary" data-st="rejected">${I18N.t("reject_quote")}</button>` : ""}
+            ${r.status === "draft" ? html`<button class="secondary" data-st="sent">${I18N.t("send_quote")}</button>` : ""}
+            ${r.status === "accepted" ? html`<button id="btn-convert">${I18N.t("quote_convert")}</button>` : ""}
+            <button class="danger" id="btn-del">${I18N.t("delete")}</button>
           </div>
         </div>
         <div class="detail-grid">
-          <div class="card"><div class="label">العميل</div><div class="value">${c ? c.name : "—"}</div></div>
-          <div class="card"><div class="label">الموبايل</div><div class="value" dir="ltr">${c ? c.phone : "—"}</div></div>
-          <div class="card"><div class="label">السيارة</div><div class="value">${v ? v.plate + " — " + v.make + " " + v.model : "—"}</div></div>
-          <div class="card"><div class="label">الإجمالي</div><div class="value">${UI.money(total)}</div></div>
+          <div class="card"><div class="label">${I18N.t("customer")}</div><div class="value">${c ? c.name : "—"}</div></div>
+          <div class="card"><div class="label">${I18N.t("phone")}</div><div class="value" dir="ltr">${c ? c.phone : "—"}</div></div>
+          <div class="card"><div class="label">${I18N.t("vehicle")}</div><div class="value">${v ? v.plate + " — " + v.make + " " + v.model : "—"}</div></div>
+          <div class="card"><div class="label">${I18N.t("total")}</div><div class="value">${UI.money(total)}</div></div>
         </div>
-        ${r.notes ? html`<div class="card"><div class="label">ملاحظات</div><div>${r.notes}</div></div>` : ""}
+        ${r.notes ? html`<div class="card"><div class="label">${I18N.t("notes")}</div><div>${r.notes}</div></div>` : ""}
         <div class="card">
-          <h3 style="margin-top:0">البنود</h3>
+          <h3 style="margin-top:0">${I18N.t("quote_lines")}</h3>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>الوصف</th><th>النوع</th><th>الكمية</th><th>السعر</th><th>الإجمالي</th></tr></thead>
+              <thead><tr><th>${I18N.t("description")}</th><th>${I18N.t("type")}</th><th>${I18N.t("qty")}</th><th>${I18N.t("price")}</th><th>الإجمالي</th></tr></thead>
               <tbody>
                 ${mine.length === 0
-                  ? html`<tr><td colspan="5" class="empty">مفيش بنود</td></tr>`
+                  ? html`<tr><td colspan="5" class="empty">${I18N.t("empty_lines")}</td></tr>`
                   : mine.map(function (l) {
                       return html`<tr>
                         <td>${l.description}</td>
-                        <td>${l.kind === "part" ? "قطعة" : "أجرة"}</td>
+                        <td>${l.kind === "part" ? I18N.t("part") : I18N.t("labor")}</td>
                         <td>${l.qty}</td>
                         <td>${UI.money(l.unit_price)}</td>
                         <td>${UI.money((Number(l.qty) || 0) * (Number(l.unit_price) || 0))}</td>
@@ -267,7 +267,7 @@
             technician_id: null,
             status: "received",
             priority: "normal",
-            complaint: r.notes || ("من عرض سعر #" + r.number),
+            complaint: r.notes || (I18N.t("quote_new") + " #" + r.number),
             expected_delivery_at: null,
           });
           for (var i = 0; i < mine.length; i++) {
@@ -288,7 +288,7 @@
       });
     }
     $("btn-del").addEventListener("click", function () {
-      if (!confirm("حذف عرض السعر؟")) return;
+      if (!confirm(I18N.t("del_quote_q"))) return;
       UI.guard(async function () {
         for (var i = 0; i < mine.length; i++) await DB.remove("quotation_lines", mine[i].id);
         await DB.remove("quotations", r.id);

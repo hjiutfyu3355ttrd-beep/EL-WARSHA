@@ -22,10 +22,10 @@
     page.innerHTML = html`
       <div class="stack">
         <div class="head-row">
-          <div><h2>المشتريات</h2><p>أوامر شراء من الموردين وزيادة المخزون عند الاستلام.</p></div>
-          <button id="btn-new">＋ أمر شراء</button>
+          <div><h2>${I18N.t("pu_title")}</h2><p>أوامر شراء من الموردين وزيادة المخزون عند الاستلام.</p></div>
+          <button id="btn-new">${I18N.t("pu_new_btn")}</button>
         </div>
-        <input id="q" placeholder="بحث برقم أو مورد">
+        <input id="q" placeholder="${I18N.t("search_pu")}">
         <div class="table-wrap" id="list"></div>
       </div>`;
     function paint() {
@@ -36,16 +36,16 @@
       });
       $("list").innerHTML = html`
         <table class="clickable">
-          <thead><tr><th>رقم</th><th>المورد</th><th>الحالة</th><th>الإجمالي</th><th>التاريخ</th></tr></thead>
+          <thead><tr><th>${I18N.t("quote_number")}</th><th>${I18N.t("supplier")}</th><th>${I18N.t("status_filter")}</th><th>${I18N.t("total")}</th><th>${I18N.t("date")}</th></tr></thead>
           <tbody>
             ${shown.length === 0
-              ? html`<tr><td colspan="5" class="empty">مفيش مشتريات</td></tr>`
+              ? html`<tr><td colspan="5" class="empty">${I18N.t("purchase_empty")}</td></tr>`
               : shown.map(function (p) {
                   var s = suppliers[p.supplier_id];
                   return html`<tr data-action="view" data-id="${p.id}">
                     <td><b>#${p.number}</b></td>
                     <td>${s ? s.name : "—"}</td>
-                    <td><span class="badge ${p.status === "received" ? "paid" : "draft"}">${p.status === "received" ? "مستلم" : "مسودة"}</span></td>
+                    <td><span class="badge ${p.status === "received" ? "paid" : "draft"}">${p.status === "received" ? I18N.t("received_st") : I18N.t("draft_st")}</span></td>
                     <td>${UI.money(p.total != null ? p.total : totalOf(p.id))}</td>
                     <td>${UI.dateAr(p.created_at)}</td>
                   </tr>`;
@@ -72,20 +72,20 @@
     page.innerHTML = html`
       <div class="stack">
         <div class="head-row">
-          <div><h2>أمر شراء جديد</h2></div>
-          <button class="secondary" id="btn-back">رجوع</button>
+          <div><h2>${I18N.t("purchase_new")}</h2></div>
+          <button class="secondary" id="btn-back">${I18N.t("back")}</button>
         </div>
         <form class="card" id="pu-form">
           <div class="form-grid">
-            <div class="field"><label>المورد</label><select id="pu-sup" required>${supOpts.length ? supOpts.join("") : '<option value="">أضف مورد أولاً</option>'}</select></div>
-            <div class="field"><label>ملاحظات</label><input id="pu-notes"></div>
+            <div class="field"><label>${I18N.t("supplier")}</label><select id="pu-sup" required>${supOpts.length ? supOpts.join("") : '<option value="">أضف مورد أولاً</option>'}</select></div>
+            <div class="field"><label>${I18N.t("notes")}</label><input id="pu-notes"></div>
           </div>
-          <h3 style="margin-top:16px">الأصناف</h3>
+          <h3 style="margin-top:16px">${I18N.t("items")}</h3>
           <div id="line-rows" class="stack"></div>
-          <button type="button" class="secondary small" id="add-line" style="margin-top:8px">＋ صنف</button>
+          <button type="button" class="secondary small" id="add-line" style="margin-top:8px">${I18N.t("add_item")}</button>
           <div class="row between" style="margin-top:16px">
-            <b id="pu-total">الإجمالي: 0 ج.م</b>
-            <button type="submit">حفظ واستلام للمخزون</button>
+            <b id="pu-total">${I18N.t("total_prefix")} 0</b>
+            <button type="submit">${I18N.t("save_receive")}</button>
           </div>
         </form>
       </div>`;
@@ -93,16 +93,16 @@
     var draft = [{ part_id: "", description: "", qty: 1, unit_cost: 0 }];
     function paintLines() {
       var partOpts = parts.map(function (p) {
-        return UI.option(p.id, p.name + " — تكلفة " + UI.money(p.cost));
+        return UI.option(p.id, p.name + " — " + I18N.t("cost_word") + " " + UI.money(p.cost));
       }).join("");
       $("line-rows").innerHTML = draft.map(function (l, i) {
         return html`<div class="form-grid" data-i="${i}">
-          <div class="field"><label>القطعة</label>
-            <select data-f="part_id"><option value="">— اختر —</option>${partOpts}</select>
+          <div class="field"><label>${I18N.t("inv_part")}</label>
+            <select data-f="part_id"><option value="">${I18N.t("choose_dash")}</option>${partOpts}</select>
           </div>
-          <div class="field"><label>الكمية</label><input data-f="qty" type="number" min="1" value="${l.qty}"></div>
-          <div class="field"><label>تكلفة الوحدة</label><input data-f="unit_cost" type="number" min="0" step="any" value="${l.unit_cost}"></div>
-          <button type="button" class="danger small" data-action="rm" data-i="${i}">حذف</button>
+          <div class="field"><label>${I18N.t("qty")}</label><input data-f="qty" type="number" min="1" value="${l.qty}"></div>
+          <div class="field"><label>${I18N.t("unit_cost")}</label><input data-f="unit_cost" type="number" min="0" step="any" value="${l.unit_cost}"></div>
+          <button type="button" class="danger small" data-action="rm" data-i="${i}">${I18N.t("delete")}</button>
         </div>`;
       }).join("");
       $("line-rows").querySelectorAll("[data-i]").forEach(function (row) {
@@ -113,7 +113,7 @@
     }
     function upd() {
       var t = draft.reduce(function (s, l) { return s + (Number(l.qty) || 0) * (Number(l.unit_cost) || 0); }, 0);
-      $("pu-total").textContent = "الإجمالي: " + UI.money(t);
+      $("pu-total").textContent = I18N.t("total_prefix") + " " + UI.money(t);
     }
     paintLines();
     $("add-line").addEventListener("click", function () {
@@ -157,8 +157,8 @@
       e.preventDefault();
       UI.guard(async function () {
         var valid = draft.filter(function (l) { return l.part_id; });
-        if (!valid.length) { UI.flash("اختار صنف واحد على الأقل"); return; }
-        if (!$("pu-sup").value) { UI.flash("اختار مورد"); return; }
+        if (!valid.length) { UI.flash(I18N.t("pick_one_item")); return; }
+        if (!$("pu-sup").value) { UI.flash(I18N.t("pick_supplier")); return; }
         var total = valid.reduce(function (s, l) { return s + l.qty * l.unit_cost; }, 0);
         var rec = await DB.insert("purchases", {
           supplier_id: $("pu-sup").value,
@@ -179,14 +179,14 @@
           if (p) await DB.update("parts", p.id, { qty: (Number(p.qty) || 0) + Number(l.qty), cost: l.unit_cost });
         }
         await DB.insert("expenses", {
-          label: "مشتريات #" + rec.number,
+          label: I18N.t("purchases_n") + " #" + rec.number,
           amount: total,
-          notes: $("pu-notes").value.trim() || "من مورد",
+          notes: $("pu-notes").value.trim() || I18N.t("from_supplier"),
         });
         await load();
         mode = "list";
         render();
-        UI.flash("تم الاستلام وزيادة المخزون", "success");
+        UI.flash(I18N.t("received_stock"), "success");
       });
     });
   }
@@ -200,26 +200,26 @@
       <div class="stack">
         <div class="head-row">
           <div>
-            <h2>أمر شراء #${p.number}</h2>
+            <h2>${I18N.t("pu_order_n")} #${p.number}</h2>
             <div class="detail-meta">
-              <span class="badge paid">مستلم</span>
+              <span class="badge paid">${I18N.t("received_st")}</span>
               <span class="chip">${UI.dateAr(p.created_at)}</span>
             </div>
           </div>
           <div class="actions">
-            <button class="secondary" id="btn-back">رجوع</button>
-            <button class="danger" id="btn-del">حذف</button>
+            <button class="secondary" id="btn-back">${I18N.t("back")}</button>
+            <button class="danger" id="btn-del">${I18N.t("delete")}</button>
           </div>
         </div>
         <div class="detail-grid">
-          <div class="card"><div class="label">المورد</div><div class="value">${s ? s.name : "—"}</div></div>
-          <div class="card"><div class="label">الإجمالي</div><div class="value">${UI.money(p.total)}</div></div>
+          <div class="card"><div class="label">${I18N.t("supplier")}</div><div class="value">${s ? s.name : "—"}</div></div>
+          <div class="card"><div class="label">${I18N.t("total")}</div><div class="value">${UI.money(p.total)}</div></div>
         </div>
         <div class="card">
-          <h3 style="margin-top:0">الأصناف</h3>
+          <h3 style="margin-top:0">${I18N.t("items")}</h3>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>الوصف</th><th>الكمية</th><th>التكلفة</th><th>الإجمالي</th></tr></thead>
+              <thead><tr><th>${I18N.t("description")}</th><th>${I18N.t("qty")}</th><th>${I18N.t("unit_cost")}</th><th>${I18N.t("total")}</th></tr></thead>
               <tbody>
                 ${mine.map(function (l) {
                   return html`<tr>
@@ -235,7 +235,7 @@
       </div>`;
     $("btn-back").addEventListener("click", function () { mode = "list"; render(); });
     $("btn-del").addEventListener("click", function () {
-      if (!confirm("حذف أمر الشراء؟ (المخزون مش هيترجع)")) return;
+      if (!confirm(I18N.t("del_pu_q"))) return;
       UI.guard(async function () {
         for (var i = 0; i < mine.length; i++) await DB.remove("purchase_lines", mine[i].id);
         await DB.remove("purchases", p.id);

@@ -7,24 +7,24 @@
 
   page.innerHTML = html`
     <div class="stack">
-      <h2 class="page-title" style="margin:0">المخزون</h2>
+      <h2 class="page-title" style="margin:0">${I18N.t("inv_title")}</h2>
       <div id="low"></div>
 
       <form class="card" id="part-form">
-        <h3 style="margin-top:0">قطعة جديدة</h3>
+        <h3 style="margin-top:0">${I18N.t("inv_new")}</h3>
         <div class="form-grid">
-          <div class="field"><label>الاسم</label><input id="p-name" required></div>
-          <div class="field"><label>الكود</label><input id="p-sku" dir="ltr"></div>
-          <div class="field"><label>الكمية</label><input id="p-qty" type="number" min="0" value="0"></div>
-          <div class="field"><label>حد الطلب</label><input id="p-min" type="number" min="0" value="0"></div>
-          <div class="field"><label>سعر الشراء</label><input id="p-cost" type="number" min="0" step="any" value="0"></div>
-          <div class="field"><label>سعر البيع</label><input id="p-price" type="number" min="0" step="any" value="0"></div>
-          <button>إضافة</button>
+          <div class="field"><label>${I18N.t("name")}</label><input id="p-name" required></div>
+          <div class="field"><label>${I18N.t("sku")}</label><input id="p-sku" dir="ltr"></div>
+          <div class="field"><label>${I18N.t("qty")}</label><input id="p-qty" type="number" min="0" value="0"></div>
+          <div class="field"><label>${I18N.t("inv_min")}</label><input id="p-min" type="number" min="0" value="0"></div>
+          <div class="field"><label>${I18N.t("inv_buy")}</label><input id="p-cost" type="number" min="0" step="any" value="0"></div>
+          <div class="field"><label>${I18N.t("inv_sell")}</label><input id="p-price" type="number" min="0" step="any" value="0"></div>
+          <button>${I18N.t("add")}</button>
         </div>
       </form>
 
-      <input id="q" placeholder="بحث بالاسم أو الكود">
-      <div class="table-wrap" id="list"><div class="empty">جارٍ التحميل…</div></div>
+      <input id="q" placeholder="${I18N.t("search_part")}">
+      <div class="table-wrap" id="list"><div class="empty">${I18N.t("loading")}</div></div>
     </div>`;
 
   var $ = function (id) { return document.getElementById(id); };
@@ -34,14 +34,14 @@
     var shown = parts.filter(function (p) { return (p.name + " " + p.sku).toLowerCase().indexOf(q) !== -1; });
     var lowCount = parts.filter(function (p) { return p.qty <= p.min_qty; }).length;
 
-    $("low").innerHTML = lowCount > 0 ? html`<div class="notice">فيه ${lowCount} صنف وصل لحد الطلب أو أقل.</div>` : "";
+    $("low").innerHTML = lowCount > 0 ? html`<div class="notice">فيه ${lowCount} صنف وصل ل${I18N.t("inv_min")} أو أقل.</div>` : "";
 
     $("list").innerHTML = html`
       <table>
-        <thead><tr><th>القطعة</th><th>الكود</th><th>الكمية</th><th>حد الطلب</th><th>الشراء</th><th>البيع</th><th></th></tr></thead>
+        <thead><tr><th>القطعة</th><th>الكود</th><th>الكمية</th><th>${I18N.t("inv_min")}</th><th>الشراء</th><th>البيع</th><th></th></tr></thead>
         <tbody>
           ${shown.length === 0
-            ? html`<tr><td colspan="7" class="empty">مفيش أصناف</td></tr>`
+            ? html`<tr><td colspan="7" class="empty">${I18N.t("inv_empty")}</td></tr>`
             : shown.map(function (p) {
                 return html`<tr>
                   <td>${p.name}</td>
@@ -53,7 +53,7 @@
                   <td><div class="row">
                     <button class="secondary small" data-action="inc" data-id="${p.id}">+1</button>
                     <button class="secondary small" data-action="dec" data-id="${p.id}">−1</button>
-                    <button class="danger small" data-action="del" data-id="${p.id}">حذف</button>
+                    <button class="danger small" data-action="del" data-id="${p.id}">${I18N.t("delete")}</button>
                   </div></td>
                 </tr>`;
               })}

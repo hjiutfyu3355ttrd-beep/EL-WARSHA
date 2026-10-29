@@ -10,31 +10,31 @@
     <div class="stack">
       <div class="head-row">
         <div>
-          <h2>مكتبة الفحص</h2>
-          <p>نقاط فحص جاهزة (محرك، فرامل، إطارات...) تستخدم أثناء أمر الشغل.</p>
+          <h2>${I18N.t("obs_title")}</h2>
+          <p>${I18N.t("obs_sub")}</p>
         </div>
       </div>
       <form class="card" id="op-form">
-        <h3 style="margin-top:0">نقطة فحص جديدة</h3>
+        <h3 style="margin-top:0">${I18N.t("obs_new")}</h3>
         <div class="form-grid">
-          <div class="field"><label>التصنيف</label>
+          <div class="field"><label>${I18N.t("category")}</label>
             <select id="op-cat">
-              <option>المحرك</option>
-              <option>الفرامل</option>
-              <option>الإطارات</option>
-              <option>الكهرباء</option>
-              <option>الهيكل</option>
-              <option>التكييف</option>
-              <option>أخرى</option>
+              <option>${I18N.t("cat_engine")}</option>
+              <option>${I18N.t("cat_brakes")}</option>
+              <option>${I18N.t("cat_tires")}</option>
+              <option>${I18N.t("cat_electric")}</option>
+              <option>${I18N.t("cat_body")}</option>
+              <option>${I18N.t("cat_ac")}</option>
+              <option>${I18N.t("comp_other")}</option>
             </select>
           </div>
-          <div class="field"><label>اسم النقطة</label><input id="op-name" required placeholder="مثال: مستوى الزيت"></div>
-          <div class="field"><label>رسوم افتراضية (ج.م)</label><input id="op-charge" type="number" min="0" step="any" value="0"></div>
-          <button>إضافة</button>
+          <div class="field"><label>${I18N.t("point_name")}</label><input id="op-name" required placeholder="${I18N.t("point_ph")}"></div>
+          <div class="field"><label>${I18N.t("default_fee")}</label><input id="op-charge" type="number" min="0" step="any" value="0"></div>
+          <button>${I18N.t("add")}</button>
         </div>
       </form>
-      <input id="q" placeholder="بحث بالاسم أو التصنيف">
-      <div class="table-wrap" id="list"><div class="empty">جارٍ التحميل…</div></div>
+      <input id="q" placeholder="${I18N.t("search_obs")}">
+      <div class="table-wrap" id="list"><div class="empty">${I18N.t("loading")}</div></div>
     </div>`;
 
   function render() {
@@ -50,20 +50,20 @@
     });
     var keys = Object.keys(cats).sort();
     if (!keys.length) {
-      $("list").innerHTML = html`<div class="empty">مفيش نقاط فحص</div>`;
+      $("list").innerHTML = html`<div class="empty">${I18N.t("obs_empty")} فحص</div>`;
       return;
     }
     $("list").innerHTML = keys.map(function (cat) {
       return html`<div class="card" style="margin-bottom:12px">
         <h3 style="margin:0 0 10px">${cat}</h3>
         <table>
-          <thead><tr><th>نقطة الفحص</th><th>الرسوم الافتراضية</th><th></th></tr></thead>
+          <thead><tr><th>${I18N.t("insp_point_col")}</th><th>${I18N.t("default_fee_col")}</th><th></th></tr></thead>
           <tbody>
             ${cats[cat].map(function (p) {
               return html`<tr>
                 <td>${p.name}</td>
                 <td>${Number(p.default_charge) ? UI.money(p.default_charge) : "—"}</td>
-                <td><button class="danger small" data-action="del" data-id="${p.id}">حذف</button></td>
+                <td><button class="danger small" data-action="del" data-id="${p.id}">${I18N.t("delete")}</button></td>
               </tr>`;
             })}
           </tbody>
@@ -94,7 +94,7 @@
   page.addEventListener("click", function (e) {
     var btn = e.target.closest("[data-action='del']");
     if (!btn) return;
-    if (!confirm("حذف نقطة الفحص؟")) return;
+    if (!confirm(I18N.t("del_point_q"))) return;
     UI.guard(async function () {
       await DB.remove("observation_points", btn.getAttribute("data-id"));
       await load();
