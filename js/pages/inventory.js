@@ -2,53 +2,50 @@
   var page = await UI.init("inventory");
   if (!page) return;
   var html = UI.html;
-  var t = UI.t;
 
   var parts = [];
 
   page.innerHTML = html`
     <div class="stack">
-      <h2 class="page-title" style="margin:0">${t("inventory_title")}</h2>
+      <h2 class="page-title" style="margin:0">المخزون</h2>
+      <div id="low"></div>
 
       <form class="card" id="part-form">
-        <h3 style="margin-top:0">${t("inventory_new")}</h3>
+        <h3 style="margin-top:0">قطعة جديدة</h3>
         <div class="form-grid">
-          <div class="field"><label>${t("inventory_name")}</label><input id="p-name" required></div>
-          <div class="field"><label>${t("inventory_sku")}</label><input id="p-sku" dir="ltr"></div>
-          <div class="field"><label>${t("inventory_qty")}</label><input id="p-qty" type="number" min="0" value="0"></div>
-          <div class="field"><label>${t("inventory_min")}</label><input id="p-min" type="number" min="0" value="0"></div>
-          <div class="field"><label>${t("inventory_cost")}</label><input id="p-cost" type="number" min="0" step="any" value="0"></div>
-          <div class="field"><label>${t("inventory_price")}</label><input id="p-price" type="number" min="0" step="any" value="0"></div>
-          <button>${t("inventory_add")}</button>
+          <div class="field"><label>الاسم</label><input id="p-name" required></div>
+          <div class="field"><label>الكود</label><input id="p-sku" dir="ltr"></div>
+          <div class="field"><label>الكمية</label><input id="p-qty" type="number" min="0" value="0"></div>
+          <div class="field"><label>حد الطلب</label><input id="p-min" type="number" min="0" value="0"></div>
+          <div class="field"><label>سعر الشراء</label><input id="p-cost" type="number" min="0" step="any" value="0"></div>
+          <div class="field"><label>سعر البيع</label><input id="p-price" type="number" min="0" step="any" value="0"></div>
+          <button>إضافة</button>
         </div>
       </form>
 
-      <input id="q" placeholder="${t("inventory_search")}">
-      <div id="low"></div>
-      <div class="table-wrap" id="list"><div class="empty">${t("loading")}</div></div>
+      <input id="q" placeholder="بحث بالاسم أو الكود">
+      <div class="table-wrap" id="list"><div class="empty">جارٍ التحميل…</div></div>
     </div>`;
 
   var $ = function (id) { return document.getElementById(id); };
 
   function render() {
     var q = $("q").value.trim().toLowerCase();
-    var shown = parts.filter(function (p) {
-      return (p.name + " " + (p.sku || "")).toLowerCase().indexOf(q) !== -1;
-    });
+    var shown = parts.filter(function (p) { return (p.name + " " + p.sku).toLowerCase().indexOf(q) !== -1; });
     var lowCount = parts.filter(function (p) { return p.qty <= p.min_qty; }).length;
 
-    $("low").innerHTML = lowCount > 0 ? html`<div class="notice">${t("inventory_low", { n: lowCount })}</div>` : "";
+    $("low").innerHTML = lowCount > 0 ? html`<div class="notice">فيه ${lowCount} صنف وصل لحد الطلب أو أقل.</div>` : "";
 
     $("list").innerHTML = html`
       <table>
-        <thead><tr><th>${t("col_part")}</th><th>${t("col_sku")}</th><th>${t("col_qty")}</th><th>${t("col_min")}</th><th>${t("col_cost")}</th><th>${t("col_sell")}</th><th></th></tr></thead>
+        <thead><tr><th>القطعة</th><th>الكود</th><th>الكمية</th><th>حد الطلب</th><th>الشراء</th><th>البيع</th><th></th></tr></thead>
         <tbody>
           ${shown.length === 0
-            ? html`<tr><td colspan="7" class="empty">${t("inventory_empty")}</td></tr>`
+            ? html`<tr><td colspan="7" class="empty">مفيش أصناف</td></tr>`
             : shown.map(function (p) {
                 return html`<tr>
                   <td>${p.name}</td>
-                  <td dir="ltr">${p.sku || t("none")}</td>
+                  <td dir="ltr" style="text-align:right">${p.sku || "—"}</td>
                   <td class="${p.qty <= p.min_qty ? "low" : ""}">${p.qty}</td>
                   <td>${p.min_qty}</td>
                   <td>${UI.money(p.cost)}</td>
@@ -56,7 +53,7 @@
                   <td><div class="row">
                     <button class="secondary small" data-action="inc" data-id="${p.id}">+1</button>
                     <button class="secondary small" data-action="dec" data-id="${p.id}">−1</button>
-                    <button class="danger small" data-action="del" data-id="${p.id}">${t("delete")}</button>
+                    <button class="danger small" data-action="del" data-id="${p.id}">حذف</button>
                   </div></td>
                 </tr>`;
               })}

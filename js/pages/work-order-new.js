@@ -1,35 +1,39 @@
 (async function () {
-  var page = await UI.init("work-orders");
+  var page = await UI.init("work-order-new");
   if (!page) return;
   var html = UI.html;
-  var t = UI.t;
 
   var customers = [], vehicles = [], techs = [];
 
   page.innerHTML = html`
     <div class="stack" style="max-width:640px">
-      <h2 class="page-title" style="margin:0">${t("work_order_new_title")}</h2>
+      <h2 class="page-title" style="margin:0">أمر شغل جديد</h2>
       <form class="card stack" id="form">
         <div class="field">
-          <label>${t("work_order_customer")}</label>
+          <label>العميل</label>
           <select id="customer"></select>
-          <small>${t("work_order_no_customers")} — <a class="link" href="customers.html">${t("nav_customers")}</a></small>
+          <small>مش لاقي العميل؟ <a class="link" href="customers.html">ضيفه من هنا</a></small>
         </div>
         <div class="field">
-          <label>${t("work_order_vehicle")}</label>
+          <label>السيارة</label>
           <select id="vehicle" disabled></select>
         </div>
         <div class="field">
-          <label>${t("work_order_tech")}</label>
+          <label>الفني المسؤول (اختياري)</label>
           <select id="tech"></select>
         </div>
+        <div class="form-grid">
+          <div class="field"><label>الأولوية</label>
+            <select id="priority">${UI.PRIORITIES.map(function (p) { return UI.option(p.key, p.label, p.key === "normal"); })}</select></div>
+          <div class="field"><label>موعد التسليم المتوقع (اختياري)</label><input id="expected" type="date"></div>
+        </div>
         <div class="field">
-          <label>${t("work_order_complaint")}</label>
+          <label>وصف العطل / الشكوى</label>
           <textarea id="complaint"></textarea>
         </div>
         <div class="row">
-          <button id="save">${t("work_order_create")}</button>
-          <a class="btn secondary" href="work-orders.html">${t("cancel")}</a>
+          <button id="save">فتح أمر الشغل</button>
+          <a class="btn secondary" href="work-orders.html">إلغاء</a>
         </div>
       </form>
     </div>`;
@@ -42,8 +46,8 @@
     var cid = elCustomer.value;
     var list = vehicles.filter(function (v) { return v.customer_id === cid; });
     elVehicle.disabled = !cid;
-    elVehicle.innerHTML = html`<option value="">—</option>${list.map(function (v) {
-      return UI.option(v.id, v.plate + " — " + (v.make || "") + " " + (v.model || ""));
+    elVehicle.innerHTML = html`<option value="">— اختار —</option>${list.map(function (v) {
+      return UI.option(v.id, v.plate + " — " + v.make + " " + v.model);
     })}`;
   }
 
@@ -52,11 +56,11 @@
     customers = data[0];
     vehicles = data[1];
     techs = data[2];
-    elCustomer.innerHTML = html`<option value="">—</option>${customers.map(function (c) {
-      return UI.option(c.id, c.name + " — " + (c.phone || ""));
+    elCustomer.innerHTML = html`<option value="">— اختار —</option>${customers.map(function (c) {
+      return UI.option(c.id, c.name + " — " + c.phone);
     })}`;
-    elTech.innerHTML = html`<option value="">—</option>${techs.map(function (tech) {
-      return UI.option(tech.id, tech.name);
+    elTech.innerHTML = html`<option value="">— بدون —</option>${techs.map(function (t) {
+      return UI.option(t.id, t.name);
     })}`;
     renderVehicles();
   });
@@ -66,20 +70,23 @@
   document.getElementById("form").addEventListener("submit", async function (e) {
     e.preventDefault();
     if (!elCustomer.value || !elVehicle.value) {
-      UI.flash(t("work_order_no_customers"));
+      UI.flash("اختار العميل والسيارة");
       return;
     }
     var btn = document.getElementById("save");
     btn.disabled = true;
     try {
-      var order = await DB.insert("work_orders", {
+      var row = await DB.insert("work_orders", {
         customer_id: elCustomer.value,
         vehicle_id: elVehicle.value,
         technician_id: elTech.value || null,
-        complaint: document.getElementById("complaint").value.trim(),
         status: "received",
+        priority: document.getElementById("priority").value,
+        expected_delivery_at: document.getElementById("expected").value
+          ? new Date(document.getElementById("expected").value + "T23:59:00").toISOString() : null,
+        complaint: document.getElementById("complaint").value.trim(),
       });
-      location.href = "work-order.html?id=" + order.id;
+      location.href = "work-order.html?id=" + encodeURIComponent(row.id);
     } catch (err) {
       UI.flash(err.message);
       btn.disabled = false;
