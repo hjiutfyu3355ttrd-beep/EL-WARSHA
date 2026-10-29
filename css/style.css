@@ -107,7 +107,7 @@ table {
 
 th,
 td {
-  text-align: right;
+  text-align: start;
   padding: 12px 14px;
   border-bottom: 1px solid var(--line);
 }
@@ -150,7 +150,26 @@ button:hover {
 
 button.ghost {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: inherit;
+  border: 1px solid currentColor;
+  opacity: 0.95;
+}
+.sidebar button.ghost {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.55);
+}
+.sidebar button.ghost:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+.content button.ghost,
+.login-card button.ghost {
+  color: var(--brand);
+  border-color: var(--brand);
+  background: #fff;
+}
+.content button.ghost:hover,
+.login-card button.ghost:hover {
+  background: #f0fdfa;
 }
 
 input {
@@ -193,13 +212,70 @@ input {
     flex-direction: row;
     flex-wrap: wrap;
     align-items: center;
+    gap: 8px;
+    padding: 14px 12px;
   }
   .sidebar h1 {
     width: 100%;
-    margin-bottom: 4px;
+    margin: 0 0 6px;
+    font-size: 18px;
+  }
+  .sidebar a {
+    font-size: 13px;
+    padding: 8px 10px;
   }
   .sidebar .spacer {
     display: none;
+  }
+  .sidebar .sep {
+    display: none;
+  }
+  .lang-box {
+    width: 100%;
+    margin: 4px 0 0;
+    order: 20;
+  }
+  .sidebar button.ghost {
+    width: 100%;
+    order: 21;
+    margin-top: 4px;
+  }
+  .content {
+    padding: 16px 12px;
+  }
+  .page-title {
+    font-size: 20px;
+  }
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  .row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  /* أزرار واضحة على الموبايل */
+  button,
+  .btn {
+    min-height: 44px;
+    font-size: 15px;
+  }
+  button.small {
+    min-height: 36px;
+  }
+  button.secondary,
+  .btn.secondary {
+    background: #fff !important;
+    color: var(--brand) !important;
+    border: 1px solid var(--brand) !important;
+  }
+  button:not(.secondary):not(.danger):not(.ghost),
+  .btn:not(.secondary):not(.danger):not(.ghost) {
+    background: var(--brand) !important;
+    color: #fff !important;
+  }
+  button.danger {
+    background: var(--danger) !important;
+    color: #fff !important;
   }
 }
 select,
@@ -291,18 +367,29 @@ textarea {
   color: #92400e;
 }
 
-button.secondary {
+button.secondary,
+.btn.secondary {
   background: #fff;
   color: var(--brand);
   border: 1px solid var(--brand);
 }
 
-button.secondary:hover {
+button.secondary:hover,
+.btn.secondary:hover {
   background: #f0fdfa;
+  color: var(--brand-dark);
 }
 
-button.danger {
+button.danger,
+.btn.danger {
   background: var(--danger);
+  color: #fff;
+}
+
+button.danger:hover,
+.btn.danger:hover {
+  background: #991b1b;
+  color: #fff;
 }
 
 button.small {
@@ -373,12 +460,32 @@ button:disabled {
 /* ===== إضافات نسخة HTML ===== */
 .btn {
   display: inline-block;
+  text-align: center;
+  background: var(--brand);
+  color: #fff !important;
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
 }
-
+.btn:hover {
+  background: var(--brand-dark);
+  color: #fff !important;
+}
 .btn.secondary {
-  background: #fff;
-  color: var(--brand);
+  background: #fff !important;
+  color: var(--brand) !important;
   border: 1px solid var(--brand);
+}
+.btn.secondary:hover {
+  background: #f0fdfa !important;
+  color: var(--brand-dark) !important;
+}
+.btn.danger {
+  background: var(--danger) !important;
+  color: #fff !important;
 }
 
 small {
@@ -403,7 +510,7 @@ small {
   background: var(--brand);
 }
 
-/* قائمة اللغة — إضافة فقط بدون تغيير المظهر القديم */
+/* قائمة اللغة في الشريط الجانبي */
 .lang-box {
   margin: 8px 4px 12px;
   padding: 8px 10px;
@@ -430,10 +537,4 @@ small {
 }
 .lang-select:focus {
   outline: 2px solid rgba(255, 255, 255, 0.5);
-}
-@media (max-width: 720px) {
-  .lang-box {
-    width: 100%;
-    margin: 4px 0 0;
-  }
 }
