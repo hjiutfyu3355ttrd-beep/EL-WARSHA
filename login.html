@@ -3,39 +3,38 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#e67e22" />
+    <meta name="theme-color" content="#0F766E" />
     <title>تسجيل الدخول — نظام الورشة</title>
-    <link rel="icon" href="favicon.ico" sizes="any" />
-    <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png" />
-    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="css/style.css" />
   </head>
   <body>
     <div class="login-wrap">
-      <section class="login-hero">
-        <img src="assets/img/logo.svg" alt="" />
-        <h1>الورشة</h1>
-        <p>نظام إدارة الورش — أوامر الشغل والعملاء والمخزون في مكان واحد</p>
-      </section>
-      <section class="login-side">
-        <div class="login-card">
-          <h2>تسجيل الدخول</h2>
-          <p class="sub">أدخل رقم تليفونك وكلمة المرور</p>
-          <form id="form">
-            <div class="field"><label for="phone">رقم التليفون</label>
-              <input id="phone" type="tel" inputmode="tel" placeholder="01XXXXXXXXX" required dir="ltr" autocomplete="tel" /></div>
-            <div class="field"><label for="password">كلمة المرور</label>
-              <input id="password" type="password" placeholder="••••••••" required dir="ltr" autocomplete="current-password" /></div>
-            <div class="error" id="msg"></div>
-            <button id="btn">تسجيل الدخول</button>
-          </form>
-          <p style="margin-bottom: 0">ماعندكش حساب؟ <a class="link" href="signup.html">سجّل ورشتك</a></p>
+      <div class="card login-card">
+        <div class="field" style="margin-bottom:12px">
+          <label id="login-lang-label">اللغة</label>
+          <select id="login-lang">
+            <option value="ar">العربية</option>
+            <option value="tr">Türkçe</option>
+          </select>
         </div>
-      </section>
+        <h2 id="login-title" style="margin-top: 0">🔧 دخول نظام الورشة</h2>
+        <form id="form">
+          <input id="email" type="email" placeholder="البريد الإلكتروني" required dir="ltr" autocomplete="email" />
+          <input id="password" type="password" placeholder="كلمة المرور" required dir="ltr" autocomplete="current-password" />
+          <div class="error" id="msg"></div>
+          <button id="btn">دخول</button>
+        </form>
+        <p id="login-footer" style="margin-bottom: 0">ماعندكش حساب؟ <a class="link" href="signup.html">سجّل ورشتك</a></p>
+      </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="js/config.js"></script>
+    <script src="js/i18n.js"></script>
     <script src="js/db.js"></script>
     <script src="js/pages/login.js"></script>
   </body>

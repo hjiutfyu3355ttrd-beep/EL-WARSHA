@@ -1,8 +1,8 @@
 # ترويسات أمان لـ Cloudflare Pages (بتتطبّق تلقائياً على كل الصفحات).
-# السياسة بتسمح بس بـ: ملفات الموقع نفسه + مكتبة Supabase من jsdelivr + خط Cairo (محلي) + اتصال Supabase.
+# السياسة بتسمح بس بـ: ملفات الموقع نفسه + مكتبة Supabase من jsdelivr + خط Cairo + اتصال Supabase.
 # لو ضفت مكتبة خارجية جديدة لازم تضيف دومينها هنا وإلا المتصفح هيحجبها.
 /*
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   X-Frame-Options: DENY
-  Content-Security-Policy: default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-ancestors 'none'; base-uri 'self'; form-action 'self'

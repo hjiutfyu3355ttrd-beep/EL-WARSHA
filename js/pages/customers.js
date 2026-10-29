@@ -2,25 +2,26 @@
   var page = await UI.init("customers");
   if (!page) return;
   var html = UI.html;
+  var t = UI.t;
 
   var customers = [], vehicles = [], sel = "";
 
   page.innerHTML = html`
     <div class="stack">
-      <h2 class="page-title" style="margin:0">العملاء والسيارات</h2>
+      <h2 class="page-title" style="margin:0">${t("customers_title")}</h2>
 
       <form class="card" id="cust-form">
-        <h3 style="margin-top:0">عميل جديد</h3>
+        <h3 style="margin-top:0">${t("customers_new")}</h3>
         <div class="form-grid">
-          <div class="field"><label>الاسم</label><input id="c-name" required></div>
-          <div class="field"><label>الموبايل</label><input id="c-phone" dir="ltr"></div>
-          <div class="field"><label>ملاحظات</label><input id="c-notes"></div>
-          <button>إضافة عميل</button>
+          <div class="field"><label>${t("customers_name")}</label><input id="c-name" required></div>
+          <div class="field"><label>${t("customers_phone")}</label><input id="c-phone" dir="ltr"></div>
+          <div class="field"><label>${t("customers_notes")}</label><input id="c-notes"></div>
+          <button>${t("customers_add")}</button>
         </div>
       </form>
 
-      <input id="q" placeholder="بحث بالاسم أو الموبايل">
-      <div class="table-wrap" id="list"><div class="empty">جارٍ التحميل…</div></div>
+      <input id="q" placeholder="${t("customers_search")}">
+      <div class="table-wrap" id="list"><div class="empty">${t("loading")}</div></div>
       <div id="detail"></div>
     </div>`;
 
@@ -29,19 +30,19 @@
   function renderList() {
     var q = $("q").value.trim().toLowerCase();
     var shown = customers.filter(function (c) {
-      return (c.name + " " + c.phone).toLowerCase().indexOf(q) !== -1;
+      return (c.name + " " + (c.phone || "")).toLowerCase().indexOf(q) !== -1;
     });
     $("list").innerHTML = html`
       <table class="clickable">
-        <thead><tr><th>العميل</th><th>الموبايل</th><th>السيارات</th></tr></thead>
+        <thead><tr><th>${t("col_customer")}</th><th>${t("customers_phone")}</th><th>${t("customers_vehicles")}</th></tr></thead>
         <tbody>
           ${shown.length === 0
-            ? html`<tr><td colspan="3" class="empty">مفيش عملاء</td></tr>`
+            ? html`<tr><td colspan="3" class="empty">${t("customers_empty")}</td></tr>`
             : shown.map(function (c) {
                 var count = vehicles.filter(function (v) { return v.customer_id === c.id; }).length;
                 return html`<tr class="${c.id === sel ? "sel-row" : ""}" data-action="select" data-id="${c.id}">
                   <td>${c.name}</td>
-                  <td dir="ltr" style="text-align:right">${c.phone || "—"}</td>
+                  <td dir="ltr">${c.phone || t("none")}</td>
                   <td>${count}</td>
                 </tr>`;
               })}
@@ -58,19 +59,20 @@
     var mine = vehicles.filter(function (v) { return v.customer_id === sel; });
     $("detail").innerHTML = html`
       <div class="card stack">
-        <h3 style="margin:0">سيارات ${c.name}</h3>
+        <h3 style="margin:0">${t("customers_vehicles_of")} ${c.name}</h3>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>اللوحة</th><th>النوع</th><th>السنة</th><th>العداد</th><th></th></tr></thead>
+            <thead><tr><th>${t("customers_plate")}</th><th>${t("customers_type")}</th><th>${t("customers_year")}</th><th>${t("customers_odometer")}</th><th></th></tr></thead>
             <tbody>
               ${mine.length === 0
-                ? html`<tr><td colspan="5" class="empty">مفيش سيارات</td></tr>`
+                ? html`<tr><td colspan="5" class="empty">${t("customers_no_vehicles")}</td></tr>`
                 : mine.map(function (v) {
                     return html`<tr>
-                      <td>${v.plate}</td><td>${v.make} ${v.model}</td>
-                      <td>${v.year || "—"}</td>
-                      <td>${v.odometer != null ? Number(v.odometer).toLocaleString("ar-EG") : "—"}</td>
-                      <td><button class="danger small" data-action="del-vehicle" data-id="${v.id}">حذف</button></td>
+                      <td>${v.plate}</td>
+                      <td>${(v.make || "") + " " + (v.model || "")}</td>
+                      <td>${v.year || t("none")}</td>
+                      <td>${v.odometer != null ? v.odometer : t("none")}</td>
+                      <td><button class="danger small" data-action="del-vehicle" data-id="${v.id}">${t("delete")}</button></td>
                     </tr>`;
                   })}
             </tbody>
@@ -78,12 +80,12 @@
         </div>
         <form id="veh-form">
           <div class="form-grid">
-            <div class="field"><label>رقم اللوحة</label><input id="v-plate" required></div>
-            <div class="field"><label>الماركة</label><input id="v-make"></div>
-            <div class="field"><label>الموديل</label><input id="v-model"></div>
-            <div class="field"><label>السنة</label><input id="v-year" type="number"></div>
-            <div class="field"><label>العداد (كم)</label><input id="v-odo" type="number"></div>
-            <button>إضافة سيارة</button>
+            <div class="field"><label>${t("customers_vehicle_plate")}</label><input id="v-plate" required></div>
+            <div class="field"><label>${t("customers_vehicle_make")}</label><input id="v-make"></div>
+            <div class="field"><label>Model</label><input id="v-model"></div>
+            <div class="field"><label>${t("customers_vehicle_year")}</label><input id="v-year" type="number"></div>
+            <div class="field"><label>${t("customers_vehicle_odometer")}</label><input id="v-odo" type="number"></div>
+            <button>${t("customers_add_vehicle")}</button>
           </div>
         </form>
       </div>`;
@@ -97,7 +99,6 @@
     renderDetail();
   }
 
-  // إضافة عميل
   $("cust-form").addEventListener("submit", function (e) {
     e.preventDefault();
     UI.guard(async function () {
@@ -114,7 +115,6 @@
 
   $("q").addEventListener("input", renderList);
 
-  // اختيار عميل / حذف سيارة / إضافة سيارة (الأحداث على الصفحة كلها لأن المحتوى بيتعاد رسمه)
   page.addEventListener("click", function (e) {
     var el = e.target.closest("[data-action]");
     if (!el) return;
@@ -131,7 +131,7 @@
         try {
           await DB.remove("vehicles", id);
         } catch (err) {
-          throw new Error("مينفعش تحذف سيارة عليها أوامر شغل");
+          throw new Error(I18N.getLang() === "tr" ? "İş emri olan araç silinemez" : "مينفعش تحذف سيارة عليها أوامر شغل");
         }
         await load();
       });
