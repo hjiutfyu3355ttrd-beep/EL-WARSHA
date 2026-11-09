@@ -1,53 +1,57 @@
 <!doctype html>
-<html lang="ar" dir="rtl" translate="no">
+<html lang="ar" dir="rtl" translate="no" class="notranslate">
   <head>
-  <script>
-    (function(){try{var l=localStorage.getItem("workshop_lang");if(l!=="tr"&&l!=="ar")l="ar";
-      document.documentElement.lang=l;document.documentElement.dir=l==="tr"?"ltr":"rtl";
-      document.documentElement.setAttribute("translate","no");}catch(e){}})();
-  </script>
 
     <meta charset="UTF-8" />
+    <meta name="google" content="notranslate" />
+    <script src="js/config.js"></script>
+    <script src="js/boot.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#e67e22" />
-    <title>سجّل ورشتك — نظام الورشة</title>
+    <title data-i18n="t_signup">EL-WARSHA</title>
     <link rel="icon" href="favicon.ico" sizes="any" />
     <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png" />
     <link rel="manifest" href="manifest.webmanifest" />
-    <link rel="preload" href="assets/fonts/Cairo-Regular.ttf" as="font" type="font/ttf" crossorigin />
+    <link rel="preload" href="assets/fonts/Cairo-Regular.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" href="css/style.css" />
   </head>
   <body>
     <div class="login-wrap">
       <section class="login-hero">
         <img src="assets/img/logo.svg" alt="" />
-        <h1>الورشة</h1>
-        <p>نظام إدارة الورش — أوامر الشغل والعملاء والمخزون في مكان واحد</p>
+        <h1 data-i18n="app_name">الورشة</h1>
+        <p data-i18n="login_hero"></p>
       </section>
       <section class="login-side">
         <div class="login-card">
-          <h2>سجّل ورشتك</h2>
-          <p class="sub">ابدأ تجربتك المجانية في دقيقة</p>
+          <div class="field" style="margin-bottom:12px;max-width:180px">
+            <label for="signup-lang" data-i18n="language"></label>
+            <select id="signup-lang">
+              <option value="ar" data-i18n="lang_native_ar"></option>
+              <option value="tr" data-i18n="lang_native_tr"></option>
+            </select>
+          </div>
+          <h2 data-i18n="signup_title"></h2>
+          <p class="sub" data-i18n="signup_sub"></p>
           <form id="form">
-            <div class="field"><label for="shop">اسم الورشة</label>
-              <input id="shop" placeholder="مثال: ورشة النور" required /></div>
-            <div class="field"><label for="phone">رقم التليفون</label>
+            <div class="field"><label for="shop" data-i18n="signup_shop"></label>
+              <input id="shop" data-i18n-ph="signup_shop_ph" required /></div>
+            <div class="field"><label for="phone" data-i18n="login_phone"></label>
               <input id="phone" type="tel" inputmode="tel" placeholder="01XXXXXXXXX" required dir="ltr" autocomplete="tel" /></div>
-            <div class="field"><label for="password">كلمة المرور</label>
-              <input id="password" type="password" placeholder="6 أحرف على الأقل" required minlength="6" dir="ltr" autocomplete="new-password" /></div>
+            <div class="field"><label for="password" data-i18n="login_password"></label>
+              <input id="password" type="password" data-i18n-ph="signup_pass_ph" required minlength="6" dir="ltr" autocomplete="new-password" /></div>
             <div class="error" id="msg"></div>
-            <button id="btn">إنشاء الحساب</button>
+            <button id="btn" data-i18n="signup_btn"></button>
           </form>
           <div id="info" style="display: none">
-            <div class="notice">تم إنشاء الحساب. سجّل دخولك برقم التليفون.</div>
-            <a class="link" href="login.html">الذهاب لتسجيل الدخول</a>
+            <div class="notice" data-i18n="signup_created"></div>
+            <a class="link" href="login.html" data-i18n="signup_go_login"></a>
           </div>
-          <p style="margin-bottom: 0">عندك حساب؟ <a class="link" href="login.html">دخول</a></p>
+          <p style="margin-bottom: 0"><span data-i18n="signup_have_account"></span> <a class="link" href="login.html" data-i18n="signup_login"></a></p>
         </div>
       </section>
     </div>
 
-    <script src="js/config.js"></script>
     <script src="js/i18n.js"></script>
     <script src="js/db.js"></script>
     <script src="js/pages/signup.js"></script>

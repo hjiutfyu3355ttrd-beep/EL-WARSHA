@@ -457,7 +457,7 @@
       exp_sub: "تسجيل مصروفات الورشة وتقارير حسب الفترة.",
       exp_new: "مصروف جديد",
       exp_label: "البيان",
-      exp_amount: "المبلغ (ج.م)",
+      exp_amount: "المبلغ ({cur})",
       exp_placeholder: "مثال: إيجار / كهرباء",
       search_label: "بحث بالبيان",
       exp_month: "مصروفات هذا الشهر",
@@ -627,7 +627,7 @@
       cat_ac: "التكييف",
       point_name: "اسم النقطة",
       point_ph: "مثال: مستوى الزيت",
-      default_fee: "رسوم افتراضية (ج.م)",
+      default_fee: "رسوم افتراضية ({cur})",
       search_obs: "بحث بالاسم أو التصنيف",
       insp_point_col: "نقطة الفحص",
       default_fee_col: "الرسوم الافتراضية",
@@ -674,6 +674,144 @@
       method_prefix: "طريقة:",
       dash_rev_week: "آخر 7 أيام",
       signup_go_login: "الذهاب لتسجيل الدخول",
+
+      // ===== v0.17: مفاتيح جديدة =====
+      menu_label: "القائمة",
+      inv_st_draft: "مسودة",
+      inv_st_issued: "صادرة",
+      inv_st_partially_paid: "مدفوعة جزئياً",
+      inv_st_paid: "مدفوعة",
+      inv_st_cancelled: "ملغاة",
+      total_word: "إجمالي",
+      src_payment: "دفعة",
+      inv_low_notice: "فيه {n} صنف وصل لحد الطلب أو أقل.",
+      plate_no: "رقم اللوحة",
+      odometer_km: "العداد (كم)",
+      empty_vehicles_match: "مفيش سيارات مطابقة",
+      obs_empty_full: "مفيش نقاط فحص",
+      pu_sub: "أوامر شراء من الموردين وزيادة المخزون عند الاستلام.",
+      pu_add_supplier_first: "أضف مورد أولاً",
+      err_lib_load: "تعذّر تحميل مكتبة Supabase. اتأكد من اتصال الإنترنت وأعد تحميل الصفحة.",
+      err_bad_phone: "رقم التليفون غير صحيح",
+      err_login_failed: "رقم التليفون أو كلمة المرور غير صحيحة",
+      err_phone_registered: "الرقم ده مسجّل قبل كده، سجّل دخول",
+      err_invoice_missing: "الفاتورة مش موجودة",
+      err_wo_missing: "أمر الشغل مش موجود",
+      err_wo_no_lines: "أمر الشغل ده مفيهوش بنود — أضف بنود الأول",
+      t_invoice: "فاتورة",
+      t_work_order: "أمر شغل",
+      t_login: "تسجيل الدخول",
+      t_signup: "سجّل ورشتك",
+      signup_sub: "ابدأ تجربتك المجانية في دقيقة",
+      signup_shop_ph: "مثال: ورشة النور",
+      signup_pass_ph: "6 أحرف على الأقل",
+      signup_created: "تم إنشاء الحساب. سجّل دخولك برقم التليفون.",
+      tpl_quotation_sent: "إرسال عرض سعر",
+      tpl_job_ready: "السيارة جاهزة",
+      tpl_invoice: "فاتورة",
+      lang_native_ar: "العربية",
+      lang_native_tr: "Türkçe",
+      cur_title: "العملة",
+      cur_hint: "العملة المستخدمة في الأسعار والفواتير والتقارير لكل الورشة.",
+      cur_select: "العملة",
+      cur_symbol: "الرمز المعروض",
+      cur_symbol_hint: "اتركه فاضي لاستخدام الرمز الافتراضي للعملة.",
+      cur_other: "عملة أخرى (حدّد الرمز)",
+      cur_preview: "معاينة",
+      cur_save: "حفظ العملة",
+      cur_saved: "تم حفظ العملة",
+      cur_symbol_required: "اكتب رمز العملة",
+      pg_prev: "السابق",
+      pg_next: "التالي",
+      pg_range: "{from}–{to} من {total}",
+      pg_page: "صفحة {p} من {n}",
+      pg_size: "عدد الصفوف",
+      nav_treasury: "الخزنة",
+      nav_payroll: "المرتبات",
+      t_treasury: "الخزنة",
+      d_treasury: "الرصيد الحالي وكل حركات الدخول والخروج",
+      t_payroll: "المرتبات",
+      d_payroll: "مرتبات العمال والصرف والمتبقي لكل عامل",
+      dash_treasury: "الخزنة",
+      tr_balance: "رصيد الخزنة",
+      tr_total_in: "إجمالي الداخل",
+      tr_total_out: "إجمالي الخارج",
+      tr_owed: "مرتبات مستحقة لم تُصرف",
+      tr_after_salaries: "المتاح بعد المرتبات: {amount}",
+      tr_deposit_btn: "＋ إيداع",
+      tr_withdraw_btn: "－ سحب",
+      tr_manual_deposit: "إيداع في الخزنة",
+      tr_manual_withdraw: "سحب من الخزنة",
+      tr_manual_hint: "للرصيد الافتتاحي أو أي مبلغ بتدخله أو بتسحبه من خارج شغل الورشة. باقي الحركات (مدفوعات، مصروفات، مشتريات، مرتبات) بتتسجّل في الخزنة تلقائياً.",
+      tr_src_payment: "دفعة من عميل",
+      tr_src_income: "دخل",
+      tr_src_expense: "مصروف",
+      tr_src_salary: "مرتب",
+      tr_src_deposit: "إيداع",
+      tr_src_withdraw: "سحب",
+      tr_filter_all: "كل الحركات",
+      tr_filter_in: "الداخل فقط",
+      tr_filter_out: "الخارج فقط",
+      tr_col_desc: "البيان",
+      tr_col_in: "داخل",
+      tr_col_out: "خارج",
+      tr_col_balance: "الرصيد",
+      tr_search: "ابحث في الحركات…",
+      tr_empty: "مفيش حركات",
+      tr_del_q: "تحذف الحركة دي؟",
+      tr_neg_warn: "الخزنة بالسالب: الخارج أكبر من الداخل.",
+      tr_amount_required: "اكتب مبلغ أكبر من صفر",
+      tr_saved: "اتسجّلت الحركة",
+      tr_go_payroll: "فتح المرتبات",
+      pr_total_due: "إجمالي المستحق للعمال",
+      pr_paid_month: "اتصرف الشهر ده",
+      pr_workers: "عدد العمال",
+      pr_add_title: "إضافة عامل",
+      pr_add_btn: "＋ عامل",
+      pr_name: "اسم العامل",
+      pr_role: "الوظيفة",
+      pr_salary: "المرتب",
+      pr_period: "الفترة",
+      pr_week: "أسبوعي",
+      pr_month: "شهري",
+      pr_start: "يبدأ من",
+      pr_per_week: "{amount} / أسبوع",
+      pr_per_month: "{amount} / شهر",
+      pr_start_hint: "المستحق بيتحسب من التاريخ ده، وبعدها كل أسبوع/شهر تلقائياً.",
+      pr_col_worker: "العامل",
+      pr_col_salary: "المرتب",
+      pr_col_accrued: "إجمالي المستحق",
+      pr_col_paid: "اتصرف",
+      pr_col_remaining: "المتبقي له",
+      pr_advance: "مدفوع مقدّماً {amount}",
+      pr_settled: "مفيش متبقي",
+      pr_pay: "صرف",
+      pr_history: "السجل",
+      pr_edit: "تعديل",
+      pr_stop: "إيقاف",
+      pr_stopped: "موقوف",
+      pr_delete: "حذف",
+      pr_pay_title: "صرف مرتب — {name}",
+      pr_pay_amount: "المبلغ المصروف",
+      pr_pay_hint: "المستحق دلوقتي {due}. اكتب اللي اتصرف فعلاً؛ والباقي بيفضل له للفترة اللي بعدها.",
+      pr_pay_preview: "هيتخصم {paid} من الخزنة، ويفضل للعامل {left}.",
+      pr_pay_preview_adv: "هيتخصم {paid} من الخزنة، وده أكتر من المستحق بـ {over} (سلفة).",
+      pr_pay_neg: "تنبيه: رصيد الخزنة ({bal}) أقل من المبلغ.",
+      pr_pay_save: "تسجيل الصرف",
+      pr_paid_ok: "اتسجّل الصرف واتخصم من الخزنة",
+      pr_hist_title: "سجل صرف {name}",
+      pr_hist_empty: "لسه مفيش صرف",
+      pr_del_pay_q: "تحذف الصرف ده؟ المبلغ هيرجع للخزنة.",
+      pr_edit_title: "تعديل بيانات عامل",
+      pr_salary_change_hint: "تغيير المرتب بيتطبّق على الفترة الحالية وللي بعدها، والفترات القديمة ما بتتغيّرش.",
+      pr_stop_q: "توقّف {name}؟ المستحق السابق يفضل متسجّل وتقدر تصرفه، ومش هيتحسب مرتب جديد.",
+      pr_del_q: "تحذف {name}؟",
+      pr_del_blocked: "مينفعش تحذف عامل ليه صرف، أوقفه بدل الحذف.",
+      pr_empty: "مفيش عمال لسه. أضف أول عامل من فوق.",
+      pr_name_required: "اكتب اسم العامل",
+      pr_start_old: "تاريخ البداية قديم جداً (أكتر من 5 سنين)",
+      pr_saved: "اتحفظ",
+      pr_current_period: "الفترة الحالية بدأت {date}",
     },
     tr: {
       app_name: "Atölye",
@@ -1123,7 +1261,7 @@
       exp_sub: "Atölye giderleri ve dönem raporları.",
       exp_new: "Yeni gider",
       exp_label: "Açıklama",
-      exp_amount: "Tutar (EGP)",
+      exp_amount: "Tutar ({cur})",
       exp_placeholder: "Örn: kira / elektrik",
       search_label: "Açıklamada ara",
       exp_month: "Bu ayın giderleri",
@@ -1293,7 +1431,7 @@
       cat_ac: "Klima",
       point_name: "Nokta adı",
       point_ph: "Örn: yağ seviyesi",
-      default_fee: "Varsayılan ücret (EGP)",
+      default_fee: "Varsayılan ücret ({cur})",
       search_obs: "Ad veya kategori ara",
       insp_point_col: "Muayene noktası",
       default_fee_col: "Varsayılan ücret",
@@ -1340,31 +1478,179 @@
       method_prefix: "Yöntem:",
       dash_rev_week: "Son 7 gün",
       signup_go_login: "Giriş sayfasına git",
+
+      // ===== v0.17: yeni anahtarlar =====
+      menu_label: "Menü",
+      inv_st_draft: "Taslak",
+      inv_st_issued: "Kesildi",
+      inv_st_partially_paid: "Kısmen ödendi",
+      inv_st_paid: "Ödendi",
+      inv_st_cancelled: "İptal edildi",
+      total_word: "Toplam",
+      src_payment: "Ödeme",
+      inv_low_notice: "{n} kalem minimum stok seviyesinde veya altında.",
+      plate_no: "Plaka no",
+      odometer_km: "Kilometre (km)",
+      empty_vehicles_match: "Eşleşen araç yok",
+      obs_empty_full: "Muayene noktası yok",
+      pu_sub: "Tedarikçilerden satın alma emirleri; teslim alınınca stok artar.",
+      pu_add_supplier_first: "Önce tedarikçi ekleyin",
+      err_lib_load: "Supabase kütüphanesi yüklenemedi. İnternet bağlantınızı kontrol edip sayfayı yenileyin.",
+      err_bad_phone: "Telefon numarası geçersiz",
+      err_login_failed: "Telefon numarası veya şifre hatalı",
+      err_phone_registered: "Bu numara zaten kayıtlı, giriş yapın",
+      err_invoice_missing: "Fatura bulunamadı",
+      err_wo_missing: "İş emri bulunamadı",
+      err_wo_no_lines: "Bu iş emrinde kalem yok — önce kalem ekleyin",
+      t_invoice: "Fatura",
+      t_work_order: "İş emri",
+      t_login: "Giriş",
+      t_signup: "Atölyenizi kaydedin",
+      signup_sub: "Ücretsiz denemenizi bir dakikada başlatın",
+      signup_shop_ph: "Örn: Yıldız Oto Servis",
+      signup_pass_ph: "En az 6 karakter",
+      signup_created: "Hesap oluşturuldu. Telefon numaranızla giriş yapın.",
+      tpl_quotation_sent: "Teklif gönderimi",
+      tpl_job_ready: "Araç hazır",
+      tpl_invoice: "Fatura",
+      lang_native_ar: "العربية",
+      lang_native_tr: "Türkçe",
+      cur_title: "Para birimi",
+      cur_hint: "Fiyatlarda, faturalarda ve raporlarda kullanılan para birimi (tüm atölye için).",
+      cur_select: "Para birimi",
+      cur_symbol: "Görünen sembol",
+      cur_symbol_hint: "Varsayılan sembol için boş bırakın.",
+      cur_other: "Diğer (sembolü belirtin)",
+      cur_preview: "Önizleme",
+      cur_save: "Para birimini kaydet",
+      cur_saved: "Para birimi kaydedildi",
+      cur_symbol_required: "Para birimi sembolünü yazın",
+      pg_prev: "Önceki",
+      pg_next: "Sonraki",
+      pg_range: "{from}–{to} / {total}",
+      pg_page: "Sayfa {p} / {n}",
+      pg_size: "Sayfa başına",
+      nav_treasury: "Kasa",
+      nav_payroll: "Maaşlar",
+      t_treasury: "Kasa",
+      d_treasury: "Güncel bakiye ve tüm giriş-çıkış hareketleri",
+      t_payroll: "Maaşlar",
+      d_payroll: "Çalışan maaşları, ödemeler ve kalan tutarlar",
+      dash_treasury: "Kasa",
+      tr_balance: "Kasa bakiyesi",
+      tr_total_in: "Toplam giriş",
+      tr_total_out: "Toplam çıkış",
+      tr_owed: "Ödenmemiş maaş borcu",
+      tr_after_salaries: "Maaşlar sonrası kalan: {amount}",
+      tr_deposit_btn: "＋ Para yatır",
+      tr_withdraw_btn: "－ Para çek",
+      tr_manual_deposit: "Kasaya para yatır",
+      tr_manual_withdraw: "Kasadan para çek",
+      tr_manual_hint: "Açılış bakiyesi veya atölye işleri dışındaki para giriş/çıkışları içindir. Diğer hareketler (ödemeler, giderler, alımlar, maaşlar) kasaya otomatik işlenir.",
+      tr_src_payment: "Müşteri ödemesi",
+      tr_src_income: "Gelir",
+      tr_src_expense: "Gider",
+      tr_src_salary: "Maaş",
+      tr_src_deposit: "Para yatırma",
+      tr_src_withdraw: "Para çekme",
+      tr_filter_all: "Tüm hareketler",
+      tr_filter_in: "Sadece girişler",
+      tr_filter_out: "Sadece çıkışlar",
+      tr_col_desc: "Açıklama",
+      tr_col_in: "Giriş",
+      tr_col_out: "Çıkış",
+      tr_col_balance: "Bakiye",
+      tr_search: "Hareketlerde ara…",
+      tr_empty: "Hareket yok",
+      tr_del_q: "Bu hareket silinsin mi?",
+      tr_neg_warn: "Kasa eksi bakiyede: çıkışlar girişlerden fazla.",
+      tr_amount_required: "Sıfırdan büyük bir tutar girin",
+      tr_saved: "Hareket kaydedildi",
+      tr_go_payroll: "Maaşlara git",
+      pr_total_due: "Çalışanlara toplam borç",
+      pr_paid_month: "Bu ay ödenen",
+      pr_workers: "Çalışan sayısı",
+      pr_add_title: "Çalışan ekle",
+      pr_add_btn: "＋ Çalışan",
+      pr_name: "Çalışan adı",
+      pr_role: "Görev",
+      pr_salary: "Maaş",
+      pr_period: "Dönem",
+      pr_week: "Haftalık",
+      pr_month: "Aylık",
+      pr_start: "Başlangıç",
+      pr_per_week: "{amount} / hafta",
+      pr_per_month: "{amount} / ay",
+      pr_start_hint: "Hak ediş bu tarihten başlar, sonrasında her hafta/ay otomatik hesaplanır.",
+      pr_col_worker: "Çalışan",
+      pr_col_salary: "Maaş",
+      pr_col_accrued: "Toplam hak ediş",
+      pr_col_paid: "Ödenen",
+      pr_col_remaining: "Kalan alacağı",
+      pr_advance: "Peşin ödendi {amount}",
+      pr_settled: "Borç yok",
+      pr_pay: "Öde",
+      pr_history: "Geçmiş",
+      pr_edit: "Düzenle",
+      pr_stop: "Durdur",
+      pr_stopped: "Durduruldu",
+      pr_delete: "Sil",
+      pr_pay_title: "Maaş ödemesi — {name}",
+      pr_pay_amount: "Ödenen tutar",
+      pr_pay_hint: "Şu anki borç {due}. Fiilen ödenen tutarı yazın; kalan sonraki döneme devreder.",
+      pr_pay_preview: "Kasadan {paid} düşülecek, çalışana {left} kalacak.",
+      pr_pay_preview_adv: "Kasadan {paid} düşülecek; bu borcun {over} üzerinde (avans).",
+      pr_pay_neg: "Uyarı: Kasa bakiyesi ({bal}) tutardan az.",
+      pr_pay_save: "Ödemeyi kaydet",
+      pr_paid_ok: "Ödeme kaydedildi ve kasadan düşüldü",
+      pr_hist_title: "{name} ödeme geçmişi",
+      pr_hist_empty: "Henüz ödeme yok",
+      pr_del_pay_q: "Bu ödeme silinsin mi? Tutar kasaya geri eklenir.",
+      pr_edit_title: "Çalışanı düzenle",
+      pr_salary_change_hint: "Maaş değişikliği mevcut ve sonraki dönemlere uygulanır; geçmiş dönemler değişmez.",
+      pr_stop_q: "{name} durdurulsun mu? Önceki borç kayıtlı kalır ve ödenebilir, yeni maaş hesaplanmaz.",
+      pr_del_q: "{name} silinsin mi?",
+      pr_del_blocked: "Ödemesi olan çalışan silinemez; bunun yerine durdurun.",
+      pr_empty: "Henüz çalışan yok. Yukarıdan ilk çalışanı ekleyin.",
+      pr_name_required: "Çalışan adını yazın",
+      pr_start_old: "Başlangıç tarihi çok eski (5 yıldan fazla)",
+      pr_saved: "Kaydedildi",
+      pr_current_period: "Mevcut dönem {date} tarihinde başladı",
     },
   };
 
+  // ---------- اللغة (بتتخزّن في متغير عشان t() متقراش localStorage في كل استدعاء) ----------
+  var current = null;
   function getLang() {
-    var s = localStorage.getItem(KEY);
-    return s === "tr" || s === "ar" ? s : "ar";
+    if (current) return current;
+    var s = null;
+    try { s = localStorage.getItem(KEY); } catch (e) {}
+    current = s === "tr" || s === "ar" ? s : "ar";
+    return current;
   }
   function setLang(lang) {
     if (lang !== "ar" && lang !== "tr") return;
-    localStorage.setItem(KEY, lang);
+    current = lang;
+    try { localStorage.setItem(KEY, lang); } catch (e) {}
     applyDir(lang);
   }
   function applyDir(lang) {
     var h = document.documentElement;
-    if (lang === "tr") {
-      h.lang = "tr";
-      h.dir = "ltr";
-    } else {
-      h.lang = "ar";
-      h.dir = "rtl";
-    }
+    h.lang = lang === "tr" ? "tr" : "ar";
+    h.dir = lang === "tr" ? "ltr" : "rtl";
+    // منع ترجمة المتصفح التلقائية (الصفحة بتترجم نفسها)
+    h.setAttribute("translate", "no");
   }
+  function locale() {
+    return getLang() === "tr" ? "tr-TR" : "ar-EG";
+  }
+  var curLabel = null;
+  function setCurrencyLabel(l) { curLabel = l || null; }
   function t(key, params) {
     var lang = getLang();
     var str = (dict[lang] && dict[lang][key]) || (dict.ar && dict.ar[key]) || key;
+    // {cur} = رمز عملة الورشة الحالي (بيتضبط من ui.js بعد قراءة الإعدادات)
+    if (str.indexOf("{cur}") !== -1) str = str.replace(/\{cur\}/g, curLabel || dict[lang].currency || dict.ar.currency);
     if (params) {
       Object.keys(params).forEach(function (k) {
         str = str.replace(new RegExp("\\{" + k + "\\}", "g"), params[k]);
@@ -1372,6 +1658,85 @@
     }
     return str;
   }
+
+  // ---------- قيم محايدة اللغة (fuel / ناقل الحركة / فئة الفحص / نوع الضريبة) ----------
+  // المشكلة القديمة: كنا بنحفظ النص المترجم نفسه في الداتابيز ("بنزين" أو "Benzin" حسب لغة اللي دخّل)،
+  // فيفضل بلغته القديمة بعد تبديل اللغة. دلوقتي: نحفظ رمز ثابت (gasoline) ونترجمه وقت العرض،
+  // ونتعرّف على القيم القديمة (عربي أو تركي) ونعرضها بلغة الواجهة الحالية.
+  var ENUMS = {
+    fuel: { gasoline: "fuel_gas", diesel: "fuel_diesel", hybrid: "fuel_hybrid", electric: "fuel_electric", lpg: "fuel_lpg" },
+    trans: { auto: "trans_auto", manual: "trans_manual", cvt: "trans_cvt" },
+    obs_cat: { engine: "cat_engine", brakes: "cat_brakes", tires: "cat_tires", electric: "cat_electric", body: "cat_body", ac: "cat_ac", other: "comp_other" },
+    tax_type: { license: "comp_license", insurance: "comp_insurance", tax: "comp_tax", inspect: "comp_inspect", other: "comp_other" },
+  };
+  var enumIndex = null;
+  function norm(v) {
+    return String(v == null ? "" : v).replace(/\s+/g, " ").trim().toLowerCase();
+  }
+  function buildEnumIndex() {
+    enumIndex = {};
+    Object.keys(ENUMS).forEach(function (g) {
+      var m = {};
+      Object.keys(ENUMS[g]).forEach(function (code) {
+        m[norm(code)] = code;
+        ["ar", "tr"].forEach(function (l) {
+          var label = dict[l][ENUMS[g][code]];
+          if (label) m[norm(label)] = code;
+        });
+      });
+      enumIndex[g] = m;
+    });
+  }
+  // يرجّع الرمز (gasoline) لأي قيمة مخزّنة (رمز / عربي / تركي) أو "" لو نص حر
+  function enumCode(group, stored) {
+    if (!enumIndex) buildEnumIndex();
+    return (enumIndex[group] && enumIndex[group][norm(stored)]) || "";
+  }
+  // نص العرض بلغة الواجهة؛ النص الحر (اللي مش معروف) بيتعرض زي ما هو
+  function enumLabel(group, stored) {
+    if (stored == null || stored === "") return "";
+    var c = enumCode(group, stored);
+    return c ? t(ENUMS[group][c]) : String(stored);
+  }
+  // قائمة اختيارات [{value,label}] — value هو الرمز الثابت
+  function enumList(group) {
+    return Object.keys(ENUMS[group]).map(function (code) {
+      return { value: code, label: t(ENUMS[group][code]) };
+    });
+  }
+  // اسم قالب الإيميل الافتراضي بلغة الواجهة (المحتوى نفسه بيفضل زي ما اتحفظ لأنه رسالة للعميل)
+  var TPL_KEYS = { quotation_sent: "tpl_quotation_sent", job_ready: "tpl_job_ready", invoice: "tpl_invoice" };
+  function tplName(tpl) {
+    if (!tpl) return "";
+    var isDefaultName = ["ar", "tr"].some(function (l) { return norm(tpl.name) === norm(dict[l][TPL_KEYS[tpl.key]]); });
+    return TPL_KEYS[tpl.key] && isDefaultName ? t(TPL_KEYS[tpl.key]) : tpl.name;
+  }
+
+  // ---------- ترجمة العناصر الثابتة في ملفات HTML ----------
+  // data-i18n="key"        → textContent
+  // data-i18n-ph="key"     → placeholder
+  // data-i18n-title="key"  → title
+  // data-i18n-aria="key"   → aria-label
+  function apply(root) {
+    root = root || document;
+    var els = root.querySelectorAll("[data-i18n],[data-i18n-ph],[data-i18n-title],[data-i18n-aria]");
+    for (var i = 0; i < els.length; i++) {
+      var el = els[i], k;
+      if ((k = el.getAttribute("data-i18n"))) {
+        // عنوان التبويب: اسم الصفحة — اسم التطبيق
+        el.textContent = el.tagName === "TITLE" ? t(k) + " — " + t("app_name") : t(k);
+      }
+      if ((k = el.getAttribute("data-i18n-ph"))) el.setAttribute("placeholder", t(k));
+      if ((k = el.getAttribute("data-i18n-title"))) el.setAttribute("title", t(k));
+      if ((k = el.getAttribute("data-i18n-aria"))) el.setAttribute("aria-label", t(k));
+    }
+  }
+
   applyDir(getLang());
-  window.I18N = { t: t, getLang: getLang, setLang: setLang, applyDir: applyDir };
+  window.I18N = {
+    t: t, getLang: getLang, setLang: setLang, applyDir: applyDir, locale: locale, apply: apply, setCurrencyLabel: setCurrencyLabel,
+    enumCode: enumCode, enumLabel: enumLabel, enumList: enumList, tplName: tplName,
+  };
+  // سكربتات الصفحات في آخر body، فالـ DOM جاهز دلوقتي
+  if (document.body) apply(document);
 })();

@@ -9,7 +9,7 @@
 
   page.innerHTML = html`
     <div class="stack">
-      <h2 class="page-title" style="margin:0">🛡️ لوحة ${I18N.t("admin_title")}</h2>
+      <h2 class="page-title" style="margin:0">🛡️ ${I18N.t("admin_title")}</h2>
       <div class="notice">
         ${I18N.t("admin_hint")}
         ${I18N.t("admin_hint2")}
@@ -50,7 +50,7 @@
             : shown.map(function (s) {
                 return html`<tr>
                   <td>${s.name}</td>
-                  <td dir="ltr" style="text-align:right">${DB.auth.emailToPhone(s.owner_email)}</td>
+                  <td dir="ltr" style="text-align:start">${DB.auth.emailToPhone(s.owner_email)}</td>
                   <td>${UI.dateAr(s.created_at)}</td>
                   <td><span class="badge ${s.status}">${STATUS_LABEL[s.status] || s.status}</span></td>
                   <td>${s.trial_ends_at ? UI.dateAr(s.trial_ends_at) : "—"}</td>

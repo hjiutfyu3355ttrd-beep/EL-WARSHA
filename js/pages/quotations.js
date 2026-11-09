@@ -15,6 +15,7 @@
       .reduce(function (s, l) { return s + (Number(l.qty) || 0) * (Number(l.unit_price) || 0); }, 0);
   }
 
+  var pg = UI.makePager();
   function render() {
     if (mode === "new") return renderNew();
     if (mode === "view") return renderView();
@@ -43,13 +44,15 @@
         var cn = customers[r.customer_id] ? customers[r.customer_id].name : "";
         return (("" + r.number) + " " + cn).toLowerCase().indexOf(q) !== -1;
       });
-      $("list").innerHTML = html`
+        var rows = UI.pageSlice(pg, shown, q);
+      var bar = UI.pagerBar(pg, shown.length);
+    $("list").innerHTML = html`
         <table class="clickable">
-          <thead><tr><th>${I18N.t("quote_number")}</th><th>${I18N.t("customer")}</th><th>${I18N.t("vehicle")}</th><th>${I18N.t("status_filter")}</th><th>${I18N.t("total")}</th><th>التاريخ</th></tr></thead>
+          <thead><tr><th>${I18N.t("quote_number")}</th><th>${I18N.t("customer")}</th><th>${I18N.t("vehicle")}</th><th>${I18N.t("status_filter")}</th><th>${I18N.t("total")}</th><th>${I18N.t("date")}</th></tr></thead>
           <tbody>
             ${shown.length === 0
               ? html`<tr><td colspan="6" class="empty">${I18N.t("quote_empty")}</td></tr>`
-              : shown.map(function (r) {
+              : rows.map(function (r) {
                   var c = customers[r.customer_id];
                   var v = vehicles[r.vehicle_id];
                   return html`<tr data-action="view" data-id="${r.id}">
@@ -62,8 +65,9 @@
                   </tr>`;
                 })}
           </tbody>
-        </table>`;
+        </table>${bar}`;
     }
+    UI.bindPager(page.querySelector("#list"), pg, paint);
     paint();
     $("q").addEventListener("input", paint);
     $("btn-new").addEventListener("click", function () { mode = "new"; render(); });
@@ -228,7 +232,7 @@
           <h3 style="margin-top:0">${I18N.t("quote_lines")}</h3>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>${I18N.t("description")}</th><th>${I18N.t("type")}</th><th>${I18N.t("qty")}</th><th>${I18N.t("price")}</th><th>الإجمالي</th></tr></thead>
+              <thead><tr><th>${I18N.t("description")}</th><th>${I18N.t("type")}</th><th>${I18N.t("qty")}</th><th>${I18N.t("price")}</th><th>${I18N.t("total")}</th></tr></thead>
               <tbody>
                 ${mine.length === 0
                   ? html`<tr><td colspan="5" class="empty">${I18N.t("empty_lines")}</td></tr>`

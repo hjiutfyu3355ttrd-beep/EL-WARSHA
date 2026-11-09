@@ -36,11 +36,130 @@
 
   // ---------- تنسيق ----------
   function locale() {
-    return (window.I18N && I18N.getLang() === "tr") ? "tr-TR" : "ar-EG";
+    return window.I18N ? I18N.locale() : "ar-EG";
+  }
+  // ---------- العملة (إعداد على مستوى الورشة، بيتخزّن في shop_profile) ----------
+  // sym = الرمز الافتراضي بالعربي/التركي. الرمز المخصص (currency_symbol) بيغلب الافتراضي.
+  var CURRENCIES = [
+    { code: "EGP", ar: "ج.م", tr: "EGP" },
+    { code: "TRY", ar: "TL", tr: "TL" },
+    { code: "SAR", ar: "ر.س", tr: "SAR" },
+    { code: "AED", ar: "د.إ", tr: "AED" },
+    { code: "KWD", ar: "د.ك", tr: "KWD" },
+    { code: "QAR", ar: "ر.ق", tr: "QAR" },
+    { code: "BHD", ar: "د.ب", tr: "BHD" },
+    { code: "OMR", ar: "ر.ع", tr: "OMR" },
+    { code: "JOD", ar: "د.أ", tr: "JOD" },
+    { code: "IQD", ar: "د.ع", tr: "IQD" },
+    { code: "LYD", ar: "د.ل", tr: "LYD" },
+    { code: "MAD", ar: "د.م", tr: "MAD" },
+    { code: "DZD", ar: "د.ج", tr: "DZD" },
+    { code: "TND", ar: "د.ت", tr: "TND" },
+    { code: "USD", ar: "$", tr: "$" },
+    { code: "EUR", ar: "€", tr: "€" },
+    { code: "GBP", ar: "£", tr: "£" },
+  ];
+  var curState = { code: "EGP", symbol: "" };
+  var curUid = "demo";
+  function currencyDefaultSymbol(code) {
+    var lang = I18N.getLang();
+    for (var i = 0; i < CURRENCIES.length; i++) {
+      if (CURRENCIES[i].code === code) return CURRENCIES[i][lang] || CURRENCIES[i].ar;
+    }
+    return code;
+  }
+  function currencyLabel() {
+    return (curState.symbol && curState.symbol.trim()) || currencyDefaultSymbol(curState.code);
+  }
+  function applyCurrency(c) {
+    curState = { code: (c && c.code) || "EGP", symbol: (c && c.symbol) || "" };
+    I18N.setCurrencyLabel(currencyLabel());
+  }
+  function readCurrencyRow(rows) {
+    var r = rows && rows[0];
+    return { code: (r && r.currency) || "EGP", symbol: (r && r.currency_symbol) || "" };
+  }
+  // أول مرة على الجهاز بنستنى القراءة مرة واحدة؛ بعد كده بنقرأ من الكاش فورًا ونحدّثه في الخلفية
+  async function loadCurrency(uid) {
+    curUid = uid || "demo";
+    var key = "ws_cur_" + curUid, cached = null;
+    try { cached = JSON.parse(localStorage.getItem(key)); } catch (e) {}
+    function store(c) { try { localStorage.setItem(key, JSON.stringify(c)); } catch (e) {} }
+    if (cached && cached.code) {
+      applyCurrency(cached);
+      var last = 0;
+      try { last = Number(sessionStorage.getItem("ws_cur_t") || 0); } catch (e) {}
+      if (Date.now() - last > 600000) {  // تحديث خلفي كل 10 دقايق (لو اتغيّرت من جهاز تاني بتظهر في الصفحة اللي بعدها)
+        try { sessionStorage.setItem("ws_cur_t", String(Date.now())); } catch (e) {}
+        DB.list("shop_profile").then(function (rows) { store(readCurrencyRow(rows)); }, function () {});
+      }
+      return;
+    }
+    try {
+      var c = readCurrencyRow(await DB.list("shop_profile"));
+      store(c);
+      applyCurrency(c);
+      try { sessionStorage.setItem("ws_cur_t", String(Date.now())); } catch (e) {}  // لسه مقروءة طازة: مفيش تحديث خلفي دلوقتي
+    } catch (e) {
+      applyCurrency({ code: "EGP", symbol: "" });
+    }
+  }
+  // بيتنادى من الإعدادات بعد الحفظ
+  function setCurrency(code, symbol) {
+    var c = { code: code || "EGP", symbol: symbol || "" };
+    try { localStorage.setItem("ws_cur_" + curUid, JSON.stringify(c)); } catch (e) {}
+    applyCurrency(c);
   }
   function money(n) {
-    var cur = (window.I18N && I18N.t("currency")) || "ج.م";
-    return new Intl.NumberFormat(locale(), { maximumFractionDigits: 2 }).format(n || 0) + " " + cur;
+    return new Intl.NumberFormat(locale(), { maximumFractionDigits: 2 }).format(n || 0) + " " + currencyLabel();
+  }
+
+  // ---------- ترقيم الصفحات (client-side: بيقلّل رسم الـ DOM في القوائم الطويلة) ----------
+  // الاستخدام في أي صفحة:
+  //   var pg = UI.makePager();  UI.bindPager($("list"), pg, renderList);
+  //   في renderList:  var rows = UI.pageSlice(pg, shown, filterSignature);  ...  + UI.pagerBar(pg, shown.length)
+  var PAGE_SIZES = [25, 50, 100];
+  function makePager(size) { return { page: 1, size: size || 25, sig: "" }; }
+  function pageSlice(p, arr, sig) {
+    sig = String(sig == null ? "" : sig);
+    if (p.sig !== sig) { p.sig = sig; p.page = 1; }  // فلتر/بحث اتغيّر → نرجع لأول صفحة
+    var pages = Math.max(1, Math.ceil(arr.length / p.size));
+    if (p.page > pages) p.page = pages;
+    if (p.page < 1) p.page = 1;
+    return arr.slice((p.page - 1) * p.size, p.page * p.size);
+  }
+  function pagerBar(p, total) {
+    if (total <= PAGE_SIZES[0]) return "";  // أقل من صفحة واحدة: مفيش داعي للشريط
+    var pages = Math.max(1, Math.ceil(total / p.size));
+    var from = (p.page - 1) * p.size + 1, to = Math.min(total, p.page * p.size);
+    return html`<div class="pager no-print">
+      <span class="pager-info">${I18N.t("pg_range", { from: from, to: to, total: total })}</span>
+      <div class="pager-ctl">
+        <label class="pager-size">${I18N.t("pg_size")}
+          <select data-pg-size>${PAGE_SIZES.map(function (n) { return option(n, n, n === p.size); })}</select>
+        </label>
+        <button type="button" class="small secondary" data-pg="prev" ${p.page <= 1 ? "disabled" : ""}>${I18N.t("pg_prev")}</button>
+        <span class="pager-page">${I18N.t("pg_page", { p: p.page, n: pages })}</span>
+        <button type="button" class="small secondary" data-pg="next" ${p.page >= pages ? "disabled" : ""}>${I18N.t("pg_next")}</button>
+      </div>
+    </div>`;
+  }
+  function bindPager(container, p, rerender) {
+    container.addEventListener("click", function (e) {
+      var b = e.target.closest("button[data-pg]");
+      if (!b || b.disabled) return;
+      p.page += b.getAttribute("data-pg") === "next" ? 1 : -1;
+      rerender();
+      var r = container.getBoundingClientRect();
+      if (r.top < 0) container.scrollIntoView({ block: "start" });
+    });
+    container.addEventListener("change", function (e) {
+      var sel = e.target.closest("select[data-pg-size]");
+      if (!sel) return;
+      p.size = Number(sel.value) || 25;
+      p.page = 1;
+      rerender();
+    });
   }
   function dateAr(s) {
     return new Date(s).toLocaleDateString(locale());
@@ -49,38 +168,17 @@
     return new Date(iso).toDateString() === new Date().toDateString();
   }
 
-  var STATUSES = [
-    { key: "received", label: "استلام" },
-    { key: "inspecting", label: "فحص" },
-    { key: "awaiting_approval", label: "انتظار موافقة العميل" },
-    { key: "approved", label: "معتمد من العميل" },
-    { key: "in_progress", label: "تحت التنفيذ" },
-    { key: "waiting_parts", label: "بانتظار قطعة غيار" },
-    { key: "testing", label: "اختبار" },
-    { key: "ready", label: "جاهزة" },
-    { key: "delivered", label: "تم التسليم" },
-    { key: "cancelled", label: "ملغي" },
-  ];
-  var PRIORITIES = [
-    { key: "low", label: "منخفضة" },
-    { key: "normal", label: "عادية" },
-    { key: "high", label: "عالية" },
-    { key: "critical", label: "حرجة" },
-  ];
-  var INV_STATUSES = [
-    { key: "draft", label: "مسودة" },
-    { key: "issued", label: "صادرة" },
-    { key: "partially_paid", label: "مدفوعة جزئياً" },
-    { key: "paid", label: "مدفوعة" },
-    { key: "cancelled", label: "ملغاة" },
-  ];
-  var PAY_METHODS = [
-    { key: "cash", label: "نقدي" },
-    { key: "card", label: "بطاقة" },
-    { key: "instapay", label: "إنستاباي" },
-    { key: "wallet", label: "محفظة (فودافون كاش)" },
-    { key: "transfer", label: "تحويل بنكي" },
-  ];
+  // كل عنصر فيه label كـ getter: بيرجّع النص بلغة الواجهة الحالية (عربي/تركي)
+  // فأي صفحة بتعمل list.map(x => x.label) بتتترجم لوحدها من غير ما نعدّل فيها.
+  function mk(keys, prefix) {
+    return keys.map(function (k) {
+      return { key: k, get label() { return I18N.t(prefix + k); } };
+    });
+  }
+  var STATUSES = mk(["received", "inspecting", "awaiting_approval", "approved", "in_progress", "waiting_parts", "testing", "ready", "delivered", "cancelled"], "status_");
+  var PRIORITIES = mk(["low", "normal", "high", "critical"], "prio_");
+  var INV_STATUSES = mk(["draft", "issued", "partially_paid", "paid", "cancelled"], "inv_st_");
+  var PAY_METHODS = mk(["cash", "card", "instapay", "wallet", "transfer"], "pay_");
 
   function labelOf(list, key) {
     var f = list.filter(function (x) { return x.key === key; })[0];
@@ -106,7 +204,7 @@
     return !!o.expected_delivery_at && UI_isOpen(o.status) && new Date(o.expected_delivery_at).getTime() < Date.now();
   }
   function UI_isOpen(s) { return s !== "delivered" && s !== "cancelled"; }
-  function invStatusLabel(k) { return labelOf(INV_STATUSES, k); }
+  function invStatusLabel(k) { return labelOf(INV_STATUSES, k); }  // label getter بيترجم لوحده
   var PAY_I18N = { cash: "pay_cash", card: "pay_card", instapay: "pay_instapay", wallet: "pay_wallet", transfer: "pay_transfer" };
   function methodLabel(k) {
     if (window.I18N && PAY_I18N[k]) return I18N.t(PAY_I18N[k]);
@@ -123,6 +221,16 @@
 
   function option(value, label, selected) {
     return html`<option value="${value}" ${selected ? "selected" : ""}>${label}</option>`;
+  }
+
+  // قائمة <option> لقيم محايدة اللغة (fuel / trans / obs_cat / tax_type):
+  // value = الرمز الثابت، والقيم القديمة المحفوظة بالعربي أو التركي بتتعرّف وتتحدد صح.
+  function enumOptions(group, stored, withEmpty) {
+    var code = I18N.enumCode(group, stored);
+    var opts = withEmpty ? [{ value: "", label: "—" }] : [];
+    opts = opts.concat(I18N.enumList(group));
+    if (stored && !code) opts.push({ value: stored, label: stored });  // نص حر قديم: منضيّعوش
+    return opts.map(function (o) { return option(o.value, o.label, o.value === (code || stored || "")); });
   }
 
   // ---------- رسائل ----------
@@ -197,9 +305,11 @@
       group: "المالية",
       items: [
         { key: "invoices", href: "invoices.html", label: "الفواتير", icon: "invoice" },
+        { key: "treasury", href: "treasury.html", label: "الخزنة", icon: "payments" },
         { key: "payments", href: "payments.html", label: "المدفوعات", icon: "payments" },
         { key: "income", href: "income.html", label: "الدخل", icon: "payments" },
         { key: "expenses", href: "expenses.html", label: "المصروفات", icon: "payments" },
+        { key: "payroll", href: "payroll.html", label: "المرتبات", icon: "customers" },
       ],
     },
     { group: "التقارير", items: [{ key: "reports", href: "reports.html", label: "التقارير", icon: "reports" }] },
@@ -227,6 +337,8 @@
     "gate-pass": ["تصاريح الخروج", "دخول وخروج المركبات من الورشة"],
     "part-sales": ["بيع قطع غيار", "بيع مباشر لقطع الغيار بدون أمر شغل"],
     income: ["الدخل", "سجل الإيرادات الأخرى والمدفوعات"],
+    treasury: ["الخزنة", "الرصيد الحالي وكل حركات الدخول والخروج"],
+    payroll: ["المرتبات", "مرتبات العمال والصرف والمتبقي لكل عامل"],
     reports: ["التقارير", "الإيرادات والأداء"],
     settings: ["الإعدادات", "الفنيون وبيانات الورشة"],
     compliance: ["الضرائب والامتثال", "ضرائب ورخص المركبات"],
@@ -237,13 +349,7 @@
     "email-templates": ["قوالب الإيميل", "نصوص الإشعارات للعملاء"],
     admin: ["الإدارة", "كل الورش المسجّلة في المنصة"],
   };
-  var QUOTE_STATUSES = [
-    { key: "draft", label: "مسودة" },
-    { key: "sent", label: "مرسل" },
-    { key: "accepted", label: "مقبول" },
-    { key: "rejected", label: "مرفوض" },
-    { key: "converted", label: "تحوّل لأمر شغل" },
-  ];
+  var QUOTE_STATUSES = mk(["draft", "sent", "accepted", "rejected", "converted"], "quote_");
   var QUOTE_I18N = {
     draft: "quote_draft", sent: "quote_sent", accepted: "quote_accepted",
     rejected: "quote_rejected", converted: "quote_converted"
@@ -276,7 +382,7 @@
       customers: "nav_customers", vehicles: "nav_vehicles", compliance: "nav_compliance",
       inventory: "nav_inventory", suppliers: "nav_suppliers", purchases: "nav_purchases",
       "part-sales": "nav_part_sales", invoices: "nav_invoices", payments: "nav_payments",
-      income: "nav_income", expenses: "nav_expenses", reports: "nav_reports",
+      income: "nav_income", expenses: "nav_expenses", treasury: "nav_treasury", payroll: "nav_payroll", reports: "nav_reports",
       settings: "nav_settings", "tax-rates": "nav_tax_rates", "email-templates": "nav_email_templates",
       "custom-fields": "nav_custom_fields", setup: "nav_setup"
     };
@@ -293,7 +399,7 @@
       suppliers: ["t_suppliers","d_suppliers"], invoices: ["t_invoices","d_invoices"],
       payments: ["t_payments","d_payments"], expenses: ["t_expenses","d_expenses"],
       "gate-pass": ["t_gate_pass","d_gate_pass"], "part-sales": ["t_part_sales","d_part_sales"],
-      income: ["t_income","d_income"], reports: ["t_reports","d_reports"], settings: ["t_settings","d_settings"],
+      income: ["t_income","d_income"], treasury: ["t_treasury","d_treasury"], payroll: ["t_payroll","d_payroll"], reports: ["t_reports","d_reports"], settings: ["t_settings","d_settings"],
       compliance: ["t_compliance","d_compliance"], "custom-fields": ["t_custom_fields","d_custom_fields"],
       setup: ["t_setup","d_setup"], purchases: ["t_purchases","d_purchases"],
       "tax-rates": ["t_tax_rates","d_tax_rates"], "email-templates": ["t_email_templates","d_email_templates"],
@@ -325,24 +431,24 @@
           <div class="lang-box">
             <label class="lang-label">${I18N.t("language")}</label>
             <select id="sidebar-lang" class="lang-select">
-              <option value="ar" ${I18N.getLang() === "ar" ? "selected" : ""}>${I18N.t("arabic")}</option>
-              <option value="tr" ${I18N.getLang() === "tr" ? "selected" : ""}>${I18N.t("turkish")}</option>
+              <option value="ar" ${I18N.getLang() === "ar" ? "selected" : ""}>${I18N.t("lang_native_ar")}</option>
+              <option value="tr" ${I18N.getLang() === "tr" ? "selected" : ""}>${I18N.t("lang_native_tr")}</option>
             </select>
           </div>
           ${DB.demoMode ? "" : html`<button class="signout" data-action="signout">${I18N.t("signout")}</button>`}
         </aside>
         <div class="main">
           <header class="topbar no-print">
-            <button class="menu-btn" data-action="toggle-nav" aria-label="القائمة">☰</button>
+            <button class="menu-btn" data-action="toggle-nav" aria-label="${I18N.t("menu_label")}">☰</button>
             <div class="crumbs"><a href="index.html">${I18N.t("home")}</a><i>›</i><b>${title[0]}</b></div>
-            <a class="btn primary" href="work-order-new.html">${I18N.t("receive_vehicle")}</a>
+            <a class="btn primary btn-receive" href="work-order-new.html">${I18N.t("receive_vehicle")}</a>
           </header>
           <main class="content">
             ${DB.demoMode
               ? html`<div class="notice no-print">${I18N.t("demo_notice")}
                   <a class="link" href="#" data-action="reset-demo">${I18N.t("demo_reset")}</a></div>`
               : ""}
-            <div id="page"><div class="empty page-skel">جارٍ التحميل…</div></div>
+            <div id="page"><div class="empty page-skel">${I18N.t("loading")}</div></div>
           </main>
         </div>
       </div>`;
@@ -373,35 +479,7 @@
     try { sb.scrollTop = parseInt(sessionStorage.getItem("ws_sb_scroll") || "0", 10); } catch (e) {}
     window.addEventListener("pagehide", function () { try { sessionStorage.setItem("ws_sb_scroll", String(sb.scrollTop)); } catch (e) {} });
 
-    // التحقق الحقيقي بعد ما الهيكل ظهر (الصفحة هتفضل شغالة لو تمام)
-    if (needCheck) {
-      var session = await DB.auth.getSession();
-      if (!session) { location.replace("login.html"); return null; }
-    }
-    var realAdmin = await DB.isAdmin();
-    try { sessionStorage.setItem("ws_admin", realAdmin ? "1" : "0"); } catch (e) {}
-    if (opts.adminOnly && !realAdmin) { location.replace("index.html"); return null; }
-    // لو حالة الأدمن اتغيّرت: نحدّث الواجهة من غير reload كامل (ثبات التنقل)
-    if (realAdmin !== admin) {
-      admin = realAdmin;
-      var plat = app.querySelector(".sidebar .nav-group");
-      // إعادة بناء رابط الأدمن فقط لو لزم
-      var side = app.querySelector(".sidebar");
-      if (side && realAdmin && !side.querySelector('a.nav[href="admin.html"]')) {
-        var langBox = side.querySelector(".lang-box");
-        var grp = document.createElement("div");
-        grp.className = "nav-group";
-        grp.textContent = I18N.t("platform");
-        var a = document.createElement("a");
-        a.className = "nav" + (active === "admin" ? " active" : "");
-        a.href = "admin.html";
-        a.innerHTML = '<span class="ic"></span>' + I18N.t("admin");
-        if (langBox) {
-          side.insertBefore(grp, langBox);
-          side.insertBefore(a, langBox);
-        }
-      }
-    }
+    // ---- مستمعات الهيكل: بتتربط فورًا (قبل أي انتظار للشبكة) ----
     var langSel = document.getElementById("sidebar-lang");
     if (langSel) {
       langSel.addEventListener("change", function () {
@@ -410,7 +488,7 @@
         location.reload();
       });
     }
-    // Prefetch صفحات التنقل عند المرور بالماوس → انتقال أسرع وأثبت إحساسًا
+    // Prefetch صفحات التنقل عند المرور بالماوس/اللمس → انتقال أسرع
     var navLinks = app.querySelectorAll(".sidebar a.nav[href], .topbar a.btn[href]");
     var prefetched = {};
     function prefetch(href) {
@@ -428,13 +506,69 @@
       })(navLinks[ni]);
     }
     // تمييز الرابط النشط فور الضغط قبل ما الصفحة تتحمّل (ثبات بصري)
-    app.querySelector(".sidebar") && app.querySelector(".sidebar").addEventListener("click", function (e) {
+    sb.addEventListener("click", function (e) {
       var a = e.target.closest("a.nav");
       if (!a) return;
       var all = app.querySelectorAll(".sidebar a.nav");
       for (var i = 0; i < all.length; i++) all[i].classList.remove("active");
       a.classList.add("active");
     });
+
+    // ---- التحقق من الجلسة: لازم قبل ما الصفحة تجيب بياناتها (الجلسة محلية وسريعة) ----
+    if (needCheck) {
+      var session = null;
+      try {
+        session = await DB.auth.getSession();
+      } catch (e) {
+        // فشل تحميل مكتبة Supabase أو الشبكة: نعرض رسالة بدل ما الصفحة تفضل "جارٍ التحميل"
+        document.getElementById("page").innerHTML = html`<div class="card login-card error">${I18N.t("err_lib_load")}</div>`;
+        return null;
+      }
+      if (!session) { location.replace("login.html"); return null; }
+      await loadCurrency(session.user && session.user.id);
+    } else {
+      await loadCurrency("demo");
+    }
+
+    // ---- صلاحية الأدمن: ----
+    // صفحة الإدارة بس هي اللي لازم تستنى التأكيد (والداتابيز نفسها بتحمي الدوال).
+    // باقي الصفحات: بنعتمد على القيمة المخزّنة في الجلسة ونأكّدها في الخلفية من غير ما نعطّل الصفحة.
+    function showAdminLink() {
+      var side = app.querySelector(".sidebar");
+      if (!side || side.querySelector('a.nav[href="admin.html"]')) return;
+      var langBox = side.querySelector(".lang-box");
+      if (!langBox) return;
+      var grp = document.createElement("div");
+      grp.className = "nav-group";
+      grp.textContent = I18N.t("platform");
+      var a = document.createElement("a");
+      a.className = "nav" + (active === "admin" ? " active" : "");
+      a.href = "admin.html";
+      a.innerHTML = icon("admin");  // SVG ثابت من عندنا
+      a.appendChild(document.createTextNode(I18N.t("admin")));
+      side.insertBefore(grp, langBox);
+      side.insertBefore(a, langBox);
+    }
+    function hideAdminLink() {
+      var link = app.querySelector('.sidebar a.nav[href="admin.html"]');
+      if (!link) return;
+      var prev = link.previousElementSibling;
+      if (prev && prev.classList.contains("nav-group")) prev.remove();
+      link.remove();
+    }
+    function applyAdmin(isAdm) {
+      try { sessionStorage.setItem("ws_admin", isAdm ? "1" : "0"); } catch (e) {}
+      if (isAdm) showAdminLink(); else hideAdminLink();
+    }
+    if (opts.adminOnly) {
+      var realAdmin = await DB.isAdmin();
+      applyAdmin(realAdmin);
+      if (!realAdmin) { location.replace("index.html"); return null; }
+    } else if (DB.demoMode) {
+      applyAdmin(true);
+    } else {
+      DB.isAdmin().then(applyAdmin, function () {});
+    }
     return document.getElementById("page");
   }
 
@@ -481,6 +615,7 @@
     money: money,
     dateAr: dateAr,
     isToday: isToday,
+    locale: locale,
     t: function (k, p) { return window.I18N ? I18N.t(k, p) : k; },
     STATUSES: STATUSES,
     PAY_METHODS: PAY_METHODS,
@@ -496,6 +631,16 @@
     isOpen: isOpen,
     byId: byId,
     option: option,
+    enumOptions: enumOptions,
+    CURRENCIES: CURRENCIES,
+    currencyDefaultSymbol: currencyDefaultSymbol,
+    currencyLabel: currencyLabel,
+    getCurrency: function () { return { code: curState.code, symbol: curState.symbol }; },
+    setCurrency: setCurrency,
+    makePager: makePager,
+    pageSlice: pageSlice,
+    pagerBar: pagerBar,
+    bindPager: bindPager,
     flash: flash,
     toast: toast,
     guard: guard,

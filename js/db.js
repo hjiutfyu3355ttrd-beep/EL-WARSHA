@@ -31,18 +31,19 @@
     if (!configured) return Promise.resolve(null);
     if (client) return Promise.resolve(client);
     if (clientReady) return clientReady;
-    clientReady = (window.supabase && window.supabase.createClient
+    // المكتبة متثبّتة محليًا (vendor/) وبيبدأ تحميلها js/boot.js بالتوازي مع باقي الملفات
+    var libReady = window.supabase && window.supabase.createClient
       ? Promise.resolve()
-      : loadScript("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js")
-    ).then(function () {
+      : (window.__sbReady || loadScript("vendor/supabase-2.118.0.js"));
+    clientReady = libReady.then(function () {
       if (!(window.supabase && window.supabase.createClient)) {
-        fatal = "تعذّر تحميل مكتبة Supabase. اتأكد من اتصال الإنترنت وأعد تحميل الصفحة.";
+        fatal = I18N.t("err_lib_load");
         throw new Error(fatal);
       }
       client = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY);
       return client;
     }).catch(function (e) {
-      fatal = fatal || (e && e.message) || "تعذّر تحميل مكتبة Supabase.";
+      fatal = fatal || I18N.t("err_lib_load");
       throw e;
     });
     return clientReady;
@@ -138,6 +139,18 @@
       { id: "ex1", label: "إيجار الورشة", amount: 5000, notes: "شهر أكتوبر", created_at: ago(5) },
       { id: "ex2", label: "كهرباء", amount: 1200, notes: "", created_at: ago(3) },
       { id: "ex3", label: "أدوات صيانة", amount: 850, notes: "مفاتيح وعدد", created_at: ago(1) },
+    ],
+    // الخزنة والمرتبات (Demo): رصيد افتتاحي + عاملين + صرف جزئي. المستحقات بتتولّد تلقائي.
+    treasury_entries: [
+      { id: "te1", kind: "deposit", amount: 50000, note: "رصيد افتتاحي", entry_date: ago(30).slice(0, 10), created_at: ago(30) },
+    ],
+    employees: [
+      { id: "em1", name: "أحمد السيد", role: "ميكانيكي", phone: "", salary_amount: 10000, salary_period: "week", start_date: ago(22).slice(0, 10), end_date: null, notes: "", created_at: ago(22) },
+      { id: "em2", name: "حسن علي", role: "كهربائي", phone: "", salary_amount: 6000, salary_period: "week", start_date: ago(22).slice(0, 10), end_date: null, notes: "", created_at: ago(22) },
+    ],
+    salary_accruals: [],
+    salary_payments: [
+      { id: "sp1", employee_id: "em1", amount: 8000, paid_at: ago(15).slice(0, 10), note: "", created_at: ago(15) },
     ],
     gate_passes: [
       { id: "gp1", number: 3001, work_order_id: "w1", vehicle_id: "v1", direction: "in", notes: "استلام للصيانة", created_at: ago(1) },
@@ -254,12 +267,34 @@
   } catch (e) {}
 
   // ---------- عمليات الجداول ----------
-  async function list(table) {
+  // جدول السيارات فيه أعمدة صور (Data-URL ممكن توصل 2.5MB للصورة): مش بنجيبها مع كل قائمة.
+  // صفحة السيارات بس بتطلبها بـ DB.list("vehicles", { full: true }).
+  var LIGHT_COLS = {
+    vehicles: "id,shop_id,customer_id,plate,make,model,year,odometer,created_at,chassis_no,color,fuel,transmission,engine_no,gearbox_no,notes,vehicle_type,extra,description"
+  };
+  async function list(table, opts) {
     if (demoMode) return readLocal(table);
     await ensureClient();
-    var res = await client.from(table).select("*").order("created_at", { ascending: false });
-    if (res.error) throw new Error(res.error.message);
-    return res.data || [];
+    var cols = (opts && opts.full) ? "*" : (LIGHT_COLS[table] || "*");
+    // PostgREST بيقصّ أي استعلام عند 1000 صف (الافتراضي). من غير الحلقة دي، أي جدول يعدّي 1000 صف
+    // كان بيتقطع بصمت وإجماليات اللوحة/التقارير بتطلع غلط. بنقرأ العدد الكلي ونكمّل على دفعات.
+    var PAGE = 1000, all = [], from = 0, total = null;
+    for (;;) {
+      var res = await client
+        .from(table)
+        .select(cols, { count: total === null ? "exact" : undefined })
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: true })  // ترتيب ثابت عشان الدفعات ما تتكررش ولا تفوّت صفوف
+        .range(from, from + PAGE - 1);
+      if (res.error) throw new Error(res.error.message);
+      var chunk = res.data || [];
+      if (total === null) total = typeof res.count === "number" ? res.count : null;
+      all = all.concat(chunk);
+      from += chunk.length;
+      // نوقف: دفعة فاضية، أو وصلنا للعدد الكلي، أو (لو العدد مش معروف) الدفعة أصغر من الصفحة
+      if (chunk.length === 0 || (total !== null && all.length >= total) || (total === null && chunk.length < PAGE)) break;
+    }
+    return all;
   }
 
   async function insert(table, row) {
@@ -321,7 +356,7 @@
   }
   function phoneToEmail(input) {
     var p = normalizePhone(input);
-    if (p.length < 8 || p.length > 15) throw new Error("رقم التليفون غير صحيح");
+    if (p.length < 8 || p.length > 15) throw new Error(I18N.t("err_bad_phone"));
     return p + PHONE_DOMAIN;
   }
   // للعرض فقط (صفحة الأدمن): يرجّع الرقم من الإيميل الداخلي
@@ -342,7 +377,7 @@
     async signIn(phone, password) {
       await ensureClient();
       var res = await client.auth.signInWithPassword({ email: phoneToEmail(phone), password: password });
-      if (res.error) throw new Error("رقم التليفون أو كلمة المرور غير صحيحة");
+      if (res.error) throw new Error(I18N.t("err_login_failed"));
     },
     // اسم الورشة بيتبعت في metadata، وtrigger في الداتابيز بينشئ الورشة وعضوية المالك تلقائياً
     async signUp(phone, password, shopName) {
@@ -353,7 +388,7 @@
         options: { data: { shop_name: shopName } },
       });
       if (res.error) {
-        if (/already|registered/i.test(res.error.message)) throw new Error("الرقم ده مسجّل قبل كده، سجّل دخول");
+        if (/already|registered/i.test(res.error.message)) throw new Error(I18N.t("err_phone_registered"));
         throw new Error(res.error.message);
       }
       return res.data.session; // لو null يبقى "Confirm email" لسه مفعّل في Supabase
@@ -364,6 +399,45 @@
       if (client) await client.auth.signOut();
     },
   };
+
+  // ---------- الخزنة والمرتبات ----------
+  // الحقيقي: دوال SQL (treasury_totals / sync_salary_accruals). الـ Demo: نفس المنطق من js/treasury.js.
+  async function treasuryTotals() {
+    if (demoMode) {
+      return window.Treasury.totals({
+        payments: readLocal("payments"), income: readLocal("income"), expenses: readLocal("expenses"),
+        treasury_entries: readLocal("treasury_entries"), salary_payments: readLocal("salary_payments"),
+        employees: readLocal("employees"), salary_accruals: readLocal("salary_accruals"),
+      });
+    }
+    await ensureClient();
+    var res = await client.rpc("treasury_totals");
+    if (res.error) throw new Error(res.error.message);
+    var r = (res.data && res.data[0]) || {};
+    return {
+      total_in: Number(r.total_in) || 0, total_out: Number(r.total_out) || 0,
+      balance: Number(r.balance) || 0, salary_owed: Number(r.salary_owed) || 0,
+    };
+  }
+
+  // بيولّد مستحقات الفترات الناقصة. آمن يتنادى كل مرة (idempotent). لو الورشة منتهية الاشتراك (قراءة فقط) بيتجاهل الخطأ.
+  async function syncSalaryAccruals(todayStr) {
+    try {
+      if (demoMode) {
+        var rows = window.Treasury.missingAccruals(readLocal("employees"), readLocal("salary_accruals"), todayStr);
+        rows.forEach(function (r) { insertLocalRaw("salary_accruals", r); });
+        return rows.length;
+      }
+      await ensureClient();
+      var res = await client.rpc("sync_salary_accruals", { p_today: todayStr });
+      return res.error ? 0 : res.data || 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+  function insertLocalRaw(table, row) {
+    writeLocal(table, readLocal(table).concat([Object.assign({ id: uid(), created_at: new Date().toISOString() }, row)]));
+  }
 
   // ---------- الإدارة (الأدمن) ----------
   // الصلاحية بتتأكد منها قاعدة البيانات نفسها (دوال RPC): الواجهة لوحدها مش حماية.
@@ -404,6 +478,8 @@
     remove: remove,
     auth: auth,
     isAdmin: isAdmin,
+    treasuryTotals: treasuryTotals,
+    syncSalaryAccruals: syncSalaryAccruals,
     adminListShops: adminListShops,
     adminUpdateShop: adminUpdateShop,
     resetDemo: resetDemo,

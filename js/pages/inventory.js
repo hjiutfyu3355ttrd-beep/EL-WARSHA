@@ -29,23 +29,27 @@
 
   var $ = function (id) { return document.getElementById(id); };
 
+  var pg = UI.makePager();
+  UI.bindPager(document.getElementById("list"), pg, render);
   function render() {
     var q = $("q").value.trim().toLowerCase();
     var shown = parts.filter(function (p) { return (p.name + " " + p.sku).toLowerCase().indexOf(q) !== -1; });
     var lowCount = parts.filter(function (p) { return p.qty <= p.min_qty; }).length;
 
-    $("low").innerHTML = lowCount > 0 ? html`<div class="notice">فيه ${lowCount} صنف وصل ل${I18N.t("inv_min")} أو أقل.</div>` : "";
+    $("low").innerHTML = lowCount > 0 ? html`<div class="notice">${I18N.t("inv_low_notice", { n: lowCount })}</div>` : "";
 
+    var rows = UI.pageSlice(pg, shown, q);
+    var bar = UI.pagerBar(pg, shown.length);
     $("list").innerHTML = html`
       <table>
-        <thead><tr><th>القطعة</th><th>الكود</th><th>الكمية</th><th>${I18N.t("inv_min")}</th><th>الشراء</th><th>البيع</th><th></th></tr></thead>
+        <thead><tr><th>${I18N.t("part")}</th><th>${I18N.t("sku")}</th><th>${I18N.t("qty")}</th><th>${I18N.t("inv_min")}</th><th>${I18N.t("inv_buy")}</th><th>${I18N.t("inv_sell")}</th><th></th></tr></thead>
         <tbody>
           ${shown.length === 0
             ? html`<tr><td colspan="7" class="empty">${I18N.t("inv_empty")}</td></tr>`
-            : shown.map(function (p) {
+            : rows.map(function (p) {
                 return html`<tr>
                   <td>${p.name}</td>
-                  <td dir="ltr" style="text-align:right">${p.sku || "—"}</td>
+                  <td dir="ltr" style="text-align:start">${p.sku || "—"}</td>
                   <td class="${p.qty <= p.min_qty ? "low" : ""}">${p.qty}</td>
                   <td>${p.min_qty}</td>
                   <td>${UI.money(p.cost)}</td>
@@ -58,7 +62,7 @@
                 </tr>`;
               })}
         </tbody>
-      </table>`;
+      </table>${bar}`;
   }
 
   async function load() {

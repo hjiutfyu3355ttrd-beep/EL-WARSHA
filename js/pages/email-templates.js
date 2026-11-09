@@ -39,7 +39,7 @@
         ? html`<div class="empty">${I18N.t("empty_templates")}</div>`
         : templates.map(function (t) {
             return html`<div class="recent" style="cursor:pointer" data-action="edit" data-id="${t.id}">
-              <div><b>${t.name}</b><small>${t.key}</small></div>
+              <div><b>${I18N.tplName(t)}</b><small>${t.key}</small></div>
               <span class="chip">${editId === t.id ? I18N.t("opened") : I18N.t("edit")}</span>
             </div>`;
           })}`;
@@ -49,7 +49,7 @@
     var t = templates.filter(function (x) { return x.id === id; })[0];
     if (!t) return;
     editId = id;
-    $("edit-title").textContent = t.name;
+    $("edit-title").textContent = I18N.tplName(t);
     $("et-form").style.display = "";
     $("et-name").value = t.name;
     $("et-subject").value = t.subject;

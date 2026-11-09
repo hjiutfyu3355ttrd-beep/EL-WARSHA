@@ -120,7 +120,7 @@
                 var stLabel = ins.status === "pass" ? I18N.t("pass") : ins.status === "fail" ? I18N.t("needs_service") : I18N.t("na");
                 var stClass = ins.status === "pass" ? "ready" : ins.status === "fail" ? "cancelled" : "draft";
                 return html`<tr>
-                  <td>${pt ? pt.category : "—"}</td>
+                  <td>${pt ? I18N.enumLabel("obs_cat", pt.category) : "—"}</td>
                   <td>${pt ? pt.name : "—"}</td>
                   <td><span class="badge ${stClass}">${stLabel}</span></td>
                   <td>${ins.notes || "—"}</td>
@@ -131,7 +131,7 @@
         </tbody>
       </table>`;
     $("insp-point").innerHTML = S.obsPoints.map(function (p) {
-      return UI.option(p.id, p.category + " — " + p.name);
+      return UI.option(p.id, I18N.enumLabel("obs_cat", p.category) + " — " + p.name);
     }).join("") || '<option value="">${I18N.t("no_obs_points")}</option>';
   }
 

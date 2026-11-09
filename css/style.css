@@ -2,9 +2,9 @@
    نظام الورشة — تصميم احترافي على طراز Garage Master
    سايدبار برتقالي غامق، بطاقات نظيفة، RTL بخط Cairo
    ============================================================ */
-@font-face { font-family: "Cairo"; font-weight: 400; src: url("../assets/fonts/Cairo-Regular.ttf") format("truetype"); font-display: swap; }
-@font-face { font-family: "Cairo"; font-weight: 600; src: url("../assets/fonts/Cairo-SemiBold.ttf") format("truetype"); font-display: swap; }
-@font-face { font-family: "Cairo"; font-weight: 700; src: url("../assets/fonts/Cairo-Bold.ttf") format("truetype"); font-display: swap; }
+@font-face { font-family: "Cairo"; font-weight: 400; src: url("../assets/fonts/Cairo-Regular.woff2") format("woff2"); font-display: swap; }
+@font-face { font-family: "Cairo"; font-weight: 600; src: url("../assets/fonts/Cairo-SemiBold.woff2") format("woff2"); font-display: swap; }
+@font-face { font-family: "Cairo"; font-weight: 700; src: url("../assets/fonts/Cairo-Bold.woff2") format("woff2"); font-display: swap; }
 
 :root {
   --primary: #f08a24;
@@ -151,11 +151,11 @@ h3 { font-size: 15px; margin-bottom: 10px; }
 .card.stat { position: relative; padding: 18px 20px 16px; overflow: hidden; }
 .card.stat .label { color: var(--text-2); font-weight: 600; }
 .card.stat .value { color: var(--text); margin-top: 6px; font-size: 26px; }
-.card.stat::after { content: ""; position: absolute; left: 16px; top: 16px; width: 36px; height: 36px; border-radius: 10px; background: var(--accent, var(--primary)); opacity: 0.12; }
+.card.stat::after { content: ""; position: absolute; inset-inline-end: 16px; top: 16px; width: 36px; height: 36px; border-radius: 10px; background: var(--accent, var(--primary)); opacity: 0.12; }
 .card.stat:has(.ico)::after { display: none; }
 .stat .ico {
   position: absolute;
-  left: 16px;
+  inset-inline-end: 16px;
   top: 16px;
   width: 36px;
   height: 36px;
@@ -184,7 +184,7 @@ h3 { font-size: 15px; margin-bottom: 10px; }
 }
 table { width: 100%; border-collapse: collapse; background: var(--surface); }
 .table-wrap table { border: 0; }
-th, td { text-align: right; padding: 12px 16px; border-bottom: 1px solid #eff1f4; }
+th, td { text-align: start; padding: 12px 16px; border-bottom: 1px solid #eff1f4; }
 th { background: #f9fafb; font-size: 12.5px; font-weight: 700; color: var(--text-2); white-space: nowrap; }
 tbody tr:last-child td { border-bottom: 0; }
 .clickable tbody tr { cursor: pointer; }
@@ -318,6 +318,9 @@ small { color: var(--muted); }
     transform: translateX(100%);
     transition: transform 0.22s ease;
   }
+  /* التركي (LTR): القائمة تنزلق من الشمال */
+  [dir="ltr"] .sidebar { inset: 0 auto 0 0; transform: translateX(-100%); }
+  [dir="ltr"] .layout.nav-open .sidebar { transform: none; }
   .layout.nav-open .sidebar { transform: none; }
   .layout.nav-open::after { content: ""; position: fixed; inset: 0; background: rgba(8, 11, 16, 0.5); z-index: 40; }
   .menu-btn { display: block; }
@@ -494,7 +497,7 @@ small { color: var(--muted); }
 .fab {
   position: fixed;
   bottom: 24px;
-  left: 24px;
+  inset-inline-end: 24px;
   width: 52px;
   height: 52px;
   border-radius: 50%;
@@ -524,7 +527,7 @@ small { color: var(--muted); }
   border-radius: var(--radius);
   overflow: hidden;
   cursor: pointer;
-  text-align: right;
+  text-align: start;
   padding: 0;
   transition: box-shadow .15s, border-color .15s;
   color: inherit;
@@ -788,6 +791,22 @@ a.btn:hover {
   background: var(--primary-hover) !important;
   color: #fff !important;
 }
+/* زر "استقبال سيارة": ألوان صريحة (مش معتمدة على متغيرات ولا على ترتيب القواعد)
+   عشان يفضل برتقالي ثابت من أول رسم، مش أبيض لحد ما تقف عليه. */
+a.btn.btn-receive, a.btn.btn-receive:visited, a.btn.btn-receive:focus {
+  background-color: #f08a24 !important;
+  background-image: none !important;
+  border: 1px solid #f08a24 !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff;
+  opacity: 1 !important;
+  transition: none;
+}
+a.btn.btn-receive:hover, a.btn.btn-receive:active {
+  background-color: #e07a18 !important;
+  border-color: #e07a18 !important;
+  color: #ffffff !important;
+}
 .btn.ghost, .btn.secondary {
   background: #fff;
   color: var(--text);
@@ -852,3 +871,13 @@ a.card.stat.pick { display: block; }
 a.card.stat.pick:hover { border-color: var(--primary-muted); box-shadow: var(--shadow-md); }
 .sidebar a.nav { transition: background 0.12s, color 0.12s; }
 .sidebar a.nav.active { font-weight: 700; }
+
+/* ---------- ترقيم الصفحات ---------- */
+.pager { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 4px 2px; }
+.pager-info, .pager-page { color: var(--muted); font-size: 13px; }
+.pager-ctl { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.pager-size { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); margin: 0; }
+.pager-size select { width: auto; min-width: 0; padding: 4px 8px; }
+.pager button:disabled { opacity: 0.45; cursor: default; }
+@media print { .pager { display: none; } }
+.veh-grid .pager { grid-column: 1 / -1; }

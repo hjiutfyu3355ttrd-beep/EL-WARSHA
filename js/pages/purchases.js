@@ -12,6 +12,7 @@
       .reduce(function (s, l) { return s + (Number(l.qty) || 0) * (Number(l.unit_cost) || 0); }, 0);
   }
 
+  var pg = UI.makePager();
   function render() {
     if (mode === "new") return renderNew();
     if (mode === "view") return renderView();
@@ -22,7 +23,7 @@
     page.innerHTML = html`
       <div class="stack">
         <div class="head-row">
-          <div><h2>${I18N.t("pu_title")}</h2><p>أوامر شراء من الموردين وزيادة المخزون عند الاستلام.</p></div>
+          <div><h2>${I18N.t("pu_title")}</h2><p>${I18N.t("pu_sub")}</p></div>
           <button id="btn-new">${I18N.t("pu_new_btn")}</button>
         </div>
         <input id="q" placeholder="${I18N.t("search_pu")}">
@@ -34,13 +35,15 @@
         var sn = suppliers[p.supplier_id] ? suppliers[p.supplier_id].name : "";
         return (("" + p.number) + " " + sn).toLowerCase().indexOf(q) !== -1;
       });
-      $("list").innerHTML = html`
+        var rows = UI.pageSlice(pg, shown, q);
+      var bar = UI.pagerBar(pg, shown.length);
+    $("list").innerHTML = html`
         <table class="clickable">
           <thead><tr><th>${I18N.t("quote_number")}</th><th>${I18N.t("supplier")}</th><th>${I18N.t("status_filter")}</th><th>${I18N.t("total")}</th><th>${I18N.t("date")}</th></tr></thead>
           <tbody>
             ${shown.length === 0
               ? html`<tr><td colspan="5" class="empty">${I18N.t("purchase_empty")}</td></tr>`
-              : shown.map(function (p) {
+              : rows.map(function (p) {
                   var s = suppliers[p.supplier_id];
                   return html`<tr data-action="view" data-id="${p.id}">
                     <td><b>#${p.number}</b></td>
@@ -51,8 +54,9 @@
                   </tr>`;
                 })}
           </tbody>
-        </table>`;
+        </table>${bar}`;
     }
+    UI.bindPager(page.querySelector("#list"), pg, paint);
     paint();
     $("q").addEventListener("input", paint);
     $("btn-new").addEventListener("click", function () { mode = "new"; render(); });
@@ -77,7 +81,7 @@
         </div>
         <form class="card" id="pu-form">
           <div class="form-grid">
-            <div class="field"><label>${I18N.t("supplier")}</label><select id="pu-sup" required>${supOpts.length ? supOpts.join("") : '<option value="">أضف مورد أولاً</option>'}</select></div>
+            <div class="field"><label>${I18N.t("supplier")}</label><select id="pu-sup" required>${supOpts.length ? supOpts.join("") : '<option value="">' + I18N.t("pu_add_supplier_first") + '</option>'}</select></div>
             <div class="field"><label>${I18N.t("notes")}</label><input id="pu-notes"></div>
           </div>
           <h3 style="margin-top:16px">${I18N.t("items")}</h3>

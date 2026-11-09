@@ -27,7 +27,7 @@
         .filter(function (p) { return new Date(p.created_at).toDateString() === day.toDateString(); })
         .reduce(function (s, p) { return s + p.amount; }, 0);
       byDay.push({
-        label: day.toLocaleDateString("ar-EG", { weekday: "long", day: "numeric", month: "numeric" }),
+        label: day.toLocaleDateString(UI.locale(), { weekday: "long", day: "numeric", month: "numeric" }),
         total: total,
       });
     }

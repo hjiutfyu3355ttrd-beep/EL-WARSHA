@@ -1,8 +1,25 @@
-# ترويسات أمان لـ Cloudflare Pages (بتتطبّق تلقائياً على كل الصفحات).
-# السياسة بتسمح بس بـ: ملفات الموقع نفسه + مكتبة Supabase من jsdelivr + خط Cairo (محلي) + اتصال Supabase.
-# لو ضفت مكتبة خارجية جديدة لازم تضيف دومينها هنا وإلا المتصفح هيحجبها.
+# ترويسات Cloudflare Pages (بتتطبّق تلقائياً).
+# الأمان: السياسة بتسمح بس بملفات الموقع نفسه + اتصال Supabase. مكتبة Supabase بقت محلية (vendor/)
+# فمفيش أي سكربت خارجي. لو ضفت مكتبة خارجية جديدة لازم تضيف دومينها هنا وإلا المتصفح هيحجبها.
 /*
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   X-Frame-Options: DENY
-  Content-Security-Policy: default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
+
+# الكاش: HTML/JS/CSS بتتحقق من السيرفر كل مرة (ETag → 304 سريع) فأي تحديث بيوصل فورًا
+# ومفيش "الزر لسه قديم" بسبب نسخة مخزّنة. الخطوط والمكتبة المثبّتة (اسمها فيه الإصدار) بتتخزّن سنة.
+/
+  Cache-Control: no-cache
+/*.html
+  Cache-Control: no-cache
+/js/*
+  Cache-Control: no-cache
+/css/*
+  Cache-Control: no-cache
+/vendor/*
+  Cache-Control: public, max-age=31536000, immutable
+/assets/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+/assets/img/*
+  Cache-Control: public, max-age=86400

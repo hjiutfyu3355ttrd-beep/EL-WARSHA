@@ -77,6 +77,7 @@
       { label: I18N.t("dash_ready_cars"), value: String(ready.length), sub: "", href: "work-orders.html?tab=done", c: "var(--info)", soft: "var(--info-soft)", ic: "M5 13l4 4L19 7" },
       { label: I18N.t("dash_revenue_today"), value: UI.money(revenueToday), sub: I18N.t("dash_rev_week") + ": " + UI.money(revenueWeek), href: "payments.html", c: "var(--orange)", soft: "var(--orange-soft)", ic: "M12 2v20M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" },
       { label: I18N.t("dash_low_stock"), value: String(low.length), sub: "", href: "inventory.html", c: "var(--purple)", soft: "var(--purple-soft)", ic: "M12 9v4M12 17h.01M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" },
+      { label: I18N.t("dash_treasury"), value: "…", sub: "", href: "treasury.html", c: "var(--success)", soft: "var(--success-soft)", ic: "M3 7h18v12H3zM3 11h18M16 15h2" },
     ];
 
     var recent = orders.slice(0, 5);
@@ -103,6 +104,17 @@
             var body = html`<div class="ico"><svg viewBox="0 0 24 24"><path d="${s.ic}"/></svg></div>
               <div class="label">${s.label}</div><div class="value">${s.value}</div>
               ${s.sub ? html`<small>${s.sub}</small>` : ""}`;
+
+    // رصيد الخزنة: استدعاء واحد خفيف (دالة في الداتابيز) بعد ما اللوحة اترسمت
+    DB.treasuryTotals().then(function (tt) {
+      var el = page.querySelector('a[href="treasury.html"] .value');
+      if (!el) return;
+      el.textContent = UI.money(tt.balance);
+      if (tt.balance < 0) el.style.color = "var(--error, #dc2626)";
+    }, function () {
+      var el = page.querySelector('a[href="treasury.html"] .value');
+      if (el) el.textContent = "—";
+    });
             return s.href
               ? html`<a class="card stat pick" href="${s.href}" style="--accent:${s.c};--accent-soft:${s.soft};text-decoration:none;color:inherit">${body}</a>`
               : html`<div class="card stat" style="--accent:${s.c};--accent-soft:${s.soft}">${body}</div>`;

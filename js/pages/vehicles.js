@@ -26,6 +26,19 @@
 
   var $ = function (id) { return document.getElementById(id); };
 
+  function enumOptions(group, stored) { return UI.enumOptions(group, stored, true); }
+
+  function enumOptions(group, stored) {
+    var code = I18N.enumCode(group, stored);
+    var opts = [{ value: "", label: "—" }].concat(I18N.enumList(group));
+    // قيمة نص حر قديمة مش معروفة: نحافظ عليها بدل ما تضيع
+    if (stored && !code) opts.push({ value: stored, label: stored });
+    return opts.map(function (o) {
+      var sel = o.value === (code || stored || "") ? "selected" : "";
+      return html`<option value="${o.value}" ${sel}>${o.label}</option>`;
+    });
+  }
+
   function custName(id) {
     var c = customers.filter(function (x) { return x.id === id; })[0];
     return c ? c.name : "—";
@@ -53,15 +66,18 @@
     );
   }
 
+  var pg = UI.makePager();
+  UI.bindPager($("list"), pg, renderList);
   function renderList() {
     var q = ($("q") && $("q").value || "").trim().toLowerCase();
     var shown = vehicles.filter(function (v) {
       var hay = [v.plate, v.make, v.model, v.year, v.color, custName(v.customer_id)].join(" ").toLowerCase();
       return !q || hay.indexOf(q) !== -1;
     });
+    var rows = UI.pageSlice(pg, shown, q);
     $("list").innerHTML = shown.length === 0
-      ? html`<div class="empty card">${I18N.t("empty_vehicles")} مطابقة</div>`
-      : shown.map(function (v) {
+      ? html`<div class="empty card">${I18N.t("empty_vehicles_match")}</div>`
+      : rows.map(function (v) {
           var imgs = imagesOf(v);
           var thumb = imgs[0] || placeholderSvg();
           var title = vehicleTitle(v);
@@ -74,7 +90,7 @@
                 <span class="muted">${custName(v.customer_id)}</span>
               </div>
             </button>`;
-        }).join("");
+        }).join("") + UI.pagerBar(pg, shown.length);
   }
 
   function renderDetail() {
@@ -89,7 +105,7 @@
     var mainImg = imgs[imgIdx] || placeholderSvg();
     var title = vehicleTitle(v);
     var year = v.year || "—";
-    var odo = v.odometer != null ? Number(v.odometer).toLocaleString("ar-EG") : "—";
+    var odo = v.odometer != null ? Number(v.odometer).toLocaleString(UI.locale()) : "—";
     var cust = custName(v.customer_id);
 
     var relatedWO = workOrders.filter(function (w) { return w.vehicle_id === v.id; });
@@ -125,14 +141,14 @@
             <div class="veh-info-grid">
               <div><span class="lbl">${I18N.t("model_name")}</span><span class="val accent">${v.model || I18N.t("not_set")}</span></div>
               <div><span class="lbl">${I18N.t("brand")}</span><span class="val accent">${v.make || I18N.t("not_set")}</span></div>
-              <div><span class="lbl">${I18N.t("transmission")}</span><span class="val accent">${v.transmission || I18N.t("not_set")}</span></div>
+              <div><span class="lbl">${I18N.t("transmission")}</span><span class="val accent">${I18N.enumLabel("trans", v.transmission) || I18N.t("not_set")}</span></div>
               <div><span class="lbl">${I18N.t("model_year")}</span><span class="val accent">${year}</span></div>
               <div><span class="lbl">${I18N.t("gearbox_no")}</span><span class="val accent">${v.gearbox_no || I18N.t("not_set")}</span></div>
               <div><span class="lbl">${I18N.t("engine_no")}</span><span class="val accent">${v.engine_no || I18N.t("not_set")}</span></div>
               <div><span class="lbl">${I18N.t("chassis")}</span><span class="val accent">${v.chassis_no || I18N.t("not_set")}</span></div>
-              <div><span class="lbl">رقم ${I18N.t("plate")}</span><span class="val accent">${v.plate || "—"}</span></div>
-              <div><span class="lbl">${I18N.t("fuel_type")}</span><span class="val accent">${v.fuel || I18N.t("not_set")}</span></div>
-              <div><span class="lbl">اللون</span><span class="val accent">${v.color || I18N.t("not_set")}</span></div>
+              <div><span class="lbl">${I18N.t("plate_no")}</span><span class="val accent">${v.plate || "—"}</span></div>
+              <div><span class="lbl">${I18N.t("fuel_type")}</span><span class="val accent">${I18N.enumLabel("fuel", v.fuel) || I18N.t("not_set")}</span></div>
+              <div><span class="lbl">${I18N.t("color")}</span><span class="val accent">${v.color || I18N.t("not_set")}</span></div>
               <div><span class="lbl">${I18N.t("total_km")}</span><span class="val accent">${odo}</span></div>
               <div><span class="lbl">${I18N.t("customer")}</span><span class="val accent">${cust}</span></div>
             </div>
@@ -175,7 +191,7 @@
                 : relatedInv.map(function (i) {
                     return html`<tr>
                       <td>${i.number || i.id}</td>
-                      <td>${i.total != null ? Number(i.total).toLocaleString("ar-EG") : "—"}</td>
+                      <td>${i.total != null ? Number(i.total).toLocaleString(UI.locale()) : "—"}</td>
                       <td dir="ltr">${(i.created_at || "").slice(0, 10)}</td>
                     </tr>`;
                   })}
@@ -247,7 +263,7 @@
                 })}
               </select>
             </div>
-            <div class="field"><label>رقم ${I18N.t("plate")}</label><input id="e-plate" value="${data.plate || ""}" required></div>
+            <div class="field"><label>${I18N.t("plate_no")}</label><input id="e-plate" value="${data.plate || ""}" required></div>
             <div class="field"><label>${I18N.t("brand")}</label><input id="e-make" value="${data.make || ""}"></div>
             <div class="field"><label>${I18N.t("model")}</label><input id="e-model" value="${data.model || ""}"></div>
             <div class="field"><label>${I18N.t("model_year")}</label><input id="e-year" type="number" value="${data.year || ""}"></div>
@@ -255,16 +271,12 @@
             <div class="field"><label>${I18N.t("color")}</label><input id="e-color" value="${data.color || ""}"></div>
             <div class="field"><label>${I18N.t("fuel_type")}</label>
               <select id="e-fuel">
-                ${["", I18N.t("fuel_gas"), I18N.t("fuel_diesel"), I18N.t("fuel_hybrid"), I18N.t("fuel_electric"), I18N.t("fuel_lpg")].map(function (f) {
-                  return html`<option value="${f}" ${f === (data.fuel || "") ? "selected" : ""}>${f || "—"}</option>`;
-                })}
+                ${enumOptions("fuel", data.fuel)}
               </select>
             </div>
             <div class="field"><label>${I18N.t("transmission")}</label>
               <select id="e-trans">
-                ${["", I18N.t("trans_auto"), I18N.t("trans_manual"), I18N.t("trans_cvt")].map(function (f) {
-                  return html`<option value="${f}" ${f === (data.transmission || "") ? "selected" : ""}>${f || "—"}</option>`;
-                })}
+                ${enumOptions("trans", data.transmission)}
               </select>
             </div>
             <div class="field"><label>${I18N.t("engine_no")}</label><input id="e-engine" value="${data.engine_no || ""}"></div>
@@ -354,7 +366,7 @@
   async function load() {
     var d = await Promise.all([
       DB.list("customers"),
-      DB.list("vehicles"),
+      DB.list("vehicles", { full: true }),
       DB.list("work_orders"),
       DB.list("invoices"),
     ]);

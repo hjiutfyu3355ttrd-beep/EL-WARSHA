@@ -43,7 +43,7 @@
                 return html`<tr>
                   <td><b>${s.name}</b></td>
                   <td>${s.company || "—"}</td>
-                  <td dir="ltr" style="text-align:right">${s.phone || "—"}</td>
+                  <td dir="ltr" style="text-align:start">${s.phone || "—"}</td>
                   <td>${s.notes || "—"}</td>
                   <td><button class="danger small" data-action="del" data-id="${s.id}">${I18N.t("delete")}</button></td>
                 </tr>`;

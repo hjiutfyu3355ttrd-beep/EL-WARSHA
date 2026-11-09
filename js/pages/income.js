@@ -28,6 +28,8 @@
       <div class="table-wrap" id="list"><div class="empty">${I18N.t("loading")}</div></div>
     </div>`;
 
+  var pg = UI.makePager();
+  UI.bindPager(document.getElementById("list"), pg, render);
   function render() {
     // دمج مدفوعات أوامر الشغل كدخل تلقائي للعرض
     var fromPayments = payments.map(function (p) {
@@ -57,7 +59,7 @@
     $("summary").innerHTML = html`
       <div class="grid">
         <div class="card stat" style="--accent:var(--success)">
-          <div class="label">إجمالي ${I18N.t("income_title")}</div>
+          <div class="label">${I18N.t("total_word")} ${I18N.t("income_title")}</div>
           <div class="value">${UI.money(total)}</div>
         </div>
         <div class="card stat" style="--accent:var(--primary)">
@@ -70,14 +72,16 @@
         </div>
       </div>`;
 
+    var rows = UI.pageSlice(pg, shown, q);
+    var bar = UI.pagerBar(pg, shown.length);
     $("list").innerHTML = html`
       <table>
         <thead><tr><th>${I18N.t("exp_label")}</th><th>${I18N.t("source")}</th><th>${I18N.t("amount")}</th><th>${I18N.t("notes")}</th><th>${I18N.t("date")}</th><th></th></tr></thead>
         <tbody>
           ${shown.length === 0
             ? html`<tr><td colspan="6" class="empty">${I18N.t("empty_entries")}</td></tr>`
-            : shown.map(function (r) {
-                var src = r.source === "payment" ? "دفعة" : r.source === "part_sale" ? I18N.t("src_ps") : r.source === "work_order" ? I18N.t("src_wo") : I18N.t("src_manual");
+            : rows.map(function (r) {
+                var src = r.source === "payment" ? I18N.t("src_payment") : r.source === "part_sale" ? I18N.t("src_ps") : r.source === "work_order" ? I18N.t("src_wo") : I18N.t("src_manual");
                 return html`<tr>
                   <td><b>${r.label}</b></td>
                   <td><span class="chip">${src}</span></td>
@@ -88,7 +92,7 @@
                 </tr>`;
               })}
         </tbody>
-      </table>`;
+      </table>${bar}`;
   }
 
   async function load() {

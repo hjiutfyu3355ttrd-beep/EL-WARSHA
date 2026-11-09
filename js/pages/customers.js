@@ -26,27 +26,31 @@
 
   var $ = function (id) { return document.getElementById(id); };
 
+  var pg = UI.makePager();
+  UI.bindPager(document.getElementById("list"), pg, renderList);
   function renderList() {
     var q = $("q").value.trim().toLowerCase();
     var shown = customers.filter(function (c) {
       return (c.name + " " + c.phone).toLowerCase().indexOf(q) !== -1;
     });
+    var rows = UI.pageSlice(pg, shown, q);
+    var bar = UI.pagerBar(pg, shown.length);
     $("list").innerHTML = html`
       <table class="clickable">
         <thead><tr><th>${I18N.t("name")}</th><th>${I18N.t("phone")}</th><th>${I18N.t("vehicles_count")}</th></tr></thead>
         <tbody>
           ${shown.length === 0
             ? html`<tr><td colspan="3" class="empty">${I18N.t("empty_customers")}</td></tr>`
-            : shown.map(function (c) {
+            : rows.map(function (c) {
                 var count = vehicles.filter(function (v) { return v.customer_id === c.id; }).length;
                 return html`<tr class="${c.id === sel ? "sel-row" : ""}" data-action="select" data-id="${c.id}">
                   <td>${c.name}</td>
-                  <td dir="ltr" style="text-align:right">${c.phone || "—"}</td>
+                  <td dir="ltr" style="text-align:start">${c.phone || "—"}</td>
                   <td>${count}</td>
                 </tr>`;
               })}
         </tbody>
-      </table>`;
+      </table>${bar}`;
   }
 
   function renderDetail() {
@@ -69,7 +73,7 @@
                     return html`<tr>
                       <td>${v.plate}</td><td>${v.make} ${v.model}</td>
                       <td>${v.year || "—"}</td>
-                      <td>${v.odometer != null ? Number(v.odometer).toLocaleString("ar-EG") : "—"}</td>
+                      <td>${v.odometer != null ? Number(v.odometer).toLocaleString(UI.locale()) : "—"}</td>
                       <td><button class="danger small" data-action="del-vehicle" data-id="${v.id}">${I18N.t("delete")}</button></td>
                     </tr>`;
                   })}
@@ -78,11 +82,11 @@
         </div>
         <form id="veh-form">
           <div class="form-grid">
-            <div class="field"><label>رقم ${I18N.t("plate")}</label><input id="v-plate" required></div>
+            <div class="field"><label>${I18N.t("plate_no")}</label><input id="v-plate" required></div>
             <div class="field"><label>${I18N.t("make")}</label><input id="v-make"></div>
             <div class="field"><label>${I18N.t("model")}</label><input id="v-model"></div>
             <div class="field"><label>${I18N.t("year")}</label><input id="v-year" type="number"></div>
-            <div class="field"><label>${I18N.t("odometer")} (كم)</label><input id="v-odo" type="number"></div>
+            <div class="field"><label>${I18N.t("odometer_km")}</label><input id="v-odo" type="number"></div>
             <button>${I18N.t("add_car")}</button>
           </div>
         </form>

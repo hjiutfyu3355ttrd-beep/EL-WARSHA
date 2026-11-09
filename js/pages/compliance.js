@@ -21,11 +21,7 @@
           <div class="field"><label>${I18N.t("vehicle")}</label><select id="t-vehicle" required></select></div>
           <div class="field"><label>${I18N.t("type")}</label>
             <select id="t-type">
-              <option>${I18N.t("comp_license")}</option>
-              <option>${I18N.t("comp_insurance")}</option>
-              <option>${I18N.t("comp_tax")}</option>
-              <option>${I18N.t("comp_inspect")}</option>
-              <option>${I18N.t("comp_other")}</option>
+              ${UI.enumOptions("tax_type", "license")}
             </select>
           </div>
           <div class="field"><label>${I18N.t("amount")}</label><input id="t-amount" type="number" min="0" step="any" value="0"></div>
@@ -78,7 +74,7 @@
 
     $("list").innerHTML = html`
       <table>
-        <thead><tr><th>السيارة</th><th>النوع</th><th>المبلغ</th><th>${I18N.t("comp_due")}</th><th>الحالة</th><th>ملاحظات</th><th></th></tr></thead>
+        <thead><tr><th>${I18N.t("vehicle")}</th><th>${I18N.t("type")}</th><th>${I18N.t("amount")}</th><th>${I18N.t("comp_due")}</th><th>${I18N.t("status_filter")}</th><th>${I18N.t("notes")}</th><th></th></tr></thead>
         <tbody>
           ${shown.length === 0
             ? html`<tr><td colspan="7" class="empty">${I18N.t("empty_records")}</td></tr>`
@@ -88,7 +84,7 @@
                 var cls = t.paid ? "paid" : isOverdue(t) ? "cancelled" : "awaiting_approval";
                 return html`<tr>
                   <td>${v ? v.plate + " — " + v.make : "—"}</td>
-                  <td>${t.tax_type}</td>
+                  <td>${I18N.enumLabel("tax_type", t.tax_type)}</td>
                   <td>${UI.money(t.amount)}</td>
                   <td>${t.due_date ? UI.dateAr(t.due_date) : "—"}</td>
                   <td><span class="badge ${cls}">${st}</span></td>

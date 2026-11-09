@@ -1,54 +1,51 @@
 <!doctype html>
-<html lang="ar" dir="rtl" translate="no">
+<html lang="ar" dir="rtl" translate="no" class="notranslate">
   <head>
-  <script>
-    (function(){try{var l=localStorage.getItem("workshop_lang");if(l!=="tr"&&l!=="ar")l="ar";
-      document.documentElement.lang=l;document.documentElement.dir=l==="tr"?"ltr":"rtl";
-      document.documentElement.setAttribute("translate","no");}catch(e){}})();
-  </script>
 
     <meta charset="UTF-8" />
+    <meta name="google" content="notranslate" />
+    <script src="js/config.js"></script>
+    <script src="js/boot.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#e67e22" />
-    <title>تسجيل الدخول — نظام الورشة</title>
+    <title data-i18n="t_login">EL-WARSHA</title>
     <link rel="icon" href="favicon.ico" sizes="any" />
     <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png" />
     <link rel="manifest" href="manifest.webmanifest" />
-    <link rel="preload" href="assets/fonts/Cairo-Regular.ttf" as="font" type="font/ttf" crossorigin />
+    <link rel="preload" href="assets/fonts/Cairo-Regular.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" href="css/style.css" />
   </head>
   <body>
     <div class="login-wrap">
       <section class="login-hero">
         <img src="assets/img/logo.svg" alt="" />
-        <h1>الورشة</h1>
-        <p>نظام إدارة الورش — أوامر الشغل والعملاء والمخزون في مكان واحد</p>
+        <h1 data-i18n="app_name">الورشة</h1>
+        <p data-i18n="login_hero"></p>
       </section>
       <section class="login-side">
         <div class="login-card">
           <div class="field" style="margin-bottom:12px;max-width:180px">
-            <label id="lbl-lang">اللغة</label>
+            <label id="lbl-lang" data-i18n="language"></label>
             <select id="login-lang">
               <option value="ar">العربية</option>
               <option value="tr">Türkçe</option>
             </select>
           </div>
-          <h2 id="login-h2">تسجيل الدخول</h2>
-          <p class="sub" id="login-sub">أدخل رقم تليفونك وكلمة المرور</p>
+          <h2 id="login-h2" data-i18n="login_title"></h2>
+          <p class="sub" id="login-sub" data-i18n="login_sub"></p>
           <form id="form">
-            <div class="field"><label for="phone" id="lbl-phone">رقم التليفون</label>
+            <div class="field"><label for="phone" id="lbl-phone" data-i18n="login_phone"></label>
               <input id="phone" type="tel" inputmode="tel" placeholder="01XXXXXXXXX" required dir="ltr" autocomplete="tel" /></div>
-            <div class="field"><label for="password" id="lbl-pass">كلمة المرور</label>
+            <div class="field"><label for="password" id="lbl-pass" data-i18n="login_password"></label>
               <input id="password" type="password" placeholder="••••••••" required dir="ltr" autocomplete="current-password" /></div>
             <div class="error" id="msg"></div>
-            <button id="btn">تسجيل الدخول</button>
+            <button id="btn" data-i18n="login_btn"></button>
           </form>
-          <p style="margin-bottom: 0" id="login-foot">ماعندكش حساب؟ <a class="link" href="signup.html" id="login-reg">سجّل ورشتك</a></p>
+          <p style="margin-bottom: 0" id="login-foot"><span data-i18n="login_no_account"></span> <a class="link" href="signup.html" id="login-reg" data-i18n="login_register"></a></p>
         </div>
       </section>
     </div>
 
-    <script src="js/config.js"></script>
     <script src="js/i18n.js"></script>
     <script src="js/db.js"></script>
     <script src="js/pages/login.js"></script>

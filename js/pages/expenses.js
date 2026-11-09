@@ -28,6 +28,8 @@
       <div class="table-wrap" id="list"><div class="empty">${I18N.t("loading")}</div></div>
     </div>`;
 
+  var pg = UI.makePager();
+  UI.bindPager(document.getElementById("list"), pg, render);
   function render() {
     var q = ($("q").value || "").trim().toLowerCase();
     var shown = expenses.filter(function (e) {
@@ -43,7 +45,7 @@
     $("summary").innerHTML = html`
       <div class="grid">
         <div class="card stat" style="--accent:var(--error)">
-          <div class="label">إجمالي ${I18N.t("nav_expenses")}</div>
+          <div class="label">${I18N.t("total_word")} ${I18N.t("nav_expenses")}</div>
           <div class="value">${UI.money(total)}</div>
         </div>
         <div class="card stat" style="--accent:var(--warning)">
@@ -56,13 +58,15 @@
         </div>
       </div>`;
 
+    var rows = UI.pageSlice(pg, shown, q);
+    var bar = UI.pagerBar(pg, shown.length);
     $("list").innerHTML = html`
       <table>
         <thead><tr><th>${I18N.t("exp_label")}</th><th>${I18N.t("amount")}</th><th>${I18N.t("notes")}</th><th>${I18N.t("date")}</th><th></th></tr></thead>
         <tbody>
           ${shown.length === 0
             ? html`<tr><td colspan="5" class="empty">${I18N.t("empty_generic")}</td></tr>`
-            : shown.map(function (e) {
+            : rows.map(function (e) {
                 return html`<tr>
                   <td><b>${e.label}</b></td>
                   <td>${UI.money(e.amount)}</td>
@@ -72,7 +76,7 @@
                 </tr>`;
               })}
         </tbody>
-      </table>`;
+      </table>${bar}`;
   }
 
   async function load() {

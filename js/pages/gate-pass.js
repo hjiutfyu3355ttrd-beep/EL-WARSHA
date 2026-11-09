@@ -47,6 +47,8 @@
     $("gp-vehicle").innerHTML = vOpts.length ? vOpts.join("") : '<option value="">${I18N.t("empty_vehicles")}</option>';
   }
 
+  var pg = UI.makePager();
+  UI.bindPager(document.getElementById("list"), pg, render);
   function render() {
     var q = ($("q").value || "").trim().toLowerCase();
     var shown = passes.filter(function (p) {
@@ -54,13 +56,15 @@
       var plate = v ? v.plate : "";
       return (("" + p.number) + " " + plate).toLowerCase().indexOf(q) !== -1;
     });
+    var rows = UI.pageSlice(pg, shown, q);
+    var bar = UI.pagerBar(pg, shown.length);
     $("list").innerHTML = html`
       <table>
         <thead><tr><th>${I18N.t("number_col")}</th><th>${I18N.t("direction")}</th><th>${I18N.t("vehicle")}</th><th>${I18N.t("wo_label")}</th><th>${I18N.t("notes")}</th><th>${I18N.t("date")}</th><th></th></tr></thead>
         <tbody>
           ${shown.length === 0
             ? html`<tr><td colspan="7" class="empty">${I18N.t("empty_gp")}</td></tr>`
-            : shown.map(function (p) {
+            : rows.map(function (p) {
                 var v = vehicles[p.vehicle_id];
                 var o = p.work_order_id ? orders[p.work_order_id] : null;
                 return html`<tr>
@@ -74,7 +78,7 @@
                 </tr>`;
               })}
         </tbody>
-      </table>`;
+      </table>${bar}`;
   }
 
   async function load() {

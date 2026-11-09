@@ -4,6 +4,14 @@
   var html = UI.html;
 
   var techs = [];
+  var cur = UI.getCurrency();
+
+  // اسم العملة بلغة الواجهة (من المتصفح) + الكود
+  function currencyName(code) {
+    var n = "";
+    try { n = new Intl.DisplayNames([UI.locale()], { type: "currency" }).of(code) || ""; } catch (e) {}
+    return n ? code + " — " + n : code;
+  }
 
   page.innerHTML = html`
     <div class="stack">
@@ -15,10 +23,31 @@
         <div class="field" style="max-width:280px">
           <label>${I18N.t("language")}</label>
           <select id="settings-lang">
-            <option value="ar" ${I18N.getLang() === "ar" ? "selected" : ""}>${I18N.t("arabic")}</option>
-            <option value="tr" ${I18N.getLang() === "tr" ? "selected" : ""}>${I18N.t("turkish")}</option>
+            <option value="ar" ${I18N.getLang() === "ar" ? "selected" : ""}>${I18N.t("lang_native_ar")}</option>
+            <option value="tr" ${I18N.getLang() === "tr" ? "selected" : ""}>${I18N.t("lang_native_tr")}</option>
           </select>
         </div>
+      </div>
+
+      <div class="card stack">
+        <h3 style="margin:0">${I18N.t("cur_title")}</h3>
+        <p style="margin:0;color:var(--muted)">${I18N.t("cur_hint")}</p>
+        <div class="form-grid">
+          <div class="field">
+            <label for="cur-code">${I18N.t("cur_select")}</label>
+            <select id="cur-code">
+              ${UI.CURRENCIES.map(function (c) { return UI.option(c.code, currencyName(c.code), c.code === cur.code); })}
+              ${UI.option("OTHER", I18N.t("cur_other"), cur.code === "OTHER")}
+            </select>
+          </div>
+          <div class="field">
+            <label for="cur-sym">${I18N.t("cur_symbol")}</label>
+            <input id="cur-sym" maxlength="12" value="${cur.symbol}">
+            <small style="color:var(--muted)">${I18N.t("cur_symbol_hint")}</small>
+          </div>
+          <button type="button" id="cur-save">${I18N.t("cur_save")}</button>
+        </div>
+        <div><span style="color:var(--muted)">${I18N.t("cur_preview")}:</span> <b id="cur-preview"></b></div>
       </div>
 
       <div class="card stack">
@@ -44,7 +73,7 @@
   function render() {
     $("list").innerHTML = html`
       <table>
-        <thead><tr><th>الاسم</th><th>${I18N.t("commission_pct")}</th><th></th></tr></thead>
+        <thead><tr><th>${I18N.t("name")}</th><th>${I18N.t("commission_pct")}</th><th></th></tr></thead>
         <tbody>
           ${techs.length === 0
             ? html`<tr><td colspan="3" class="empty">${I18N.t("empty_techs")}</td></tr>`
@@ -78,6 +107,35 @@
     UI.guard(async function () {
       await DB.remove("technicians", btn.getAttribute("data-id"));
       await load();
+    });
+  });
+
+  // ---- العملة ----
+  function chosenSymbol() {
+    var code = $("cur-code").value, typed = $("cur-sym").value.trim();
+    return typed || (code === "OTHER" ? "" : UI.currencyDefaultSymbol(code));
+  }
+  function updateCurPreview() {
+    var code = $("cur-code").value;
+    $("cur-sym").placeholder = code === "OTHER" ? "" : UI.currencyDefaultSymbol(code);
+    $("cur-preview").textContent = new Intl.NumberFormat(UI.locale(), { maximumFractionDigits: 2 }).format(1234.5) + " " + chosenSymbol();
+  }
+  $("cur-code").addEventListener("change", updateCurPreview);
+  $("cur-sym").addEventListener("input", updateCurPreview);
+  updateCurPreview();
+  $("cur-save").addEventListener("click", function () {
+    UI.guard(async function () {
+      var code = $("cur-code").value, typed = $("cur-sym").value.trim();
+      if (code === "OTHER" && !typed) { UI.flash(I18N.t("cur_symbol_required"), "error"); return; }
+      // الرمز المخصص بيتخزّن بس لو مختلف عن الافتراضي (فيتبع اللغة تلقائياً)
+      var symbol = typed && typed !== UI.currencyDefaultSymbol(code) ? typed : null;
+      var payload = { currency: code, currency_symbol: symbol };
+      var rows = await DB.list("shop_profile");
+      if (rows.length) await DB.update("shop_profile", rows[0].id, payload);
+      else await DB.insert("shop_profile", payload);
+      UI.setCurrency(code, symbol || "");
+      updateCurPreview();
+      UI.flash(I18N.t("cur_saved"), "success");
     });
   });
 

@@ -14,6 +14,7 @@
       .reduce(function (s, l) { return s + (Number(l.qty) || 0) * (Number(l.unit_price) || 0); }, 0);
   }
 
+  var pg = UI.makePager();
   function render() {
     if (mode === "new") return renderNew();
     if (mode === "view") return renderView();
@@ -40,13 +41,15 @@
         var cn = customers[s.customer_id] ? customers[s.customer_id].name : "";
         return (("" + s.number) + " " + cn).toLowerCase().indexOf(q) !== -1;
       });
-      $("list").innerHTML = html`
+        var rows = UI.pageSlice(pg, shown, q);
+      var bar = UI.pagerBar(pg, shown.length);
+    $("list").innerHTML = html`
         <table class="clickable">
           <thead><tr><th>${I18N.t("quote_number")}</th><th>${I18N.t("customer")}</th><th>${I18N.t("status_filter")}</th><th>${I18N.t("total")}</th><th>${I18N.t("date")}</th></tr></thead>
           <tbody>
             ${shown.length === 0
               ? html`<tr><td colspan="5" class="empty">${I18N.t("ps_empty")}</td></tr>`
-              : shown.map(function (s) {
+              : rows.map(function (s) {
                   var c = customers[s.customer_id];
                   return html`<tr data-action="view" data-id="${s.id}">
                     <td><b>#${s.number}</b></td>
@@ -57,8 +60,9 @@
                   </tr>`;
                 })}
           </tbody>
-        </table>`;
+        </table>${bar}`;
     }
+    UI.bindPager(page.querySelector("#list"), pg, paint);
     paint();
     $("q").addEventListener("input", paint);
     $("btn-new").addEventListener("click", function () { mode = "new"; render(); });

@@ -51,6 +51,8 @@
     })}`;
   }
 
+  var pg = UI.makePager();
+  UI.bindPager(document.getElementById("list"), pg, renderList);
   function renderList() {
     var q = $("q").value.trim().toLowerCase();
     var f = $("filter").value;
@@ -59,13 +61,15 @@
       var name = customers[i.customer_id] ? customers[i.customer_id].name : "";
       return ("#" + i.number + " " + name).toLowerCase().indexOf(q) !== -1;
     });
+    var rows = UI.pageSlice(pg, shown, [q, f].join("|"));
+    var bar = UI.pagerBar(pg, shown.length);
     $("list").innerHTML = html`
       <table class="clickable">
         <thead><tr><th>${I18N.t("number_col")}</th><th>${I18N.t("customer")}</th><th>${I18N.t("date")}</th><th>${I18N.t("status_filter")}</th><th>${I18N.t("total")}</th><th>${I18N.t("paid")}</th><th>${I18N.t("remaining")}</th></tr></thead>
         <tbody>
           ${shown.length === 0
             ? html`<tr><td colspan="7" class="empty">${I18N.t("invc_empty")}</td></tr>`
-            : shown.map(function (i) {
+            : rows.map(function (i) {
                 var rem = i.status === "cancelled" ? 0 : i.total - i.paid_amount;
                 return html`<tr data-href="invoice.html?id=${i.id}">
                   <td><b>#${i.number}</b></td>
@@ -78,7 +82,7 @@
                 </tr>`;
               })}
         </tbody>
-      </table>`;
+      </table>${bar}`;
   }
 
   await UI.guard(async function () {

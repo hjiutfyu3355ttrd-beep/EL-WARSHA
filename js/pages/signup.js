@@ -9,6 +9,15 @@
     return;
   }
 
+  var langSel = document.getElementById("signup-lang");
+  if (langSel) {
+    langSel.value = I18N.getLang();
+    langSel.addEventListener("change", function () {
+      I18N.setLang(langSel.value);
+      location.reload();
+    });
+  }
+
   document.getElementById("form").addEventListener("submit", async function (e) {
     e.preventDefault();
     var btn = document.getElementById("btn");

@@ -11,7 +11,7 @@
   async function recalc(invoiceId) {
     var d = await Promise.all([DB.list("invoices"), DB.list("invoice_lines"), DB.list("payments")]);
     var inv = d[0].filter(function (i) { return i.id === invoiceId; })[0];
-    if (!inv) throw new Error("الفاتورة مش موجودة");
+    if (!inv) throw new Error(I18N.t("err_invoice_missing"));
     var subtotal = d[1]
       .filter(function (l) { return l.invoice_id === invoiceId; })
       .reduce(function (s, l) { return s + num(l.qty) * num(l.unit_price); }, 0);
@@ -33,9 +33,9 @@
   async function createFromWorkOrder(orderId) {
     var d = await Promise.all([DB.list("work_orders"), DB.list("work_order_lines"), DB.list("payments")]);
     var order = d[0].filter(function (o) { return o.id === orderId; })[0];
-    if (!order) throw new Error("أمر الشغل مش موجود");
+    if (!order) throw new Error(I18N.t("err_wo_missing"));
     var lines = d[1].filter(function (l) { return l.work_order_id === orderId; });
-    if (lines.length === 0) throw new Error("أمر الشغل ده مفيهوش بنود — أضف بنود الأول");
+    if (lines.length === 0) throw new Error(I18N.t("err_wo_no_lines"));
 
     var inv = await DB.insert("invoices", {
       customer_id: order.customer_id,

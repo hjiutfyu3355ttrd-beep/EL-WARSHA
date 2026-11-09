@@ -18,6 +18,8 @@
   var $ = function (id) { return document.getElementById(id); };
   var pays = [], invoices = {}, orders = {}, customers = {};
 
+  var pg = UI.makePager();
+  UI.bindPager(document.getElementById("list"), pg, render);
   function render() {
     var m = $("method").value;
     var shown = pays.filter(function (p) { return m === "all" || p.method === m; });
@@ -35,13 +37,15 @@
       return html`<div class="card stat" style="--accent:${s.color};--accent-soft:${s.soft}"><div class="label">${s.label}</div><div class="value">${s.value}</div></div>`;
     })}`;
 
+    var rows = UI.pageSlice(pg, shown, m);
+    var bar = UI.pagerBar(pg, shown.length);
     $("list").innerHTML = html`
       <table>
         <thead><tr><th>${I18N.t("date")}</th><th>${I18N.t("amount")}</th><th>${I18N.t("method")}</th><th>${I18N.t("customer")}</th><th>${I18N.t("reference")}</th></tr></thead>
         <tbody>
           ${shown.length === 0
             ? html`<tr><td colspan="5" class="empty">${I18N.t("empty_payments")}</td></tr>`
-            : shown.map(function (p) {
+            : rows.map(function (p) {
                 var inv = invoices[p.invoice_id], wo = orders[p.work_order_id];
                 var cid = inv ? inv.customer_id : wo ? wo.customer_id : null;
                 return html`<tr>
@@ -54,7 +58,7 @@
                 </tr>`;
               })}
         </tbody>
-      </table>`;
+      </table>${bar}`;
   }
 
   await UI.guard(async function () {

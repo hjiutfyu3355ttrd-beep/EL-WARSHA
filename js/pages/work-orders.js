@@ -102,6 +102,7 @@
     })}`;
   }
 
+  var pg = UI.makePager();
   function renderList() {
     var shown = filtered(false);
     if (shown.length === 0) {
@@ -112,8 +113,10 @@
         ${orders.length === 0 ? html`<a class="btn" href="work-order-new.html">＋ ${I18N.t("create_first_wo")}</a>` : ""}</div>`;
       return;
     }
+    var rows = UI.pageSlice(pg, shown, [st.tab, st.q, st.status, st.priority, st.view].join("|"));
+    var bar = UI.pagerBar(pg, shown.length);
     if (st.view === "grid") {
-      $("list").innerHTML = html`<div class="cards-grid">${shown.map(function (o) {
+      $("list").innerHTML = html`<div class="cards-grid">${rows.map(function (o) {
         var c = customers[o.customer_id], v = vehicles[o.vehicle_id];
         return html`<a class="wo-card" href="work-order.html?id=${o.id}">
           <div class="top"><b>#${o.number}</b><span class="badge ${o.status}">${UI.statusLabel(o.status)}</span></div>
@@ -121,12 +124,12 @@
           <p>${v ? v.plate + " — " + v.make + " " + v.model : "—"}</p>
           <p><span class="badge prio-${o.priority || "normal"}">${UI.priorityLabel(o.priority)}</span>
             · ${UI.money(total(o.id))}${UI.isOverdue(o) ? html` · <span class="late">${I18N.t("late_badge")}</span>` : ""}</p></a>`;
-      })}</div>`;
+      })}</div>${bar}`;
       return;
     }
     $("list").innerHTML = html`<div class="table-wrap"><table class="clickable">
       <thead><tr><th>${I18N.t("number_col")}</th><th>${I18N.t("customer")}</th><th>${I18N.t("vehicle")}</th><th>${I18N.t("priority_filter")}</th><th>${I18N.t("status_filter")}</th><th>${I18N.t("technician")}</th><th>${I18N.t("expected_delivery")}</th><th>${I18N.t("total")}</th></tr></thead>
-      <tbody>${shown.map(function (o) {
+      <tbody>${rows.map(function (o) {
         return html`<tr data-href="work-order.html?id=${o.id}">
           <td><b>#${o.number}</b></td>
           <td>${customers[o.customer_id] ? customers[o.customer_id].name : "—"}</td>
@@ -136,10 +139,11 @@
           <td>${techs[o.technician_id] ? techs[o.technician_id].name : "—"}</td>
           <td class="${UI.isOverdue(o) ? "late" : ""}">${o.expected_delivery_at ? UI.dateAr(o.expected_delivery_at) : "—"}</td>
           <td>${UI.money(total(o.id))}</td></tr>`;
-      })}</tbody></table></div>`;
+      })}</tbody></table></div>${bar}`;
   }
 
   function renderAll() { renderCards(); renderTabs(); renderList(); }
+  UI.bindPager($("list"), pg, renderList);
 
   async function load() {
     var d = await Promise.all([

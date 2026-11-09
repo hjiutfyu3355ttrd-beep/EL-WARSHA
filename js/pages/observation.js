@@ -19,13 +19,7 @@
         <div class="form-grid">
           <div class="field"><label>${I18N.t("category")}</label>
             <select id="op-cat">
-              <option>${I18N.t("cat_engine")}</option>
-              <option>${I18N.t("cat_brakes")}</option>
-              <option>${I18N.t("cat_tires")}</option>
-              <option>${I18N.t("cat_electric")}</option>
-              <option>${I18N.t("cat_body")}</option>
-              <option>${I18N.t("cat_ac")}</option>
-              <option>${I18N.t("comp_other")}</option>
+              ${UI.enumOptions("obs_cat", "engine")}
             </select>
           </div>
           <div class="field"><label>${I18N.t("point_name")}</label><input id="op-name" required placeholder="${I18N.t("point_ph")}"></div>
@@ -40,22 +34,25 @@
   function render() {
     var q = ($("q").value || "").trim().toLowerCase();
     var shown = points.filter(function (p) {
-      return (p.category + " " + p.name).toLowerCase().indexOf(q) !== -1;
+      return (I18N.enumLabel("obs_cat", p.category) + " " + p.name).toLowerCase().indexOf(q) !== -1;
     });
     // group by category
     var cats = {};
     shown.forEach(function (p) {
-      if (!cats[p.category]) cats[p.category] = [];
-      cats[p.category].push(p);
+      var ck = I18N.enumCode("obs_cat", p.category) || p.category;  // عربي/تركي قديم + رمز جديد = نفس المجموعة
+      if (!cats[ck]) cats[ck] = [];
+      cats[ck].push(p);
     });
-    var keys = Object.keys(cats).sort();
+    var keys = Object.keys(cats).sort(function (a, b) {
+      return I18N.enumLabel("obs_cat", a).localeCompare(I18N.enumLabel("obs_cat", b), UI.locale());
+    });
     if (!keys.length) {
-      $("list").innerHTML = html`<div class="empty">${I18N.t("obs_empty")} فحص</div>`;
+      $("list").innerHTML = html`<div class="empty">${I18N.t("obs_empty_full")}</div>`;
       return;
     }
     $("list").innerHTML = keys.map(function (cat) {
       return html`<div class="card" style="margin-bottom:12px">
-        <h3 style="margin:0 0 10px">${cat}</h3>
+        <h3 style="margin:0 0 10px">${I18N.enumLabel("obs_cat", cat)}</h3>
         <table>
           <thead><tr><th>${I18N.t("insp_point_col")}</th><th>${I18N.t("default_fee_col")}</th><th></th></tr></thead>
           <tbody>
