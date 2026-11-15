@@ -114,7 +114,7 @@
           var v = vehicles[id];
           return UI.option(id, v.plate + " — " + v.make + " " + v.model);
         });
-      $("q-vehicle").innerHTML = opts.length ? opts.join("") : '<option value="">${I18N.t("empty_vehicles")}</option>';
+      $("q-vehicle").innerHTML = opts.length ? opts.join("") : '<option value="">' + I18N.t("empty_vehicles") + '</option>';
     }
     fillVehicles();
     $("q-customer").addEventListener("change", fillVehicles);

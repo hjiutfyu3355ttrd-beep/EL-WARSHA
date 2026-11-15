@@ -39,12 +39,12 @@
       var v = vehicles[o.vehicle_id];
       return UI.option(id, "#" + o.number + (v ? " — " + v.plate : ""));
     });
-    $("gp-wo").innerHTML = '<option value="">${I18N.t("without")}</option>' + woOpts.join("");
+    $("gp-wo").innerHTML = '<option value="">' + I18N.t("without") + '</option>' + woOpts.join("");
     var vOpts = Object.keys(vehicles).map(function (id) {
       var v = vehicles[id];
       return UI.option(id, v.plate + " — " + v.make + " " + v.model);
     });
-    $("gp-vehicle").innerHTML = vOpts.length ? vOpts.join("") : '<option value="">${I18N.t("empty_vehicles")}</option>';
+    $("gp-vehicle").innerHTML = vOpts.length ? vOpts.join("") : '<option value="">' + I18N.t("empty_vehicles") + '</option>';
   }
 
   var pg = UI.makePager();

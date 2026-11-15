@@ -10,14 +10,22 @@
     { key: "progress", labelKey: "progress_tab", test: function (o) { return ["in_progress", "waiting_parts", "testing"].indexOf(o.status) !== -1; } },
     { key: "done", labelKey: "done_tab", test: function (o) { return o.status === "ready" || o.status === "delivered"; } },
     { key: "late", labelKey: "late_tab", test: function (o) { return UI.isOverdue(o); } },
+    // أوامر التأمين اللي فلوسها لسه ما اتستلمتش (حتى لو السيارة اتسلّمت)
+    { key: "insurance", labelKey: "ins_tab_ins", test: function (o) { return Insurance.isPending(o); } },
   ];
+
+  function insBadge(o) {
+    if (!Insurance.isInsurance(o)) return "";
+    var done = Insurance.isSettled(o);
+    return html` <span class="badge ${done ? "ready" : "draft"}" title="${o.insurance_company}">🛡 ${I18N.t(done ? "ins_short_settled" : "ins_short_pending")}</span>`;
+  }
   TABS.forEach(function (tab) { tab.label = I18N.t(tab.labelKey); });
 
   var st = { tab: "all", card: "", view: "list", q: "", status: "all", priority: "all" };
   try {
     var params = new URLSearchParams(location.search);
     var tabQ = params.get("tab");
-    if (tabQ && ["all", "open", "progress", "done", "late"].indexOf(tabQ) !== -1) st.tab = tabQ;
+    if (tabQ && ["all", "open", "progress", "done", "late", "insurance"].indexOf(tabQ) !== -1) st.tab = tabQ;
     var viewQ = params.get("view") || sessionStorage.getItem("ws_wo_view");
     if (viewQ === "grid" || viewQ === "list") st.view = viewQ;
   } catch (e) {}
@@ -119,7 +127,7 @@
       $("list").innerHTML = html`<div class="cards-grid">${rows.map(function (o) {
         var c = customers[o.customer_id], v = vehicles[o.vehicle_id];
         return html`<a class="wo-card" href="work-order.html?id=${o.id}">
-          <div class="top"><b>#${o.number}</b><span class="badge ${o.status}">${UI.statusLabel(o.status)}</span></div>
+          <div class="top"><b>#${o.number}</b><span class="badge ${o.status}">${UI.statusLabel(o.status)}</span>${insBadge(o)}</div>
           <div><b>${c ? c.name : "—"}</b></div>
           <p>${v ? v.plate + " — " + v.make + " " + v.model : "—"}</p>
           <p><span class="badge prio-${o.priority || "normal"}">${UI.priorityLabel(o.priority)}</span>
@@ -135,7 +143,7 @@
           <td>${customers[o.customer_id] ? customers[o.customer_id].name : "—"}</td>
           <td>${vehicles[o.vehicle_id] ? vehicles[o.vehicle_id].plate : "—"}</td>
           <td><span class="badge prio-${o.priority || "normal"}">${UI.priorityLabel(o.priority)}</span></td>
-          <td><span class="badge ${o.status}">${UI.statusLabel(o.status)}</span></td>
+          <td><span class="badge ${o.status}">${UI.statusLabel(o.status)}</span>${insBadge(o)}</td>
           <td>${techs[o.technician_id] ? techs[o.technician_id].name : "—"}</td>
           <td class="${UI.isOverdue(o) ? "late" : ""}">${o.expected_delivery_at ? UI.dateAr(o.expected_delivery_at) : "—"}</td>
           <td>${UI.money(total(o.id))}</td></tr>`;

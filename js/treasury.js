@@ -125,9 +125,15 @@
     var empName = {};
     (d.employees || []).forEach(function (e) { empName[e.id] = e.name; });
     var out = [];
+    // دفعة على أمر تأمين = "دفعة شركة تأمين" + اسم الشركة (لو d.work_orders متاحة)
+    var insOrder = {};
+    (d.work_orders || []).forEach(function (o) { if (o.payer_type === "insurance") insOrder[o.id] = o; });
     (d.payments || []).forEach(function (r) {
+      var io = insOrder[r.work_order_id];
+      var method = window.UI ? UI.methodLabel(r.method) : (r.method || "");
       out.push({ key: "payment:" + r.id, table: "payments", id: r.id, dir: "in", source: "payment", amount: num(r.amount),
-        label: t("tr_src_payment"), note: window.UI ? UI.methodLabel(r.method) : (r.method || ""), when: whenOf(r.created_at) });
+        label: io ? t("tr_src_insurance") + " — " + io.insurance_company : t("tr_src_payment"),
+        note: io ? "#" + io.number + " · " + method : method, when: whenOf(r.created_at) });
     });
     (d.income || []).forEach(function (r) {
       out.push({ key: "income:" + r.id, table: "income", id: r.id, dir: "in", source: "income", amount: num(r.amount),

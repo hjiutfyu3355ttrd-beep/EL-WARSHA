@@ -96,14 +96,22 @@
     work_orders: [
       { id: "w1", number: 1001, customer_id: "c1", vehicle_id: "v1", technician_id: "t1", status: "in_progress", priority: "high", expected_delivery_at: ago(-1), complaint: "صوت في الفرامل وتغيير زيت", created_at: ago(1) },
       { id: "w2", number: 1002, customer_id: "c2", vehicle_id: "v2", technician_id: "t2", status: "awaiting_approval", priority: "normal", expected_delivery_at: ago(1), complaint: "كشف كهرباء", created_at: ago(3) },
+      // أوامر تأمين (Demo): w3 اتسلّمت وفلوس التأمين لسه ما اتستلمتش (معلّقة)، w4 اتسوّت
+      { id: "w3", number: 1003, customer_id: "c2", vehicle_id: "v2", technician_id: "t1", status: "delivered", priority: "normal", expected_delivery_at: ago(3), delivered_at: ago(2), complaint: "تصليح صدمة أمامية", created_at: ago(9), payer_type: "insurance", insurance_company: "مصر للتأمين", insurance_claim_no: "CL-2041", insurance_settled_at: null },
+      { id: "w4", number: 1004, customer_id: "c1", vehicle_id: "v1", technician_id: "t2", status: "delivered", priority: "normal", expected_delivery_at: ago(12), delivered_at: ago(10), complaint: "تغيير زجاج جانبي", created_at: ago(15), payer_type: "insurance", insurance_company: "الأهلية للتأمين", insurance_claim_no: "AH-778", insurance_settled_at: ago(5) },
     ],
     work_order_lines: [
       { id: "l1", work_order_id: "w1", kind: "part", description: "تيل فرامل أمامي", qty: 1, unit_price: 600, part_id: "p3", created_at: ago(1) },
       { id: "l2", work_order_id: "w1", kind: "labor", description: "أجرة تغيير تيل", qty: 1, unit_price: 200, part_id: null, created_at: ago(1) },
       { id: "l3", work_order_id: "w2", kind: "labor", description: "كشف كهرباء", qty: 1, unit_price: 250, part_id: null, created_at: ago(3) },
+      { id: "l4", work_order_id: "w3", kind: "part", description: "مصد أمامي", qty: 1, unit_price: 2200, part_id: null, created_at: ago(9) },
+      { id: "l5", work_order_id: "w3", kind: "labor", description: "دهان وتصليح صدمة", qty: 1, unit_price: 1500, part_id: null, created_at: ago(9) },
+      { id: "l6", work_order_id: "w4", kind: "part", description: "زجاج جانبي", qty: 1, unit_price: 1800, part_id: null, created_at: ago(15) },
+      { id: "l7", work_order_id: "w4", kind: "labor", description: "أجرة تركيب", qty: 1, unit_price: 700, part_id: null, created_at: ago(15) },
     ],
     payments: [
       { id: "y1", work_order_id: "w1", amount: 300, method: "cash", created_at: new Date().toISOString() },
+      { id: "y2", work_order_id: "w4", amount: 2500, method: "transfer", created_at: ago(5) },
     ],
     invoices: [],
     invoice_lines: [],

@@ -58,7 +58,7 @@
   async function load() {
     // نولّد مستحقات المرتبات الناقصة الأول (عشان "المرتبات المستحقة" تكون محدّثة)
     await DB.syncSalaryAccruals(Treasury.today());
-    var names = ["payments", "income", "expenses", "treasury_entries", "salary_payments", "employees", "salary_accruals"];
+    var names = ["payments", "income", "expenses", "treasury_entries", "salary_payments", "employees", "salary_accruals", "work_orders"];
     var res = await Promise.all(names.map(function (n) { return DB.list(n); }));
     data = {};
     names.forEach(function (n, i) { data[n] = res[i]; });

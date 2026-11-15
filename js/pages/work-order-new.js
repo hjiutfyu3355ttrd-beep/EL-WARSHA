@@ -22,6 +22,17 @@
           <label>${I18N.t("wo_tech")}</label>
           <select id="tech"></select>
         </div>
+        <div class="field">
+          <label>${I18N.t("ins_payer")}</label>
+          <select id="payer">
+            <option value="customer">${I18N.t("ins_payer_customer")}</option>
+            <option value="insurance">${I18N.t("ins_payer_insurance")}</option>
+          </select>
+        </div>
+        <div class="form-grid" id="ins-fields" style="display:none">
+          <div class="field"><label>${I18N.t("ins_company")}</label><input id="ins-company" maxlength="120"></div>
+          <div class="field"><label>${I18N.t("ins_claim_no")}</label><input id="ins-claim" maxlength="60"></div>
+        </div>
         <div class="form-grid">
           <div class="field"><label>${I18N.t("wo_priority")}</label>
             <select id="priority">${UI.PRIORITIES.map(function (p) { return UI.option(p.key, p.label, p.key === "normal"); })}</select></div>
@@ -66,11 +77,22 @@
   });
 
   elCustomer.addEventListener("change", renderVehicles);
+  document.getElementById("payer").addEventListener("change", function () {
+    document.getElementById("ins-fields").style.display = this.value === "insurance" ? "" : "none";
+    if (this.value === "insurance") document.getElementById("ins-company").focus();
+  });
 
   document.getElementById("form").addEventListener("submit", async function (e) {
     e.preventDefault();
     if (!elCustomer.value || !elVehicle.value) {
       UI.flash(I18N.t("wo_new_pick"));
+      return;
+    }
+    var payer = document.getElementById("payer").value;
+    var company = document.getElementById("ins-company").value.trim();
+    if (payer === "insurance" && !company) {
+      UI.flash(I18N.t("ins_company_required"));
+      document.getElementById("ins-company").focus();
       return;
     }
     var btn = document.getElementById("save");
@@ -85,6 +107,9 @@
         expected_delivery_at: document.getElementById("expected").value
           ? new Date(document.getElementById("expected").value + "T23:59:00").toISOString() : null,
         complaint: document.getElementById("complaint").value.trim(),
+        payer_type: payer,
+        insurance_company: payer === "insurance" ? company : "",
+        insurance_claim_no: payer === "insurance" ? document.getElementById("ins-claim").value.trim() : "",
       });
       location.href = "work-order.html?id=" + encodeURIComponent(row.id);
     } catch (err) {

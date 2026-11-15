@@ -72,11 +72,13 @@
       .reduce(function (s, p) { return s + p.amount; }, 0);
     var low = parts.filter(function (p) { return p.qty <= p.min_qty; });
 
+    var insPending = orders.filter(Insurance.isPending);
     var stats = [
       { label: I18N.t("dash_open_orders"), value: String(open.length), sub: late.length ? (late.length + " " + I18N.t("late_badge")) : "", href: "work-orders.html?tab=open", c: "var(--primary)", soft: "var(--success-soft)", ic: "M9 11l3 3 8-8M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9" },
       { label: I18N.t("dash_ready_cars"), value: String(ready.length), sub: "", href: "work-orders.html?tab=done", c: "var(--info)", soft: "var(--info-soft)", ic: "M5 13l4 4L19 7" },
       { label: I18N.t("dash_revenue_today"), value: UI.money(revenueToday), sub: I18N.t("dash_rev_week") + ": " + UI.money(revenueWeek), href: "payments.html", c: "var(--orange)", soft: "var(--orange-soft)", ic: "M12 2v20M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" },
       { label: I18N.t("dash_low_stock"), value: String(low.length), sub: "", href: "inventory.html", c: "var(--purple)", soft: "var(--purple-soft)", ic: "M12 9v4M12 17h.01M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" },
+      { label: I18N.t("dash_ins"), value: insPending.length ? "…" : UI.money(0), sub: I18N.t("dash_ins_sub", { n: insPending.length }), href: "insurance.html", c: "var(--warning)", soft: "var(--warning-soft)", ic: "M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6z" },
       { label: I18N.t("dash_treasury"), value: "…", sub: "", href: "treasury.html", c: "var(--success)", soft: "var(--success-soft)", ic: "M3 7h18v12H3zM3 11h18M16 15h2" },
     ];
 
@@ -104,6 +106,17 @@
             var body = html`<div class="ico"><svg viewBox="0 0 24 24"><path d="${s.ic}"/></svg></div>
               <div class="label">${s.label}</div><div class="value">${s.value}</div>
               ${s.sub ? html`<small>${s.sub}</small>` : ""}`;
+
+    // مستحقات التأمين: محتاجة بنود الأوامر، فبنجيبها بس لو فيه مطالبات معلّقة (ومن غير ما نعطّل اللوحة)
+    if (insPending.length) {
+      DB.list("work_order_lines").then(function (lines) {
+        var el = page.querySelector('a[href="insurance.html"] .value');
+        if (el) el.textContent = UI.money(Insurance.summary(orders, lines, payments).outstanding);
+      }, function () {
+        var el = page.querySelector('a[href="insurance.html"] .value');
+        if (el) el.textContent = "—";
+      });
+    }
 
     // رصيد الخزنة: استدعاء واحد خفيف (دالة في الداتابيز) بعد ما اللوحة اترسمت
     DB.treasuryTotals().then(function (tt) {

@@ -262,6 +262,7 @@
     dashboard: '<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
     workorder: '<path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/>',
     receive: '<path d="M5 17h14M6 17l1.5-6h9L18 17M7 17v2M17 17v2"/><circle cx="8.5" cy="14" r=".6"/><circle cx="15.5" cy="14" r=".6"/><path d="M12 3v4M10 5l2 2 2-2"/>',
+    insurance: '<path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/>',
     customers: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.4 3.2-5.5 6.5-5.5s5.9 2.1 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.8c1.8.7 3 2.4 3.5 5.2"/>',
     parts: '<path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3.3 7.5L12 12.5l8.7-5M12 22V12.5"/>',
     invoice: '<path d="M6 2h9l4 4v16l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/>',
@@ -283,6 +284,7 @@
         { key: "work-orders", href: "work-orders.html", label: "أوامر الشغل", icon: "workorder" },
         { key: "work-order-new", href: "work-order-new.html", label: "استقبال سيارة", icon: "receive" },
         { key: "quotations", href: "quotations.html", label: "عروض الأسعار", icon: "invoice" },
+        { key: "insurance", href: "insurance.html", label: "التأمين", icon: "insurance" },
         { key: "observation", href: "observation.html", label: "مكتبة الفحص", icon: "workorder" },
         { key: "gate-pass", href: "gate-pass.html", label: "تصاريح الخروج", icon: "receive" },
       ],
@@ -326,6 +328,7 @@
     "work-orders": ["أوامر الشغل", "إدارة ومتابعة أوامر الصيانة"],
     "work-order-new": ["استقبال سيارة", "فتح أمر شغل جديد"],
     quotations: ["عروض الأسعار", "إنشاء ومتابعة عروض الأسعار للعملاء"],
+    insurance: ["السيارات على التأمين", "مطالبات شركات التأمين: اللي اتسلّمت واللي لسه مستنية الدفع"],
     observation: ["مكتبة الفحص", "نقاط الفحص حسب نوع المركبة"],
     customers: ["العملاء", "بيانات العملاء وسياراتهم"],
     vehicles: ["السيارات", "ملفات المركبات والصور وسجل الصيانة"],
@@ -378,7 +381,7 @@
     var title = TITLES[opts.key || active] || TITLES[active] || ["", ""];
     var navLabel = {
       dashboard: "nav_dashboard", "work-orders": "nav_work_orders", "work-order-new": "nav_work_order_new",
-      quotations: "nav_quotations", observation: "nav_observation", "gate-pass": "nav_gate_pass",
+      quotations: "nav_quotations", insurance: "nav_insurance", observation: "nav_observation", "gate-pass": "nav_gate_pass",
       customers: "nav_customers", vehicles: "nav_vehicles", compliance: "nav_compliance",
       inventory: "nav_inventory", suppliers: "nav_suppliers", purchases: "nav_purchases",
       "part-sales": "nav_part_sales", invoices: "nav_invoices", payments: "nav_payments",
@@ -393,7 +396,7 @@
     };
     var titleKey = {
       dashboard: ["t_dashboard","d_dashboard"], "work-orders": ["t_work_orders","d_work_orders"],
-      "work-order-new": ["t_work_order_new","d_work_order_new"], quotations: ["t_quotations","d_quotations"],
+      "work-order-new": ["t_work_order_new","d_work_order_new"], quotations: ["t_quotations","d_quotations"], insurance: ["t_insurance","d_insurance"],
       observation: ["t_observation","d_observation"], customers: ["t_customers","d_customers"],
       vehicles: ["t_vehicles","d_vehicles"], inventory: ["t_inventory","d_inventory"],
       suppliers: ["t_suppliers","d_suppliers"], invoices: ["t_invoices","d_invoices"],

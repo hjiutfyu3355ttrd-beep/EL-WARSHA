@@ -18,6 +18,8 @@
 
       <div class="card" id="head"><div class="empty">${I18N.t("loading")}</div></div>
 
+      <div id="ins-panel"></div>
+
       <div>
         <h3>${I18N.t("inspection")}</h3>
         <div class="table-wrap" id="inspections"></div>
@@ -132,7 +134,7 @@
       </table>`;
     $("insp-point").innerHTML = S.obsPoints.map(function (p) {
       return UI.option(p.id, I18N.enumLabel("obs_cat", p.category) + " — " + p.name);
-    }).join("") || '<option value="">${I18N.t("no_obs_points")}</option>';
+    }).join("") || '<option value="">' + I18N.t("no_obs_points") + '</option>';
   }
 
   function renderLines() {
@@ -183,8 +185,67 @@
     })}`;
   }
 
+  // ---------- التأمين: جهة الدفع + استلام فلوس شركة التأمين ----------
+  // السيارة بتتسلّم عادي (مفيش شرط دفع)، والمطالبة بتفضل معلّقة لحد ما تسجّل إن شركة التأمين دفعت.
+  function renderInsurance() {
+    var o = S.order, ins = Insurance.isInsurance(o), t = totals();
+    var settled = Insurance.isSettled(o), pending = Insurance.isPending(o);
+    var remaining = Math.max(0, t.total - t.paid);
+    // لأمر العميل اللوحة للتعديل بس (مش بتتطبع)، ولأمر التأمين بتتطبع بياناتها
+    $("ins-panel").innerHTML = html`
+      <div class="card stack ${ins ? "" : "no-print"}">
+        <div class="row between">
+          <h3 style="margin:0">${I18N.t("ins_panel_title")}</h3>
+          ${ins ? html`<span class="badge ${settled ? "ready" : "draft"}">${I18N.t(settled ? "ins_status_settled" : "ins_status_pending")}</span>` : ""}
+        </div>
+        ${ins ? html`<p style="margin:0"><b>${I18N.t("ins_company")}:</b> ${o.insurance_company}
+          ${o.insurance_claim_no ? html` · <b>${I18N.t("ins_claim_no")}:</b> ${o.insurance_claim_no}` : ""}</p>` : ""}
+        ${Insurance.isDeliveredPending(o) ? html`<div class="notice">${I18N.t("ins_hanging_notice")}</div>` : ""}
+
+        <div class="no-print form-grid" style="align-items:end">
+          <div class="field"><label>${I18N.t("ins_payer")}</label>
+            <select id="ins-payer">
+              ${UI.option("customer", I18N.t("ins_payer_customer"), !ins)}
+              ${UI.option("insurance", I18N.t("ins_payer_insurance"), ins)}
+            </select></div>
+          <div class="field" id="ins-company-wrap" style="${ins ? "" : "display:none"}"><label>${I18N.t("ins_company")}</label>
+            <input id="ins-company" maxlength="120" value="${o.insurance_company || ""}"></div>
+          <div class="field" id="ins-claim-wrap" style="${ins ? "" : "display:none"}"><label>${I18N.t("ins_claim_no")}</label>
+            <input id="ins-claim" maxlength="60" value="${o.insurance_claim_no || ""}"></div>
+          <button type="button" data-ins="save">${I18N.t("save")}</button>
+        </div>
+
+        ${ins ? html`
+          <div class="totals">
+            <div class="card"><div class="label">${I18N.t("total")}</div><div class="value">${UI.money(t.total)}</div></div>
+            <div class="card"><div class="label">${I18N.t("ins_received")}</div><div class="value">${UI.money(t.paid)}</div></div>
+            <div class="card"><div class="label">${I18N.t("ins_remaining")}</div><div class="value">${UI.money(remaining)}</div></div>
+          </div>` : ""}
+
+        ${pending ? html`
+          <form class="no-print" id="ins-pay-form">
+            <h4 style="margin:4px 0 8px">${I18N.t("ins_record_title")}</h4>
+            <div class="form-grid" style="align-items:end">
+              <div class="field"><label>${I18N.t("ins_record_amount")}</label>
+                <input id="ins-amount" type="number" min="0" step="any" value="${remaining > 0 ? remaining : ""}"></div>
+              <div class="field"><label>${I18N.t("ins_record_method")}</label>
+                <select id="ins-method">${UI.PAY_METHODS.map(function (m) { return UI.option(m.key, m.label, m.key === "transfer"); })}</select></div>
+              <label style="display:flex;gap:8px;align-items:center;margin:0"><input type="checkbox" id="ins-close" checked style="width:auto"> ${I18N.t("ins_close_claim")}</label>
+              <button>${I18N.t("ins_record_btn")}</button>
+            </div>
+          </form>` : ""}
+
+        ${settled ? html`
+          <div class="row between no-print">
+            <span>${I18N.t("ins_settled_on", { date: UI.dateAr(o.insurance_settled_at) })}${remaining > 0 ? html` · <b>${I18N.t("ins_diff", { amount: UI.money(remaining) })}</b>` : ""}</span>
+            <button type="button" class="secondary" data-ins="reopen">${I18N.t("ins_reopen")}</button>
+          </div>` : ""}
+      </div>`;
+  }
+
   function renderAll() {
     renderHead();
+    renderInsurance();
     renderInspections();
     renderLines();
     renderPayments();
@@ -346,6 +407,64 @@
       await DB.insert("payments", { work_order_id: orderId, amount: amount, method: $("pay-method").value });
       $("pay-form").reset();
       await reload();
+    });
+  });
+
+  // ----- أحداث التأمين (مفوّضة لأن اللوحة بتتعاد رسمها) -----
+  var insCloseTouched = false;
+  page.addEventListener("change", function (e) {
+    if (e.target.id === "ins-payer") {
+      var show = e.target.value === "insurance" ? "" : "none";
+      $("ins-company-wrap").style.display = show;
+      $("ins-claim-wrap").style.display = show;
+      if (!show) $("ins-company").focus();
+    }
+    if (e.target.id === "ins-close") insCloseTouched = true;
+  });
+  page.addEventListener("input", function (e) {
+    if (e.target.id !== "ins-amount" || insCloseTouched) return;
+    var t = totals();
+    $("ins-close").checked = Number(e.target.value) >= Math.max(0, t.total - t.paid);   // استلم كل المستحق → اقفل المطالبة
+  });
+  page.addEventListener("click", function (e) {
+    var b = e.target.closest("[data-ins]");
+    if (!b) return;
+    var act = b.getAttribute("data-ins");
+    if (act === "save") {
+      var payer = $("ins-payer").value, company = $("ins-company").value.trim();
+      if (payer === "insurance" && !company) { UI.flash(I18N.t("ins_company_required")); $("ins-company").focus(); return; }
+      UI.guard(async function () {
+        await DB.update("work_orders", orderId, {
+          payer_type: payer,
+          insurance_company: payer === "insurance" ? company : "",
+          insurance_claim_no: payer === "insurance" ? $("ins-claim").value.trim() : "",
+          // الرجوع لـ "العميل بيدفع" بيمسح حالة التسوية (قيد في الداتابيز)
+          insurance_settled_at: payer === "insurance" ? S.order.insurance_settled_at || null : null,
+        });
+        await reload();
+        UI.flash(I18N.t("ins_saved"), "success");
+      });
+    } else if (act === "reopen") {
+      UI.guard(async function () {
+        await DB.update("work_orders", orderId, { insurance_settled_at: null });
+        await reload();
+        UI.flash(I18N.t("ins_reopened"), "success");
+      });
+    }
+  });
+  page.addEventListener("submit", function (e) {
+    if (e.target.id !== "ins-pay-form") return;
+    e.preventDefault();
+    var amount = Number($("ins-amount").value);
+    if (!(amount > 0)) { UI.flash(I18N.t("amount_invalid")); return; }
+    var close = $("ins-close").checked;
+    UI.guard(async function () {
+      // دفعة عادية على الأمر → بتدخل الخزنة وبتنقّص المتبقي لوحدها
+      await DB.insert("payments", { work_order_id: orderId, amount: amount, method: $("ins-method").value });
+      if (close) await DB.update("work_orders", orderId, { insurance_settled_at: new Date().toISOString() });
+      insCloseTouched = false;
+      await reload();
+      UI.flash(I18N.t("ins_recorded"), "success");
     });
   });
 

@@ -107,7 +107,7 @@
     $("t-vehicle").innerHTML = Object.keys(vehicles).map(function (id) {
       var v = vehicles[id];
       return UI.option(id, v.plate + " — " + v.make + " " + v.model);
-    }).join("") || '<option value="">${I18N.t("empty_vehicles")}</option>';
+    }).join("") || '<option value="">' + I18N.t("empty_vehicles") + '</option>';
     render();
   }
 
