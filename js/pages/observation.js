@@ -1,4 +1,4 @@
-(async function () {
+UI.page("observation", async function () {
   var page = await UI.init("observation");
   if (!page) return;
   var html = UI.html;
@@ -99,4 +99,4 @@
   });
 
   await UI.guard(load);
-})();
+});

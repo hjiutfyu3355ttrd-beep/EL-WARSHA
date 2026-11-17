@@ -1,4 +1,4 @@
-(async function () {
+UI.page("custom-fields", async function () {
   var page = await UI.init("custom-fields");
   if (!page) return;
   var html = UI.html;
@@ -116,4 +116,4 @@
   });
 
   await UI.guard(load);
-})();
+});

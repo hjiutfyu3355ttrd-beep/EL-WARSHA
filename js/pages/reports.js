@@ -1,4 +1,4 @@
-(async function () {
+UI.page("reports", async function () {
   var page = await UI.init("reports");
   if (!page) return;
   var html = UI.html;
@@ -133,4 +133,4 @@
         </div>
       </div>`;
   });
-})();
+});

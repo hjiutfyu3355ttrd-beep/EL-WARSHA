@@ -1,4 +1,4 @@
-(async function () {
+UI.page("purchases", async function () {
   var page = await UI.init("purchases");
   if (!page) return;
   var html = UI.html;
@@ -264,4 +264,4 @@
     await load();
     render();
   });
-})();
+});

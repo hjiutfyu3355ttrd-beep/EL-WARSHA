@@ -1,4 +1,4 @@
-(async function () {
+UI.page("tax-rates", async function () {
   var page = await UI.init("tax-rates");
   if (!page) return;
   var html = UI.html;
@@ -94,4 +94,4 @@
   });
 
   await UI.guard(load);
-})();
+});

@@ -1,4 +1,4 @@
-(async function () {
+UI.page("work-order-new", async function () {
   var page = await UI.init("work-order-new");
   if (!page) return;
   var html = UI.html;
@@ -111,10 +111,10 @@
         insurance_company: payer === "insurance" ? company : "",
         insurance_claim_no: payer === "insurance" ? document.getElementById("ins-claim").value.trim() : "",
       });
-      location.href = "work-order.html?id=" + encodeURIComponent(row.id);
+      UI.go("work-order.html?id=" + encodeURIComponent(row.id));
     } catch (err) {
       UI.flash(err.message);
       btn.disabled = false;
     }
   });
-})();
+});

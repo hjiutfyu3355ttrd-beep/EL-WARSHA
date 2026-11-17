@@ -1,4 +1,4 @@
-(async function () {
+UI.page("income", async function () {
   var page = await UI.init("income");
   if (!page) return;
   var html = UI.html;
@@ -128,4 +128,4 @@
   });
 
   await UI.guard(load);
-})();
+});

@@ -1,4 +1,4 @@
-(async function () {
+UI.page("payments", async function () {
   var page = await UI.init("payments");
   if (!page) return;
   var html = UI.html;
@@ -67,4 +67,4 @@
     render();
   });
   $("method").addEventListener("change", render);
-})();
+});

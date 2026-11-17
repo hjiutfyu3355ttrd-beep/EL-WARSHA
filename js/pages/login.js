@@ -55,7 +55,7 @@
     msg.textContent = "";
     try {
       await DB.auth.signIn(document.getElementById("phone").value, document.getElementById("password").value);
-      location.href = "index.html";
+      location.href = (await DB.auth.mustChangePassword()) ? "settings.html#pw" : "index.html";
     } catch (err) {
       msg.textContent = err.message;
       btn.disabled = false;

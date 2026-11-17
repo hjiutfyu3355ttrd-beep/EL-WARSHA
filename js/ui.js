@@ -59,7 +59,7 @@
     { code: "EUR", ar: "€", tr: "€" },
     { code: "GBP", ar: "£", tr: "£" },
   ];
-  var curState = { code: "EGP", symbol: "" };
+  var curState = { code: "EGP", symbol: "", name: "" };
   var curUid = "demo";
   function currencyDefaultSymbol(code) {
     var lang = I18N.getLang();
@@ -72,12 +72,13 @@
     return (curState.symbol && curState.symbol.trim()) || currencyDefaultSymbol(curState.code);
   }
   function applyCurrency(c) {
-    curState = { code: (c && c.code) || "EGP", symbol: (c && c.symbol) || "" };
+    curState = { code: (c && c.code) || "EGP", symbol: (c && c.symbol) || "", name: (c && c.name) || curState.name || "" };
     I18N.setCurrencyLabel(currencyLabel());
+    if (window.Shell && Shell.setShop) Shell.setShop(curState.name);
   }
   function readCurrencyRow(rows) {
     var r = rows && rows[0];
-    return { code: (r && r.currency) || "EGP", symbol: (r && r.currency_symbol) || "" };
+    return { code: (r && r.currency) || "EGP", symbol: (r && r.currency_symbol) || "", name: (r && r.name) || "" };
   }
   // أول مرة على الجهاز بنستنى القراءة مرة واحدة؛ بعد كده بنقرأ من الكاش فورًا ونحدّثه في الخلفية
   async function loadCurrency(uid) {
@@ -89,9 +90,13 @@
       applyCurrency(cached);
       var last = 0;
       try { last = Number(sessionStorage.getItem("ws_cur_t") || 0); } catch (e) {}
-      if (Date.now() - last > 600000) {  // تحديث خلفي كل 10 دقايق (لو اتغيّرت من جهاز تاني بتظهر في الصفحة اللي بعدها)
+      if (cached.name === undefined || Date.now() - last > 600000) {  // تحديث خلفي كل 10 دقايق (لو اتغيّرت من جهاز تاني بتظهر في الصفحة اللي بعدها)
         try { sessionStorage.setItem("ws_cur_t", String(Date.now())); } catch (e) {}
-        DB.list("shop_profile").then(function (rows) { store(readCurrencyRow(rows)); }, function () {});
+        DB.list("shop_profile").then(function (rows) {
+          var fresh = readCurrencyRow(rows);
+          store(fresh);
+          if (window.Shell && Shell.setShop) Shell.setShop(fresh.name);
+        }, function () {});
       }
       return;
     }
@@ -106,9 +111,15 @@
   }
   // بيتنادى من الإعدادات بعد الحفظ
   function setCurrency(code, symbol) {
-    var c = { code: code || "EGP", symbol: symbol || "" };
+    var c = { code: code || "EGP", symbol: symbol || "", name: curState.name };
     try { localStorage.setItem("ws_cur_" + curUid, JSON.stringify(c)); } catch (e) {}
     applyCurrency(c);
+  }
+  // بيتنادى من الإعدادات بعد حفظ اسم الورشة عشان يظهر فورًا في القائمة الجانبية
+  function setShopName(name) {
+    curState.name = name || "";
+    try { localStorage.setItem("ws_cur_" + curUid, JSON.stringify({ code: curState.code, symbol: curState.symbol, name: curState.name })); } catch (e) {}
+    if (window.Shell && Shell.setShop) Shell.setShop(curState.name);
   }
   function money(n) {
     return new Intl.NumberFormat(locale(), { maximumFractionDigits: 2 }).format(n || 0) + " " + currencyLabel();
@@ -234,13 +245,39 @@
   }
 
   // ---------- رسائل ----------
+  // الرسائل بتتكدّس في حاوية واحدة (مش فوق بعض)، وبتفضل ظاهرة حتى لو المستخدم انتقل لصفحة تانية.
   function flash(msg, type) {
+    var host = document.getElementById("toasts");
+    if (!host) {
+      host = document.createElement("div");
+      host.id = "toasts";
+      host.className = "toasts no-print";
+      host.setAttribute("aria-live", "polite");
+      document.body.appendChild(host);
+    }
+    var kind = type || "error";
     var d = document.createElement("div");
-    d.className = "toast " + (type || "error");
-    d.textContent = msg;
-    document.body.appendChild(d);
-    setTimeout(function () { d.remove(); }, 4500);
+    d.className = "toast " + kind;
+    d.setAttribute("role", kind === "error" ? "alert" : "status");
+    var ic = document.createElement("span");
+    ic.className = "toast-ic";
+    ic.innerHTML = ICON_TOAST[kind === "success" ? "check" : "alert"];  // SVG ثابت من عندنا
+    var tx = document.createElement("span");
+    tx.className = "toast-tx";
+    tx.textContent = msg;
+    d.appendChild(ic);
+    d.appendChild(tx);
+    host.appendChild(d);
+    while (host.children.length > 4) host.removeChild(host.firstChild);
+    setTimeout(function () {
+      d.classList.add("out");
+      setTimeout(function () { d.remove(); }, 220);
+    }, kind === "error" ? 5200 : 3200);
   }
+  var ICON_TOAST = {
+    check: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>',
+    alert: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5h.01"/></svg>'
+  };
 
   // اسم بديل لـ flash بيستخدمه vehicles.js: toast(رسالة) = نجاح، toast(رسالة, true) = خطأ
   function toast(msg, isError) {
@@ -256,100 +293,145 @@
     }
   }
 
-  // ---------- الشريط الجانبي + حماية الصفحات ----------
-  // أيقونات بسيطة (SVG stroke) — بتتلوّن بلون الحالة من CSS
+  // ---------- القائمة الجانبية: البيانات (الرسم نفسه في js/shell.js) ----------
+  // أيقونات SVG (stroke) — بتتلوّن بلون الحالة من CSS. كل صفحة ليها أيقونة مميّزة.
   var ICONS = {
     dashboard: '<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
-    workorder: '<path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/>',
-    receive: '<path d="M5 17h14M6 17l1.5-6h9L18 17M7 17v2M17 17v2"/><circle cx="8.5" cy="14" r=".6"/><circle cx="15.5" cy="14" r=".6"/><path d="M12 3v4M10 5l2 2 2-2"/>',
-    insurance: '<path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/>',
+    workorders: '<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/>',
+    receive: '<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>',
+    quotations: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/>',
+    insurance: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>',
+    observation: '<path d="m3 17 2 2 4-4M3 7l2 2 4-4M13 6h8M13 12h8M13 18h8"/>',
+    gatepass: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',
     customers: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.4 3.2-5.5 6.5-5.5s5.9 2.1 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.8c1.8.7 3 2.4 3.5 5.2"/>',
-    parts: '<path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3.3 7.5L12 12.5l8.7-5M12 22V12.5"/>',
-    invoice: '<path d="M6 2h9l4 4v16l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/>',
+    vehicles: '<path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/>',
+    compliance: '<path d="M12 3v18M7 21h10M5 6h14"/><path d="m5 6-3 7a3.5 3.5 0 0 0 6 0z"/><path d="m19 6-3 7a3.5 3.5 0 0 0 6 0z"/>',
+    parts: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94z"/>',
+    suppliers: '<path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/>',
+    purchases: '<circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>',
+    partsales: '<path d="M12.6 2.6A2 2 0 0 0 11.2 2H4a2 2 0 0 0-2 2v7.2a2 2 0 0 0 .6 1.4l8.7 8.7a2.4 2.4 0 0 0 3.4 0l6.6-6.6a2.4 2.4 0 0 0 0-3.4z"/><circle cx="7.5" cy="7.5" r=".6"/>',
+    invoices: '<path d="M6 2h9l4 4v16l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/>',
+    treasury: '<path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>',
     payments: '<rect x="2" y="5" width="20" height="14" rx="2.5"/><path d="M2 10h20M6 15h4"/>',
+    income: '<path d="M22 7 13.5 15.5l-5-5L2 17"/><path d="M16 7h6v6"/>',
+    expenses: '<path d="M22 17 13.5 8.5l-5 5L2 7"/><path d="M16 17h6v-6"/>',
+    payroll: '<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.2"/><path d="M6 12h.01M18 12h.01"/>',
     reports: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
     settings: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
-    admin: '<path d="M12 3l8 3v6c0 4.5-3.2 8-8 9-4.8-1-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/>',
+    taxrates: '<path d="M19 5 5 19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/>',
+    mail: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/>',
+    fields: '<path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>',
+    setup: '<path d="M4 22V4M4 4h13l-2 4 2 4H4"/>',
+    admin: '<path d="M12 3l8 3v6c0 4.5-3.2 8-8 9-4.8-1-8-4.5-8-9V6z"/><path d="M12 8v4M12 15.5h.01"/>',
+    // أيقونات الواجهة
+    search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
+    chev: '<path d="m6 9 6 6 6-6"/>',
+    panel: '<rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M9 4v16"/>',
+    menu: '<path d="M4 7h16M4 12h16M4 17h10"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    more: '<rect x="4" y="4" width="6" height="6" rx="1.6"/><rect x="14" y="4" width="6" height="6" rx="1.6"/><rect x="4" y="14" width="6" height="6" rx="1.6"/><rect x="14" y="14" width="6" height="6" rx="1.6"/>',
+    logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',
+    x: '<path d="M18 6 6 18M6 6l12 12"/>',
+    enter: '<path d="M9 10 4 15l5 5"/><path d="M20 4v7a4 4 0 0 1-4 4H4"/>',
+    globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.7 4 5.7 4 9s-1.4 6.3-4 9c-2.6-2.7-4-5.7-4-9s1.4-6.3 4-9z"/>',
   };
   function icon(name) {
     return '<svg viewBox="0 0 24 24" aria-hidden="true">' + (ICONS[name] || "") + "</svg>";
   }
 
-  // مجموعات القائمة على طراز Garage Master
+  // مجموعات القائمة. الـ key = اسم الصفحة (نفس القيمة اللي بتتبعت لـ UI.init)
   var NAV = [
-    { group: "الرئيسية", items: [{ key: "dashboard", href: "index.html", label: "لوحة التحكم", icon: "dashboard" }] },
+    { group: "الرئيسية", gk: "g_home", items: [{ key: "dashboard", href: "index.html", label: "لوحة التحكم", icon: "dashboard" }] },
     {
-      group: "العمليات",
+      group: "العمليات", gk: "g_ops",
       items: [
-        { key: "work-orders", href: "work-orders.html", label: "أوامر الشغل", icon: "workorder" },
+        { key: "work-orders", href: "work-orders.html", label: "أوامر الشغل", icon: "workorders" },
         { key: "work-order-new", href: "work-order-new.html", label: "استقبال سيارة", icon: "receive" },
-        { key: "quotations", href: "quotations.html", label: "عروض الأسعار", icon: "invoice" },
+        { key: "quotations", href: "quotations.html", label: "عروض الأسعار", icon: "quotations" },
         { key: "insurance", href: "insurance.html", label: "التأمين", icon: "insurance" },
-        { key: "observation", href: "observation.html", label: "مكتبة الفحص", icon: "workorder" },
-        { key: "gate-pass", href: "gate-pass.html", label: "تصاريح الخروج", icon: "receive" },
+        { key: "observation", href: "observation.html", label: "مكتبة الفحص", icon: "observation" },
+        { key: "gate-pass", href: "gate-pass.html", label: "تصاريح الخروج", icon: "gatepass" },
       ],
     },
-    { group: "العملاء والسيارات", items: [
+    { group: "العملاء والسيارات", gk: "g_customers", items: [
       { key: "customers", href: "customers.html", label: "العملاء", icon: "customers" },
-      { key: "vehicles", href: "vehicles.html", label: "السيارات", icon: "receive" },
-      { key: "compliance", href: "compliance.html", label: "الضرائب والامتثال", icon: "invoice" },
+      { key: "vehicles", href: "vehicles.html", label: "السيارات", icon: "vehicles" },
+      { key: "compliance", href: "compliance.html", label: "الضرائب والامتثال", icon: "compliance" },
     ] },
     {
-      group: "المخزون",
+      group: "المخزون", gk: "g_stock",
       items: [
         { key: "inventory", href: "inventory.html", label: "قطع الغيار", icon: "parts" },
-        { key: "suppliers", href: "suppliers.html", label: "الموردين", icon: "parts" },
-        { key: "purchases", href: "purchases.html", label: "المشتريات", icon: "parts" },
-        { key: "part-sales", href: "part-sales.html", label: "بيع قطع غيار", icon: "parts" },
+        { key: "suppliers", href: "suppliers.html", label: "الموردين", icon: "suppliers" },
+        { key: "purchases", href: "purchases.html", label: "المشتريات", icon: "purchases" },
+        { key: "part-sales", href: "part-sales.html", label: "بيع قطع غيار", icon: "partsales" },
       ],
     },
     {
-      group: "المالية",
+      group: "المالية", gk: "g_finance",
       items: [
-        { key: "invoices", href: "invoices.html", label: "الفواتير", icon: "invoice" },
-        { key: "treasury", href: "treasury.html", label: "الخزنة", icon: "payments" },
+        { key: "invoices", href: "invoices.html", label: "الفواتير", icon: "invoices" },
+        { key: "treasury", href: "treasury.html", label: "الخزنة", icon: "treasury" },
         { key: "payments", href: "payments.html", label: "المدفوعات", icon: "payments" },
-        { key: "income", href: "income.html", label: "الدخل", icon: "payments" },
-        { key: "expenses", href: "expenses.html", label: "المصروفات", icon: "payments" },
-        { key: "payroll", href: "payroll.html", label: "المرتبات", icon: "customers" },
+        { key: "income", href: "income.html", label: "الدخل", icon: "income" },
+        { key: "expenses", href: "expenses.html", label: "المصروفات", icon: "expenses" },
+        { key: "payroll", href: "payroll.html", label: "المرتبات", icon: "payroll" },
       ],
     },
-    { group: "التقارير", items: [{ key: "reports", href: "reports.html", label: "التقارير", icon: "reports" }] },
-    { group: "النظام", items: [
+    { group: "التقارير", gk: "g_reports", items: [{ key: "reports", href: "reports.html", label: "التقارير", icon: "reports" }] },
+    { group: "النظام", gk: "g_system", items: [
       { key: "settings", href: "settings.html", label: "الإعدادات", icon: "settings" },
-      { key: "tax-rates", href: "tax-rates.html", label: "معدلات الضرائب", icon: "invoice" },
-      { key: "email-templates", href: "email-templates.html", label: "قوالب الإيميل", icon: "settings" },
-      { key: "custom-fields", href: "custom-fields.html", label: "حقول مخصصة", icon: "settings" },
-      { key: "setup", href: "setup.html", label: "معالج الإعداد", icon: "dashboard" },
+      { key: "tax-rates", href: "tax-rates.html", label: "معدلات الضرائب", icon: "taxrates" },
+      { key: "email-templates", href: "email-templates.html", label: "قوالب الإيميل", icon: "mail" },
+      { key: "custom-fields", href: "custom-fields.html", label: "حقول مخصصة", icon: "fields" },
+      { key: "setup", href: "setup.html", label: "معالج الإعداد", icon: "setup" },
     ] },
   ];
-  var TITLES = {
-    dashboard: ["لوحة التحكم", "نظرة سريعة على الورشة اليوم"],
-    "work-orders": ["أوامر الشغل", "إدارة ومتابعة أوامر الصيانة"],
-    "work-order-new": ["استقبال سيارة", "فتح أمر شغل جديد"],
-    quotations: ["عروض الأسعار", "إنشاء ومتابعة عروض الأسعار للعملاء"],
-    insurance: ["السيارات على التأمين", "مطالبات شركات التأمين: اللي اتسلّمت واللي لسه مستنية الدفع"],
-    observation: ["مكتبة الفحص", "نقاط الفحص حسب نوع المركبة"],
-    customers: ["العملاء", "بيانات العملاء وسياراتهم"],
-    vehicles: ["السيارات", "ملفات المركبات والصور وسجل الصيانة"],
-    inventory: ["قطع الغيار", "المخزون والنواقص"],
-    suppliers: ["الموردين", "إدارة الموردين وبياناتهم"],
-    invoices: ["الفواتير", "إصدار الفواتير ومتابعة التحصيل"],
-    payments: ["المدفوعات", "سجل كل المبالغ المحصّلة"],
-    expenses: ["المصروفات", "تسجيل ومتابعة مصروفات الورشة"],
-    "gate-pass": ["تصاريح الخروج", "دخول وخروج المركبات من الورشة"],
-    "part-sales": ["بيع قطع غيار", "بيع مباشر لقطع الغيار بدون أمر شغل"],
-    income: ["الدخل", "سجل الإيرادات الأخرى والمدفوعات"],
-    treasury: ["الخزنة", "الرصيد الحالي وكل حركات الدخول والخروج"],
-    payroll: ["المرتبات", "مرتبات العمال والصرف والمتبقي لكل عامل"],
-    reports: ["التقارير", "الإيرادات والأداء"],
-    settings: ["الإعدادات", "الفنيون وبيانات الورشة"],
-    compliance: ["الضرائب والامتثال", "ضرائب ورخص المركبات"],
-    "custom-fields": ["حقول مخصصة", "توسيع نماذج العملاء والمركبات"],
-    setup: ["معالج الإعداد", "خطوات تجهيز الورشة لأول مرة"],
-    purchases: ["المشتريات", "أوامر شراء من الموردين ودخول مخزون"],
-    "tax-rates": ["معدلات الضرائب", "ضرائب الخدمة والمنتجات"],
-    "email-templates": ["قوالب الإيميل", "نصوص الإشعارات للعملاء"],
+  // مفاتيح الترجمة لعناصر القائمة وعناوين الصفحات
+  var NAV_I18N = {
+    dashboard: "nav_dashboard", "work-orders": "nav_work_orders", "work-order-new": "nav_work_order_new",
+    quotations: "nav_quotations", insurance: "nav_insurance", observation: "nav_observation", "gate-pass": "nav_gate_pass",
+    customers: "nav_customers", vehicles: "nav_vehicles", compliance: "nav_compliance",
+    inventory: "nav_inventory", suppliers: "nav_suppliers", purchases: "nav_purchases",
+    "part-sales": "nav_part_sales", invoices: "nav_invoices", payments: "nav_payments",
+    income: "nav_income", expenses: "nav_expenses", treasury: "nav_treasury", payroll: "nav_payroll", reports: "nav_reports",
+    settings: "nav_settings", "tax-rates": "nav_tax_rates", "email-templates": "nav_email_templates",
+    "custom-fields": "nav_custom_fields", setup: "nav_setup"
+  };
+  var TITLE_I18N = {
+    dashboard: ["t_dashboard", "d_dashboard"], "work-orders": ["t_work_orders", "d_work_orders"],
+    "work-order-new": ["t_work_order_new", "d_work_order_new"], quotations: ["t_quotations", "d_quotations"], insurance: ["t_insurance", "d_insurance"],
+    observation: ["t_observation", "d_observation"], customers: ["t_customers", "d_customers"],
+    vehicles: ["t_vehicles", "d_vehicles"], inventory: ["t_inventory", "d_inventory"],
+    suppliers: ["t_suppliers", "d_suppliers"], invoices: ["t_invoices", "d_invoices"],
+    payments: ["t_payments", "d_payments"], expenses: ["t_expenses", "d_expenses"],
+    "gate-pass": ["t_gate_pass", "d_gate_pass"], "part-sales": ["t_part_sales", "d_part_sales"],
+    income: ["t_income", "d_income"], treasury: ["t_treasury", "d_treasury"], payroll: ["t_payroll", "d_payroll"], reports: ["t_reports", "d_reports"], settings: ["t_settings", "d_settings"],
+    compliance: ["t_compliance", "d_compliance"], "custom-fields": ["t_custom_fields", "d_custom_fields"],
+    setup: ["t_setup", "d_setup"], purchases: ["t_purchases", "d_purchases"],
+    "tax-rates": ["t_tax_rates", "d_tax_rates"], "email-templates": ["t_email_templates", "d_email_templates"],
+    admin: ["t_admin", "d_admin"]
+  };
+  // [عنوان الصفحة، وصفها] بلغة الواجهة الحالية
+  function titleOf(key) {
+    var tk = TITLE_I18N[key];
+    if (tk) return [I18N.t(tk[0]), I18N.t(tk[1])];
+    return TITLES_AR[key] || ["", ""];
+  }
+  function navLabelOf(item) {
+    return NAV_I18N[item.key] ? I18N.t(NAV_I18N[item.key]) : item.label;
+  }
+  function groupLabelOf(g) {
+    return g.gk ? I18N.t(g.gk) : g.group;
+  }
+  // المجموعة اللي فيها الصفحة دي (للـ breadcrumb)
+  function groupOf(key) {
+    for (var i = 0; i < NAV.length; i++) {
+      for (var j = 0; j < NAV[i].items.length; j++) if (NAV[i].items[j].key === key) return NAV[i];
+    }
+    return null;
+  }
+  var TITLES_AR = {
     admin: ["الإدارة", "كل الورش المسجّلة في المنصة"],
   };
   var QUOTE_STATUSES = mk(["draft", "sent", "accepted", "rejected", "converted"], "quote_");
@@ -362,8 +444,10 @@
     return labelOf(QUOTE_STATUSES, k);
   }
 
-  // كل صفحة بتبدأ بـ: const page = await UI.init("اسم-الصفحة");
-  // بترجّع العنصر اللي الصفحة بتكتب فيه، أو null لو المستخدم اتحوّل (مش مسجّل دخول مثلاً).
+  // ---------- init: كل صفحة بتبدأ بـ  var page = await UI.init("اسم-الصفحة"); ----------
+  // الهيكل (القائمة الجانبية + الشريط العلوي) بيتبني مرة واحدة في js/shell.js وبيفضل ثابت طول الجلسة؛
+  // init هنا بس بتحدّث "الصفحة النشطة" وبتتأكد من تسجيل الدخول، وبترجّع العنصر اللي الصفحة بتكتب فيه
+  // (أو null لو المستخدم اتحوّل لصفحة تانية).
   async function init(active, opts) {
     opts = opts || {};
     var app = document.getElementById("app");
@@ -372,211 +456,52 @@
       app.innerHTML = html`<div class="login-wrap"><div class="card login-card error">${DB.fatal}</div></div>`;
       return null;
     }
+    var S = window.Shell;
+    S.ensure();
+    S.setActive(active, opts);
+    var pageEl = document.getElementById("page");
 
-    // الأدمن بيتخزّن مؤقتًا في الجلسة عشان الشريط الجانبي يتبني فورًا من غير وميض
-    var admin = false;
-    try { admin = sessionStorage.getItem("ws_admin") === "1"; } catch (e) {}
-    var needCheck = !DB.demoMode;
-
-    var title = TITLES[opts.key || active] || TITLES[active] || ["", ""];
-    var navLabel = {
-      dashboard: "nav_dashboard", "work-orders": "nav_work_orders", "work-order-new": "nav_work_order_new",
-      quotations: "nav_quotations", insurance: "nav_insurance", observation: "nav_observation", "gate-pass": "nav_gate_pass",
-      customers: "nav_customers", vehicles: "nav_vehicles", compliance: "nav_compliance",
-      inventory: "nav_inventory", suppliers: "nav_suppliers", purchases: "nav_purchases",
-      "part-sales": "nav_part_sales", invoices: "nav_invoices", payments: "nav_payments",
-      income: "nav_income", expenses: "nav_expenses", treasury: "nav_treasury", payroll: "nav_payroll", reports: "nav_reports",
-      settings: "nav_settings", "tax-rates": "nav_tax_rates", "email-templates": "nav_email_templates",
-      "custom-fields": "nav_custom_fields", setup: "nav_setup"
-    };
-    var groupLabel = {
-      "الرئيسية": "g_home", "العمليات": "g_ops", "التشغيل": "g_ops",
-      "العملاء والسيارات": "g_customers", "المخزون": "g_stock",
-      "المالية": "g_finance", "التقارير": "g_reports", "النظام": "g_system"
-    };
-    var titleKey = {
-      dashboard: ["t_dashboard","d_dashboard"], "work-orders": ["t_work_orders","d_work_orders"],
-      "work-order-new": ["t_work_order_new","d_work_order_new"], quotations: ["t_quotations","d_quotations"], insurance: ["t_insurance","d_insurance"],
-      observation: ["t_observation","d_observation"], customers: ["t_customers","d_customers"],
-      vehicles: ["t_vehicles","d_vehicles"], inventory: ["t_inventory","d_inventory"],
-      suppliers: ["t_suppliers","d_suppliers"], invoices: ["t_invoices","d_invoices"],
-      payments: ["t_payments","d_payments"], expenses: ["t_expenses","d_expenses"],
-      "gate-pass": ["t_gate_pass","d_gate_pass"], "part-sales": ["t_part_sales","d_part_sales"],
-      income: ["t_income","d_income"], treasury: ["t_treasury","d_treasury"], payroll: ["t_payroll","d_payroll"], reports: ["t_reports","d_reports"], settings: ["t_settings","d_settings"],
-      compliance: ["t_compliance","d_compliance"], "custom-fields": ["t_custom_fields","d_custom_fields"],
-      setup: ["t_setup","d_setup"], purchases: ["t_purchases","d_purchases"],
-      "tax-rates": ["t_tax_rates","d_tax_rates"], "email-templates": ["t_email_templates","d_email_templates"],
-      admin: ["t_admin","d_admin"]
-    };
-    var tk = titleKey[opts.key || active] || titleKey[active];
-    if (tk) title = [I18N.t(tk[0]), I18N.t(tk[1])];
-    var navHtml = NAV.map(function (g) {
-      var gname = groupLabel[g.group] ? I18N.t(groupLabel[g.group]) : g.group;
-      return html`<div class="nav-group">${gname}</div>
-        ${g.items.map(function (l) {
-          var lab = navLabel[l.key] ? I18N.t(navLabel[l.key]) : l.label;
-          return html`<a class="nav ${l.key === active ? "active" : ""}" href="${l.href}"><span class="ic"></span>${lab}</a>`;
-        })}`;
-    });
-    app.innerHTML = html`
-      <div class="layout" id="layout">
-        <aside class="sidebar">
-          <div class="brand">
-            <img src="assets/img/logo.svg" alt="" />
-            <div><b>${I18N.t("app_name")}</b><span>${I18N.t("app_tag")}</span></div>
-          </div>
-          <input class="menu-search" id="menu-search" type="search" placeholder="${I18N.t("menu_search")}" />
-          ${navHtml}
-          ${admin
-            ? html`<div class="nav-group">${I18N.t("platform")}</div><a class="nav ${active === "admin" ? "active" : ""}" href="admin.html"><span class="ic"></span>${I18N.t("admin")}</a>`
-            : ""}
-          <div class="spacer"></div>
-          <div class="lang-box">
-            <label class="lang-label">${I18N.t("language")}</label>
-            <select id="sidebar-lang" class="lang-select">
-              <option value="ar" ${I18N.getLang() === "ar" ? "selected" : ""}>${I18N.t("lang_native_ar")}</option>
-              <option value="tr" ${I18N.getLang() === "tr" ? "selected" : ""}>${I18N.t("lang_native_tr")}</option>
-            </select>
-          </div>
-          ${DB.demoMode ? "" : html`<button class="signout" data-action="signout">${I18N.t("signout")}</button>`}
-        </aside>
-        <div class="main">
-          <header class="topbar no-print">
-            <button class="menu-btn" data-action="toggle-nav" aria-label="${I18N.t("menu_label")}">☰</button>
-            <div class="crumbs"><a href="index.html">${I18N.t("home")}</a><i>›</i><b>${title[0]}</b></div>
-            <a class="btn primary btn-receive" href="work-order-new.html">${I18N.t("receive_vehicle")}</a>
-          </header>
-          <main class="content">
-            ${DB.demoMode
-              ? html`<div class="notice no-print">${I18N.t("demo_notice")}
-                  <a class="link" href="#" data-action="reset-demo">${I18N.t("demo_reset")}</a></div>`
-              : ""}
-            <div id="page"><div class="empty page-skel">${I18N.t("loading")}</div></div>
-          </main>
-        </div>
-      </div>`;
-
-    // بحث في القائمة الجانبية (debounce لتقليل شغل DOM أثناء الكتابة)
-    var ms = document.getElementById("menu-search");
-    var searchTimer = null;
-    ms.addEventListener("input", function () {
-      if (searchTimer) clearTimeout(searchTimer);
-      searchTimer = setTimeout(function () {
-        var q = ms.value.trim();
-        var links = app.querySelectorAll(".sidebar a.nav");
-        for (var k = 0; k < links.length; k++) {
-          links[k].style.display = !q || links[k].textContent.indexOf(q) !== -1 ? "" : "none";
+    // ---- التحقق من الجلسة: الجلسة محلية وسريعة، فبنتحقق مرة كل 5 دقايق مش في كل تنقّل ----
+    if (!DB.demoMode) {
+      if (Date.now() - S.state.checkedAt > 300000) {
+        var session = null;
+        try {
+          session = await DB.auth.getSession();
+        } catch (e) {
+          // فشل تحميل مكتبة Supabase أو الشبكة: نعرض رسالة بدل ما الصفحة تفضل "جارٍ التحميل"
+          pageEl.innerHTML = html`<div class="card login-card error">${I18N.t("err_lib_load")}</div>`;
+          S.markReady();
+          return null;
         }
-      }, 60);
-    });
-
-    // الأيقونات: SVG ثابت من عندنا (مش من المستخدم) فبنحقنها بعد الرسم عشان قالب html بيعمل escape
-    var ics = app.querySelectorAll(".sidebar a.nav .ic");
-    var flat = [];
-    NAV.forEach(function (g) { g.items.forEach(function (l) { flat.push(l.icon); }); });
-    if (admin) flat.push("admin");
-    for (var i = 0; i < ics.length; i++) ics[i].outerHTML = icon(flat[i]);
-
-    // حفظ/استرجاع مكان سكرول السايدبار عشان القائمة ما تقفزش بين الصفحات
-    var sb = app.querySelector(".sidebar");
-    try { sb.scrollTop = parseInt(sessionStorage.getItem("ws_sb_scroll") || "0", 10); } catch (e) {}
-    window.addEventListener("pagehide", function () { try { sessionStorage.setItem("ws_sb_scroll", String(sb.scrollTop)); } catch (e) {} });
-
-    // ---- مستمعات الهيكل: بتتربط فورًا (قبل أي انتظار للشبكة) ----
-    var langSel = document.getElementById("sidebar-lang");
-    if (langSel) {
-      langSel.addEventListener("change", function () {
-        if (langSel.value === I18N.getLang()) return;
-        I18N.setLang(langSel.value);
-        location.reload();
-      });
-    }
-    // Prefetch صفحات التنقل عند المرور بالماوس/اللمس → انتقال أسرع
-    var navLinks = app.querySelectorAll(".sidebar a.nav[href], .topbar a.btn[href]");
-    var prefetched = {};
-    function prefetch(href) {
-      if (!href || prefetched[href] || href.indexOf("#") === 0) return;
-      prefetched[href] = true;
-      var l = document.createElement("link");
-      l.rel = "prefetch";
-      l.href = href;
-      document.head.appendChild(l);
-    }
-    for (var ni = 0; ni < navLinks.length; ni++) {
-      (function (el) {
-        el.addEventListener("mouseenter", function () { prefetch(el.getAttribute("href")); }, { passive: true });
-        el.addEventListener("touchstart", function () { prefetch(el.getAttribute("href")); }, { passive: true });
-      })(navLinks[ni]);
-    }
-    // تمييز الرابط النشط فور الضغط قبل ما الصفحة تتحمّل (ثبات بصري)
-    sb.addEventListener("click", function (e) {
-      var a = e.target.closest("a.nav");
-      if (!a) return;
-      var all = app.querySelectorAll(".sidebar a.nav");
-      for (var i = 0; i < all.length; i++) all[i].classList.remove("active");
-      a.classList.add("active");
-    });
-
-    // ---- التحقق من الجلسة: لازم قبل ما الصفحة تجيب بياناتها (الجلسة محلية وسريعة) ----
-    if (needCheck) {
-      var session = null;
-      try {
-        session = await DB.auth.getSession();
-      } catch (e) {
-        // فشل تحميل مكتبة Supabase أو الشبكة: نعرض رسالة بدل ما الصفحة تفضل "جارٍ التحميل"
-        document.getElementById("page").innerHTML = html`<div class="card login-card error">${I18N.t("err_lib_load")}</div>`;
-        return null;
+        if (!session) { location.replace("login.html"); return null; }
+        S.state.checkedAt = Date.now();
+        S.setUser(session.user);
+        await loadCurrency(session.user && session.user.id);
       }
-      if (!session) { location.replace("login.html"); return null; }
-      await loadCurrency(session.user && session.user.id);
-    } else {
+    } else if (!S.state.currencyLoaded) {
       await loadCurrency("demo");
+      S.state.currencyLoaded = true;
     }
 
-    // ---- صلاحية الأدمن: ----
+    // ---- صلاحية الأدمن ----
     // صفحة الإدارة بس هي اللي لازم تستنى التأكيد (والداتابيز نفسها بتحمي الدوال).
-    // باقي الصفحات: بنعتمد على القيمة المخزّنة في الجلسة ونأكّدها في الخلفية من غير ما نعطّل الصفحة.
-    function showAdminLink() {
-      var side = app.querySelector(".sidebar");
-      if (!side || side.querySelector('a.nav[href="admin.html"]')) return;
-      var langBox = side.querySelector(".lang-box");
-      if (!langBox) return;
-      var grp = document.createElement("div");
-      grp.className = "nav-group";
-      grp.textContent = I18N.t("platform");
-      var a = document.createElement("a");
-      a.className = "nav" + (active === "admin" ? " active" : "");
-      a.href = "admin.html";
-      a.innerHTML = icon("admin");  // SVG ثابت من عندنا
-      a.appendChild(document.createTextNode(I18N.t("admin")));
-      side.insertBefore(grp, langBox);
-      side.insertBefore(a, langBox);
-    }
-    function hideAdminLink() {
-      var link = app.querySelector('.sidebar a.nav[href="admin.html"]');
-      if (!link) return;
-      var prev = link.previousElementSibling;
-      if (prev && prev.classList.contains("nav-group")) prev.remove();
-      link.remove();
-    }
-    function applyAdmin(isAdm) {
-      try { sessionStorage.setItem("ws_admin", isAdm ? "1" : "0"); } catch (e) {}
-      if (isAdm) showAdminLink(); else hideAdminLink();
-    }
+    // باقي الصفحات: بنعتمد على القيمة المخزّنة ونأكّدها في الخلفية من غير ما نعطّل الصفحة.
     if (opts.adminOnly) {
       var realAdmin = await DB.isAdmin();
-      applyAdmin(realAdmin);
-      if (!realAdmin) { location.replace("index.html"); return null; }
+      S.setAdmin(realAdmin);
+      if (!realAdmin) { S.go("index.html"); return null; }
     } else if (DB.demoMode) {
-      applyAdmin(true);
-    } else {
-      DB.isAdmin().then(applyAdmin, function () {});
+      S.setAdmin(true);
+    } else if (!S.state.adminChecked) {
+      // بنعتبر الفحص "تم" بس بعد وصول النتيجة؛ لو المستخدم سابنا قبل كده بنعيده في الصفحة اللي بعدها
+      DB.isAdmin().then(function (v) { S.state.adminChecked = true; S.setAdmin(v); }, function () {});
     }
-    return document.getElementById("page");
+    return pageEl;
   }
 
   // ---------- أحداث عامة (event delegation) ----------
   // مستمع واحد على الصفحة كلها بيتعامل مع أي عنصر عليه data-action أو data-href.
+  // (أحداث القشرة: القائمة، البحث السريع، اللغة… في js/shell.js)
   document.addEventListener("click", function (e) {
     var row = e.target.closest("tr[data-href]");
     var actionEl = e.target.closest("[data-action]");
@@ -593,24 +518,29 @@
         location.reload();
         return;
       }
-      if (action === "toggle-nav") {
-        document.getElementById("layout").classList.toggle("nav-open");
-        return;
-      }
       if (action === "print") {
         window.print();
         return;
       }
     }
-    if (row && !actionEl) location.href = row.getAttribute("data-href");
-  });
-
-  document.addEventListener("click", function (e) {
-    var l = document.getElementById("layout");
-    if (l && l.classList.contains("nav-open") && !e.target.closest(".sidebar") && !e.target.closest("[data-action='toggle-nav']")) {
-      l.classList.remove("nav-open");
+    // صف جدول قابل للضغط: انتقال داخل التطبيق (من غير إعادة تحميل)، وبيحترم Ctrl/⌘ لفتح تبويب جديد
+    if (row && !actionEl) {
+      var to = row.getAttribute("data-href");
+      if (e.ctrlKey || e.metaKey) window.open(to, "_blank");
+      else go(to);
     }
   });
+
+  // تنقّل داخل التطبيق (Shell.go) مع رجوع لتحميل عادي لو القشرة مش موجودة
+  function go(href) {
+    if (window.Shell && Shell.go) return Shell.go(href);
+    location.href = href;
+  }
+  // تسجيل سكربت صفحة: UI.page("اسم", async function () { var page = await UI.init("اسم"); ... })
+  function page(name, fn) {
+    if (!window.Shell) throw new Error("js/shell.js لازم يتحمّل بعد ui.js وقبل سكربت الصفحة");
+    Shell.register(name, fn);
+  }
 
   window.UI = {
     html: html,
@@ -648,5 +578,12 @@
     toast: toast,
     guard: guard,
     init: init,
+    page: page,
+    go: go,
+    setShopName: setShopName,
+    meta: {
+      NAV: NAV, ICONS: ICONS, icon: icon, titleOf: titleOf,
+      navLabelOf: navLabelOf, groupLabelOf: groupLabelOf, groupOf: groupOf,
+    },
   };
 })();

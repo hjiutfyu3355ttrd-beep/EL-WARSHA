@@ -1,4 +1,4 @@
-(async function () {
+UI.page("quotations", async function () {
   var page = await UI.init("quotations");
   if (!page) return;
   var html = UI.html;
@@ -287,7 +287,7 @@
           }
           await DB.update("quotations", r.id, { status: "converted" });
           await load();
-          location.href = "work-order.html?id=" + wo.id;
+          UI.go("work-order.html?id=" + wo.id);
         });
       });
     }
@@ -325,4 +325,4 @@
     await load();
     render();
   });
-})();
+});

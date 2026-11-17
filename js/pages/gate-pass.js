@@ -1,4 +1,4 @@
-(async function () {
+UI.page("gate-pass", async function () {
   var page = await UI.init("gate-pass");
   if (!page) return;
   var html = UI.html;
@@ -136,4 +136,4 @@
   });
 
   await UI.guard(load);
-})();
+});

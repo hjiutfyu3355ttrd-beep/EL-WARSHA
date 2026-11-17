@@ -1,4 +1,4 @@
-(async function () {
+UI.page("vehicles", async function () {
   var page = await UI.init("vehicles");
   if (!page) return;
   var html = UI.html;
@@ -458,4 +458,4 @@
   });
 
   await load();
-})();
+});

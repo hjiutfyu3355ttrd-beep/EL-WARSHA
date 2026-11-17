@@ -1,4 +1,4 @@
-(async function () {
+UI.page("work-order", async function () {
   var page = await UI.init("work-orders");
   if (!page) return;
   var html = UI.html;
@@ -469,4 +469,4 @@
   });
 
   await UI.guard(reload);
-})();
+});

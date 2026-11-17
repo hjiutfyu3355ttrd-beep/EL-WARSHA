@@ -1,4 +1,4 @@
-(async function () {
+UI.page("setup", async function () {
   var page = await UI.init("setup");
   if (!page) return;
   var html = UI.html;
@@ -92,10 +92,11 @@
       } else {
         await DB.insert("shop_profile", payload);
       }
+      UI.setShopName(payload.name);  // يظهر فورًا في القائمة الجانبية
       UI.flash(I18N.t("shop_saved"), "success");
       await load();
     });
   });
 
   await UI.guard(load);
-})();
+});

@@ -1,7 +1,7 @@
 // صفحة الخزنة: الرصيد بيتحسب تلقائي من كل حركات الورشة (مفيش حاجة بتتعدّل يدوي):
 //   داخل = مدفوعات الأوامر والفواتير + الدخل (مبيعات القطع وغيرها) + الإيداعات اليدوية
 //   خارج = المصروفات (والمشتريات بتتسجّل فيها) + المرتبات المصروفة + السحوبات اليدوية
-(async function () {
+UI.page("treasury", async function () {
   var page = await UI.init("treasury");
   if (!page) return;
   var html = UI.html;
@@ -161,4 +161,4 @@
   $("dir").addEventListener("change", renderList);
 
   UI.guard(load);
-})();
+});

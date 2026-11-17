@@ -1,4 +1,4 @@
-(async function () {
+UI.page("invoice", async function () {
   var page = await UI.init("invoices");
   if (!page) return;
   var html = UI.html;
@@ -193,4 +193,4 @@
   });
 
   await UI.guard(async function () { await reload(false); });
-})();
+});

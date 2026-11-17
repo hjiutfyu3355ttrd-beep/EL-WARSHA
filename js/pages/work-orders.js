@@ -1,4 +1,4 @@
-(async function () {
+UI.page("work-orders", async function () {
   var page = await UI.init("work-orders");
   if (!page) return;
   var html = UI.html;
@@ -205,4 +205,4 @@
   $("f-priority").addEventListener("change", function () { st.priority = this.value; renderTabs(); renderList(); });
 
   await UI.guard(async function () { await load(); renderAll(); });
-})();
+});

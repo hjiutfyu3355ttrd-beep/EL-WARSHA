@@ -1,4 +1,4 @@
-(async function () {
+UI.page("expenses", async function () {
   var page = await UI.init("expenses");
   if (!page) return;
   var html = UI.html;
@@ -108,4 +108,4 @@
   });
 
   await UI.guard(load);
-})();
+});

@@ -1,4 +1,4 @@
-(async function () {
+UI.page("settings", async function () {
   var page = await UI.init("settings");
   if (!page) return;
   var html = UI.html;
@@ -16,6 +16,16 @@
   page.innerHTML = html`
     <div class="stack">
       <h2 class="page-title" style="margin:0">${I18N.t("t_settings")}</h2>
+
+      <div class="card stack" id="pw-card">
+        <h3 style="margin:0">${I18N.t("pw_title")}</h3>
+        <p style="margin:0;color:var(--muted)">${I18N.t("pw_hint")}</p>
+        <div class="field" style="max-width:280px">
+          <label for="pw-new">${I18N.t("pw_new")}</label>
+          <input id="pw-new" type="password" dir="ltr" autocomplete="new-password" minlength="6">
+        </div>
+        <div><button id="pw-save">${I18N.t("pw_save")}</button></div>
+      </div>
 
       <div class="card stack">
         <h3 style="margin:0">${I18N.t("settings_lang")}</h3>
@@ -139,6 +149,20 @@
     });
   });
 
+  var pwSave = document.getElementById("pw-save");
+  if (pwSave) {
+    pwSave.addEventListener("click", function () {
+      UI.guard(async function () {
+        var v = document.getElementById("pw-new").value;
+        if (v.length < 6) { UI.flash(I18N.t("pw_short"), "error"); return; }
+        await DB.auth.changePassword(v);
+        document.getElementById("pw-new").value = "";
+        UI.flash(I18N.t("pw_saved"), "success");
+      });
+    });
+    if (location.hash === "#pw") document.getElementById("pw-card").scrollIntoView();
+  }
+
   var langSel = document.getElementById("settings-lang");
   if (langSel) {
     langSel.addEventListener("change", function () {
@@ -149,4 +173,4 @@
   }
 
   await UI.guard(load);
-})();
+});

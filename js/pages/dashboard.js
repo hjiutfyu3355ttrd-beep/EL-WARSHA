@@ -1,4 +1,4 @@
-(async function () {
+UI.page("dashboard", async function () {
   var page = await UI.init("dashboard");
   if (!page) return;
   var html = UI.html;
@@ -193,4 +193,4 @@
         </div>
       </div>`;
   });
-})();
+});

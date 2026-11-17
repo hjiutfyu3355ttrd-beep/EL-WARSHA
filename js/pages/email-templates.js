@@ -1,4 +1,4 @@
-(async function () {
+UI.page("email-templates", async function () {
   var page = await UI.init("email-templates");
   if (!page) return;
   var html = UI.html;
@@ -103,4 +103,4 @@
   $("btn-preview").addEventListener("click", preview);
 
   await UI.guard(load);
-})();
+});

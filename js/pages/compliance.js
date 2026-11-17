@@ -1,4 +1,4 @@
-(async function () {
+UI.page("compliance", async function () {
   var page = await UI.init("compliance");
   if (!page) return;
   var html = UI.html;
@@ -163,4 +163,4 @@
   });
 
   await UI.guard(load);
-})();
+});

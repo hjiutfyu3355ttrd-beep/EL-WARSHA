@@ -401,6 +401,18 @@
       }
       return res.data.session; // لو null يبقى "Confirm email" لسه مفعّل في Supabase
     },
+    // تغيير كلمة السر للمستخدم المسجّل دخول (وبيشيل علامة "لازم يغيّرها")
+    async changePassword(newPassword) {
+      if (demoMode) return;
+      await ensureClient();
+      var res = await client.auth.updateUser({ password: newPassword, data: { must_change_password: false } });
+      if (res.error) throw new Error(res.error.message);
+    },
+    async mustChangePassword() {
+      if (demoMode) return false;
+      var s = await this.getSession();
+      return !!(s && s.user && s.user.user_metadata && s.user.user_metadata.must_change_password);
+    },
     async signOut() {
       if (demoMode) return;
       await ensureClient();
@@ -477,7 +489,17 @@
     if (res.error) throw new Error(res.error.message);
   }
 
+  // الأدمن بس: بيرجّع كلمة سر مؤقتة للورشة (من الـ Edge Function)
+  async function adminResetPassword(ownerEmail) {
+    if (demoMode) return "Demo1234";
+    await ensureClient();
+    var res = await client.functions.invoke("admin-reset-password", { body: { email: ownerEmail } });
+    if (res.error || !res.data || !res.data.password) throw new Error(I18N.t("err_reset_failed"));
+    return res.data.password;
+  }
+
   window.DB = {
+    adminResetPassword: adminResetPassword,
     demoMode: demoMode,
     fatal: fatal,
     list: list,

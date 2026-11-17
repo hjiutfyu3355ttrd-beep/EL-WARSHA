@@ -1,7 +1,7 @@
 // صفحة التأمين: كل أوامر الشغل اللي شركة تأمين هي اللي بتدفع فيها.
 // السيارة بتتسلّم عادي حتى لو التأمين ما دفعش، والمطالبة بتفضل معلّقة هنا لحد ما تسجّل استلام الفلوس
 // (من صفحة الأمر: "تسجيل دفع شركة التأمين").
-(async function () {
+UI.page("insurance", async function () {
   var page = await UI.init("insurance");
   if (!page) return;
   var html = UI.html;
@@ -139,4 +139,4 @@
   $("q").addEventListener("input", function () { st.q = $("q").value; renderList(); });
 
   UI.guard(load);
-})();
+});

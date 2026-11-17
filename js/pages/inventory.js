@@ -1,4 +1,4 @@
-(async function () {
+UI.page("inventory", async function () {
   var page = await UI.init("inventory");
   if (!page) return;
   var html = UI.html;
@@ -103,4 +103,4 @@
   });
 
   await UI.guard(load);
-})();
+});

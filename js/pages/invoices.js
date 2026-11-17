@@ -1,4 +1,4 @@
-(async function () {
+UI.page("invoices", async function () {
   var page = await UI.init("invoices");
   if (!page) return;
   var html = UI.html;
@@ -103,7 +103,7 @@
     if (!id) return UI.flash(I18N.t("pick_wo_first"));
     UI.guard(async function () {
       var inv = await Finance.createFromWorkOrder(id);
-      location.href = "invoice.html?id=" + inv.id;
+      UI.go("invoice.html?id=" + inv.id);
     });
   });
-})();
+});

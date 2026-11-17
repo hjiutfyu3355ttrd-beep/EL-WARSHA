@@ -1,4 +1,4 @@
-(async function () {
+UI.page("admin", async function () {
   // adminOnly: لو المستخدم مش أدمن بيتحوّل للرئيسية. (الحماية الحقيقية في الداتابيز مش هنا.)
   var page = await UI.init("admin", { adminOnly: true });
   if (!page) return;
@@ -58,6 +58,7 @@
                     ${s.status !== "active" ? html`<button class="small" data-action="activate" data-id="${s.id}">${I18N.t("activate")}</button>` : ""}
                     ${s.status !== "suspended" ? html`<button class="danger small" data-action="suspend" data-id="${s.id}">${I18N.t("suspend")}</button>` : ""}
                     <button class="secondary small" data-action="extend" data-id="${s.id}">${I18N.t("extend_trial")}</button>
+                    <button class="secondary small" data-action="resetpw" data-id="${s.id}">${I18N.t("reset_pw")}</button>
                   </div></td>
                 </tr>`;
               })}
@@ -80,6 +81,12 @@
     var action = el.getAttribute("data-action");
 
     UI.guard(async function () {
+      if (action === "resetpw") {
+        if (!window.confirm(I18N.t("reset_pw_confirm"))) return;
+        var pw = await DB.adminResetPassword(shop.owner_email);
+        window.prompt(I18N.t("reset_pw_done"), pw);
+        return;
+      }
       if (action === "activate") await DB.adminUpdateShop(shop.id, "active", null);
       if (action === "suspend") await DB.adminUpdateShop(shop.id, "suspended", null);
       if (action === "extend") {
@@ -92,4 +99,4 @@
   });
 
   await UI.guard(load);
-})();
+});
