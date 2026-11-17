@@ -10,5 +10,7 @@
 // ============================================================
 window.APP_CONFIG = {
   SUPABASE_URL: "https://blspjpghimjpyczxkvvs.supabase.co",
+  // رقم واتساب الدعم (بالصيغة الدولية بدون + أو أصفار) — بيظهر في "نسيت كلمة السر؟"
+  SUPPORT_WHATSAPP: "201010422057",
   SUPABASE_ANON_KEY: "sb_publishable_6jlfYSTp8-1qBNOMfL7V9A_hWxhEXDf",
 };

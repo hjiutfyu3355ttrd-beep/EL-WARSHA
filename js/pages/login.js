@@ -18,7 +18,8 @@
     var map = [
       ["lbl-lang", "language"], ["login-h2", "login_title"], ["login-sub", "login_sub"],
       ["lbl-phone", "login_phone"], ["lbl-pass", "login_password"], ["btn", "login_btn"],
-      ["login-reg", "login_register"]
+      ["login-reg", "login_register"],
+      ["forgot-link", "forgot_link"], ["forgot-text", "forgot_text"], ["forgot-wa", "forgot_wa"]
     ];
     map.forEach(function (m) {
       var el = document.getElementById(m[0]);
@@ -42,6 +43,19 @@
     });
   }
 
+
+  // نسيت كلمة السر: بنفتح واتساب الدعم برسالة جاهزة فيها رقم التليفون اللي كتبه
+  document.getElementById("forgot-link").addEventListener("click", function (e) {
+    e.preventDefault();
+    var box = document.getElementById("forgot-box");
+    box.hidden = !box.hidden;
+  });
+  document.getElementById("forgot-wa").addEventListener("click", function () {
+    var phone = document.getElementById("phone").value.trim();
+    var text = I18N.t("forgot_msg") + (phone ? " " + phone : "");
+    var num = (window.APP_CONFIG && APP_CONFIG.SUPPORT_WHATSAPP) || "";
+    this.href = "https://wa.me/" + num + "?text=" + encodeURIComponent(text);
+  });
 
   // لو مسجّل دخول بالفعل
   DB.auth.getSession().then(function (s) {
