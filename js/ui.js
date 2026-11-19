@@ -318,6 +318,7 @@
     payroll: '<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.2"/><path d="M6 12h.01M18 12h.01"/>',
     reports: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
     settings: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
+    ai: '<path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/>',
     taxrates: '<path d="M19 5 5 19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/>',
     mail: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/>',
     fields: '<path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>',
@@ -378,7 +379,10 @@
         { key: "payroll", href: "payroll.html", label: "المرتبات", icon: "payroll" },
       ],
     },
-    { group: "التقارير", gk: "g_reports", items: [{ key: "reports", href: "reports.html", label: "التقارير", icon: "reports" }] },
+    { group: "التقارير", gk: "g_reports", items: [
+      { key: "reports", href: "reports.html", label: "التقارير", icon: "reports" },
+      { key: "assistant", href: "assistant.html", label: "المساعد الذكي", icon: "ai" },
+    ] },
     { group: "النظام", gk: "g_system", items: [
       { key: "settings", href: "settings.html", label: "الإعدادات", icon: "settings" },
       { key: "tax-rates", href: "tax-rates.html", label: "معدلات الضرائب", icon: "taxrates" },
@@ -394,7 +398,7 @@
     customers: "nav_customers", vehicles: "nav_vehicles", compliance: "nav_compliance",
     inventory: "nav_inventory", suppliers: "nav_suppliers", purchases: "nav_purchases",
     "part-sales": "nav_part_sales", invoices: "nav_invoices", payments: "nav_payments",
-    income: "nav_income", expenses: "nav_expenses", treasury: "nav_treasury", payroll: "nav_payroll", reports: "nav_reports",
+    income: "nav_income", expenses: "nav_expenses", treasury: "nav_treasury", payroll: "nav_payroll", reports: "nav_reports", assistant: "nav_assistant",
     settings: "nav_settings", "tax-rates": "nav_tax_rates", "email-templates": "nav_email_templates",
     "custom-fields": "nav_custom_fields", setup: "nav_setup"
   };
@@ -406,7 +410,7 @@
     suppliers: ["t_suppliers", "d_suppliers"], invoices: ["t_invoices", "d_invoices"],
     payments: ["t_payments", "d_payments"], expenses: ["t_expenses", "d_expenses"],
     "gate-pass": ["t_gate_pass", "d_gate_pass"], "part-sales": ["t_part_sales", "d_part_sales"],
-    income: ["t_income", "d_income"], treasury: ["t_treasury", "d_treasury"], payroll: ["t_payroll", "d_payroll"], reports: ["t_reports", "d_reports"], settings: ["t_settings", "d_settings"],
+    income: ["t_income", "d_income"], treasury: ["t_treasury", "d_treasury"], payroll: ["t_payroll", "d_payroll"], reports: ["t_reports", "d_reports"], assistant: ["t_assistant", "d_assistant"], settings: ["t_settings", "d_settings"],
     compliance: ["t_compliance", "d_compliance"], "custom-fields": ["t_custom_fields", "d_custom_fields"],
     setup: ["t_setup", "d_setup"], purchases: ["t_purchases", "d_purchases"],
     "tax-rates": ["t_tax_rates", "d_tax_rates"], "email-templates": ["t_email_templates", "d_email_templates"],

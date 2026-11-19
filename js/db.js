@@ -498,7 +498,22 @@
     return res.data.password;
   }
 
+  // المساعد الذكي (Edge Function ai-assistant). بيرجّع نص الرد أو بيرمي رسالة مفهومة.
+  async function aiAsk(payload) {
+    if (demoMode) throw new Error(I18N.t("ai_err_demo"));
+    await ensureClient();
+    var res = await client.functions.invoke("ai-assistant", { body: payload });
+    if (res.error) {
+      var code = "provider";
+      try { code = (await res.error.context.json()).error || code; } catch (e) {}
+      var map = { limit: "ai_err_limit", quota: "ai_err_quota", not_configured: "ai_err_nokey", auth: "ai_err_auth" };
+      throw new Error(I18N.t(map[code] || "ai_err_provider"));
+    }
+    return res.data.text;
+  }
+
   window.DB = {
+    aiAsk: aiAsk,
     adminResetPassword: adminResetPassword,
     demoMode: demoMode,
     fatal: fatal,

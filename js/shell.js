@@ -205,6 +205,12 @@
     try { nav.scrollTop = parseInt(sessionStorage.getItem("ws_sb_scroll") || "0", 10); } catch (x) {}
     window.addEventListener("pagehide", function () { try { sessionStorage.setItem("ws_sb_scroll", String(nav.scrollTop)); } catch (x) {} });
     document.body.classList.add("shell-ready");
+    // بوت الشات العائم (مساعد الورشة) — بيتحمّل مرة واحدة
+    if (!window.__cw && !document.getElementById("cw-loader")) {
+      var cw = document.createElement("script");
+      cw.id = "cw-loader"; cw.src = "js/chat-widget.js";
+      document.body.appendChild(cw);
+    }
   }
   S.ensure = function () { if (!S.built) buildShell(); };
 
