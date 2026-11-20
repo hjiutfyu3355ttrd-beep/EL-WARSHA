@@ -499,7 +499,7 @@
   }
 
   // المساعد الذكي (Edge Function ai-assistant). بيرجّع نص الرد أو بيرمي رسالة مفهومة.
-  async function aiAsk(payload) {
+  async function aiAsk(payload, full) {
     if (demoMode) throw new Error(I18N.t("ai_err_demo"));
     await ensureClient();
     var res = await client.functions.invoke("ai-assistant", { body: payload });
@@ -509,6 +509,7 @@
       var map = { limit: "ai_err_limit", quota: "ai_err_quota", not_configured: "ai_err_nokey", auth: "ai_err_auth" };
       throw new Error(I18N.t(map[code] || "ai_err_provider"));
     }
+    if (full) return { text: res.data.text, sources: Array.isArray(res.data.sources) ? res.data.sources : [] };
     return res.data.text;
   }
 

@@ -54,10 +54,26 @@
   var body = panel.querySelector("#cw-body"), ta = panel.querySelector("#cw-ta"), sendBtn = panel.querySelector("#cw-send"), typing = null;
 
   function down() { body.scrollTop = body.scrollHeight; }
-  function bubble(role, text) {
+  // اسم الموقع من الرابط (من غير www.) — الرابط https بس
+  function host(u) { try { return new URL(u).hostname.replace(/^www\./, ""); } catch (x) { return ""; } }
+  function sourcesBox(list) {
+    var box = mk("div", "cw-src"), n = 0;
+    box.appendChild(mk("b", "cw-src-h", esc(t("cw_sources"))));
+    list.slice(0, 5).forEach(function (s) {
+      if (!s || typeof s.uri !== "string" || s.uri.indexOf("https://") !== 0) return;
+      var a = mk("a", "cw-src-a"); a.href = s.uri; a.target = "_blank"; a.rel = "noopener noreferrer";
+      a.appendChild(mk("span", "cw-src-t", esc(s.title || host(s.uri))));
+      a.appendChild(mk("span", "cw-src-d", esc(host(s.uri))));
+      box.appendChild(a); n++;
+    });
+    return n ? box : null;
+  }
+  function bubble(role, text, srcs) {
     var b = mk("div", "cw-m " + role);
     if (role === "bot") {
       b.innerHTML = fmt(text);
+      var sb = srcs && srcs.length ? sourcesBox(srcs) : null;
+      if (sb) b.appendChild(sb);
       var c = mk("button", "cw-cp"); c.type = "button"; c.textContent = t("cw_copy");
       c.addEventListener("click", function () {
         try { navigator.clipboard.writeText(text); c.textContent = t("cw_copied"); setTimeout(function () { c.textContent = t("cw_copy"); }, 1500); } catch (x) {}
@@ -78,11 +94,11 @@
       });
       body.appendChild(chips);
     }
-    msgs.forEach(function (m) { body.appendChild(bubble(m.r, m.t)); });
+    msgs.forEach(function (m) { body.appendChild(bubble(m.r, m.t, m.s)); });
     if (typing) body.appendChild(typing);
     down();
   }
-  function push(r, text) { msgs.push({ r: r, t: text }); save(); render(); }
+  function push(r, text, srcs) { msgs.push({ r: r, t: text, s: srcs || [] }); save(); render(); }
   function grow() { ta.style.height = "auto"; ta.style.height = Math.min(ta.scrollHeight, 110) + "px"; }
   function setBusy(v) { busy = v; sendBtn.disabled = v; }
   function iso(d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
@@ -96,8 +112,8 @@
     msgs.push({ r: "me", t: text }); save();
     typing = mk("div", "cw-m bot cw-typing", "<i></i><i></i><i></i>");
     setBusy(true); render();
-    DB.aiAsk({ mode: "chat", message: text, history: hist, today: iso(new Date()) })
-      .then(function (r) { typing = null; push("bot", r); })
+    DB.aiAsk({ mode: "chat", message: text, history: hist, today: iso(new Date()) }, true)
+      .then(function (r) { typing = null; push("bot", r.text, r.sources); })
       .catch(function (e) { typing = null; push("err", (e && e.message) || t("ai_err_provider")); })
       .then(function () { setBusy(false); if (open && window.innerWidth > 600) ta.focus(); });
   }
