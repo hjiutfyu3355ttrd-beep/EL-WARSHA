@@ -29,7 +29,7 @@ UI.page("work-orders", async function () {
     var viewQ = params.get("view") || sessionStorage.getItem("ws_wo_view");
     if (viewQ === "grid" || viewQ === "list") st.view = viewQ;
   } catch (e) {}
-  var orders = [], customers = {}, vehicles = {}, techs = {}, lines = [];
+  var orders = [], customers = {}, vehicles = {}, techs = {}, lines = [], allVehicles = [], allCustomers = [], allTechs = [];
 
   page.innerHTML = html`
     <div class="stack">
@@ -136,7 +136,7 @@ UI.page("work-orders", async function () {
       return;
     }
     $("list").innerHTML = html`<div class="table-wrap"><table class="clickable">
-      <thead><tr><th>${I18N.t("number_col")}</th><th>${I18N.t("customer")}</th><th>${I18N.t("vehicle")}</th><th>${I18N.t("priority_filter")}</th><th>${I18N.t("status_filter")}</th><th>${I18N.t("technician")}</th><th>${I18N.t("expected_delivery")}</th><th>${I18N.t("total")}</th></tr></thead>
+      <thead><tr><th>${I18N.t("number_col")}</th><th>${I18N.t("customer")}</th><th>${I18N.t("vehicle")}</th><th>${I18N.t("priority_filter")}</th><th>${I18N.t("status_filter")}</th><th>${I18N.t("technician")}</th><th>${I18N.t("expected_delivery")}</th><th>${I18N.t("total")}</th><th class="no-print">${I18N.t("sh_actions")}</th></tr></thead>
       <tbody>${rows.map(function (o) {
         return html`<tr data-href="work-order.html?id=${o.id}">
           <td><b>#${o.number}</b></td>
@@ -146,8 +146,117 @@ UI.page("work-orders", async function () {
           <td><span class="badge ${o.status}">${UI.statusLabel(o.status)}</span>${insBadge(o)}</td>
           <td>${techs[o.technician_id] ? techs[o.technician_id].name : "—"}</td>
           <td class="${UI.isOverdue(o) ? "late" : ""}">${o.expected_delivery_at ? UI.dateAr(o.expected_delivery_at) : "—"}</td>
-          <td>${UI.money(total(o.id))}</td></tr>`;
+          <td>${UI.money(total(o.id))}</td>
+          <td class="no-print" style="white-space:nowrap">
+            <button class="secondary small" data-act="edit" data-id="${o.id}">${I18N.t("edit")}</button>
+            <button class="danger small" data-act="del" data-id="${o.id}">${I18N.t("delete")}</button>
+          </td></tr>`;
       })}</tbody></table></div>${bar}`;
+  }
+
+
+  // ---------- حذف أمر شغل ----------
+  async function deleteOrder(id) {
+    var o = orders.filter(function (x) { return x.id === id; })[0];
+    if (!o) return;
+    await UI.guard(async function () {
+      var d = await Promise.all([DB.list("payments"), DB.list("invoices")]);
+      var pays = d[0].filter(function (p) { return p.work_order_id === id; });
+      var invs = d[1].filter(function (i) { return i.work_order_id === id; });
+      var msg = I18N.t("wo_del_q").replace("{n}", o.number);
+      if (pays.length) msg += "\n\n" + I18N.t("wo_del_pay_warn").replace("{p}", pays.length);
+      if (invs.length) msg += "\n\n" + I18N.t("wo_del_inv_warn").replace("{i}", invs.length);
+      if (!window.confirm(msg)) return;
+
+      var orderLines = lines.filter(function (l) { return l.work_order_id === id; });
+      // في وضع Demo مفيش cascade، فبنمسح التوابع بإيدينا. في Supabase الداتابيز بتعمل cascade.
+      if (DB.demoMode) {
+        var ins = await DB.list("work_order_inspections");
+        for (var i = 0; i < orderLines.length; i++) await DB.remove("work_order_lines", orderLines[i].id);
+        for (var j = 0; j < pays.length; j++) await DB.remove("payments", pays[j].id);
+        for (var k = 0; k < ins.length; k++) if (ins[k].work_order_id === id) await DB.remove("work_order_inspections", ins[k].id);
+      }
+      await DB.remove("work_orders", id);
+
+      // رجّع القطع المستهلكة للمخزون (بعد نجاح الحذف)
+      var parts = await DB.list("parts"), byPart = {};
+      orderLines.forEach(function (l) { if (l.part_id) byPart[l.part_id] = (byPart[l.part_id] || 0) + Number(l.qty || 0); });
+      for (var pid in byPart) {
+        var part = parts.filter(function (p) { return p.id === pid; })[0];
+        if (part) await DB.update("parts", pid, { qty: Number(part.qty) + byPart[pid] });
+      }
+      UI.flash(I18N.t("wo_deleted_ok"), "success");
+      await load(); renderAll();
+    });
+  }
+
+  // ---------- تعديل سريع لأمر شغل ----------
+  function openEditor(id) {
+    var o = orders.filter(function (x) { return x.id === id; })[0];
+    if (!o) return;
+    var overlay = document.createElement("div");
+    overlay.className = "modal-overlay";
+    function vehOptions(custId, sel) {
+      return allVehicles.filter(function (v) { return v.customer_id === custId; })
+        .map(function (v) { return html`<option value="${v.id}" ${v.id === sel ? "selected" : ""}>${v.plate + " — " + (v.make || "") + " " + (v.model || "")}</option>`; });
+    }
+    overlay.innerHTML = html`
+      <div class="modal card" style="max-width:640px;width:95%">
+        <h3 style="margin-top:0">${I18N.t("wo_edit_title")} #${o.number}</h3>
+        <form id="wo-edit-form" class="stack">
+          <div class="form-grid">
+            <div class="field"><label>${I18N.t("customer")}</label>
+              <select id="e-cust">${allCustomers.map(function (c) { return html`<option value="${c.id}" ${c.id === o.customer_id ? "selected" : ""}>${c.name}</option>`; })}</select></div>
+            <div class="field"><label>${I18N.t("vehicle")}</label>
+              <select id="e-veh">${vehOptions(o.customer_id, o.vehicle_id)}</select></div>
+            <div class="field"><label>${I18N.t("technician")}</label>
+              <select id="e-tech"><option value="">${I18N.t("none")}</option>
+                ${allTechs.map(function (t) { return html`<option value="${t.id}" ${t.id === o.technician_id ? "selected" : ""}>${t.name}</option>`; })}</select></div>
+            <div class="field"><label>${I18N.t("status_filter")}</label>
+              <select id="e-status">${UI.STATUSES.map(function (s) { return html`<option value="${s.key}" ${s.key === o.status ? "selected" : ""}>${UI.statusLabel(s.key)}</option>`; })}</select></div>
+            <div class="field"><label>${I18N.t("priority_filter")}</label>
+              <select id="e-prio">${UI.PRIORITIES.map(function (p) { return html`<option value="${p.key}" ${p.key === (o.priority || "normal") ? "selected" : ""}>${UI.priorityLabel(p.key)}</option>`; })}</select></div>
+            <div class="field"><label>${I18N.t("expected_delivery")}</label>
+              <input id="e-exp" type="date" value="${o.expected_delivery_at ? String(o.expected_delivery_at).slice(0, 10) : ""}"></div>
+          </div>
+          <div class="field"><label>${I18N.t("complaint")}</label><textarea id="e-complaint" rows="2">${o.complaint || ""}</textarea></div>
+          <div class="row gap" style="justify-content:space-between">
+            <a class="link" href="work-order.html?id=${o.id}">${I18N.t("wo_open_details")}</a>
+            <span class="row gap">
+              <button type="button" class="ghost" data-x="close">${I18N.t("cancel")}</button>
+              <button type="submit" class="primary">${I18N.t("save")}</button>
+            </span>
+          </div>
+        </form>
+      </div>`;
+    document.body.appendChild(overlay);
+    var g = function (i) { return overlay.querySelector("#" + i); };
+    overlay.addEventListener("click", function (e) {
+      if (e.target === overlay || e.target.getAttribute("data-x") === "close") overlay.remove();
+    });
+    // تغيير العميل بيغيّر قائمة سياراته
+    g("e-cust").addEventListener("change", function () {
+      g("e-veh").innerHTML = html`${vehOptions(this.value, "")}`.toString();
+    });
+    g("wo-edit-form").addEventListener("submit", function (e) {
+      e.preventDefault();
+      UI.guard(async function () {
+        var patch = {
+          customer_id: g("e-cust").value,
+          vehicle_id: g("e-veh").value,
+          technician_id: g("e-tech").value || null,
+          status: g("e-status").value,
+          priority: g("e-prio").value,
+          expected_delivery_at: g("e-exp").value || null,
+          complaint: g("e-complaint").value.trim(),
+        };
+        if (!patch.vehicle_id) throw new Error(I18N.t("vehicle"));
+        await DB.update("work_orders", id, patch);
+        overlay.remove();
+        UI.flash(I18N.t("wo_saved_ok"), "success");
+        await load(); renderAll();
+      });
+    });
   }
 
   function renderAll() { renderCards(); renderTabs(); renderList(); }
@@ -158,6 +267,7 @@ UI.page("work-orders", async function () {
       DB.list("work_orders"), DB.list("customers"), DB.list("vehicles"), DB.list("work_order_lines"), DB.list("technicians"),
     ]);
     orders = d[0]; customers = UI.byId(d[1]); vehicles = UI.byId(d[2]); lines = d[3]; techs = UI.byId(d[4]);
+    allCustomers = d[1]; allVehicles = d[2]; allTechs = d[4];
   }
 
   function exportCsv() {
@@ -190,6 +300,8 @@ UI.page("work-orders", async function () {
       renderAll(); return;
     }
     var a = t.getAttribute("data-act");
+    if (a === "edit") { e.stopPropagation(); openEditor(t.getAttribute("data-id")); return; }
+    if (a === "del") { e.stopPropagation(); deleteOrder(t.getAttribute("data-id")); return; }
     if (a === "refresh") UI.guard(async function () { await load(); renderAll(); });
     else if (a === "export") exportCsv();
     else if (a === "filters") $("filters").classList.toggle("open");
