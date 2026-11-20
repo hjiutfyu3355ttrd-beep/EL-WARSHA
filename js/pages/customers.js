@@ -37,7 +37,7 @@ UI.page("customers", async function () {
     var bar = UI.pagerBar(pg, shown.length);
     $("list").innerHTML = html`
       <table class="clickable">
-        <thead><tr><th>${I18N.t("name")}</th><th>${I18N.t("phone")}</th><th>${I18N.t("vehicles_count")}</th></tr></thead>
+        <thead><tr><th>${I18N.t("name")}</th><th>${I18N.t("phone")}</th><th>${I18N.t("vehicles_count")}</th><th></th></tr></thead>
         <tbody>
           ${shown.length === 0
             ? html`<tr><td colspan="3" class="empty">${I18N.t("empty_customers")}</td></tr>`
@@ -47,6 +47,7 @@ UI.page("customers", async function () {
                   <td>${c.name}</td>
                   <td dir="ltr" style="text-align:start">${c.phone || "—"}</td>
                   <td>${count}</td>
+                  <td><button class="danger small" data-action="del-customer" data-id="${c.id}">${I18N.t("delete")}</button></td>
                 </tr>`;
               })}
         </tbody>
@@ -129,6 +130,24 @@ UI.page("customers", async function () {
       sel = id;
       renderList();
       renderDetail();
+    }
+    if (action === "del-customer") {
+      e.stopPropagation();
+      UI.guard(async function () {
+        var c = customers.filter(function (x) { return x.id === id; })[0];
+        if (!c) return;
+        var n = vehicles.filter(function (v) { return v.customer_id === id; }).length;
+        // لو عليه أوامر شغل/فواتير: الداتابيز بترفض (restrict)، وفي الـ Demo بنفحص بنفسنا
+        var wo = (await DB.list("work_orders")).filter(function (w) { return w.customer_id === id; });
+        if (wo.length) throw new Error(I18N.t("cant_del_customer"));
+        if (!window.confirm(I18N.t("del_customer_q").replace("{name}", c.name).replace("{n}", n))) return;
+        try { await DB.remove("customers", id); }
+        catch (err) { throw new Error(I18N.t("cant_del_customer")); }
+        if (sel === id) sel = "";
+        UI.flash(I18N.t("customer_deleted"), "success");
+        await load();
+      });
+      return;
     }
     if (action === "del-vehicle") {
       UI.guard(async function () {

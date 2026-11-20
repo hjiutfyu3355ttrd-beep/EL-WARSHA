@@ -18,6 +18,12 @@ UI.page("work-order-new", async function () {
           <label>${I18N.t("wo_vehicle")}</label>
           <select id="vehicle" disabled></select>
         </div>
+        <div class="form-grid" id="quick-fields" style="display:none">
+          <p class="muted" style="grid-column:1/-1;margin:0">${I18N.t("quick_hint")}</p>
+          <div class="field"><label>${I18N.t("plate_no")}</label><input id="q-plate" maxlength="30"></div>
+          <div class="field"><label>${I18N.t("make")}</label><input id="q-make" maxlength="60"></div>
+          <div class="field"><label>${I18N.t("model")}</label><input id="q-model" maxlength="60"></div>
+        </div>
         <div class="field">
           <label>${I18N.t("wo_tech")}</label>
           <select id="tech"></select>
@@ -32,6 +38,10 @@ UI.page("work-order-new", async function () {
         <div class="form-grid" id="ins-fields" style="display:none">
           <div class="field"><label>${I18N.t("ins_company")}</label><input id="ins-company" maxlength="120"></div>
           <div class="field"><label>${I18N.t("ins_claim_no")}</label><input id="ins-claim" maxlength="60"></div>
+          <div class="field"><label>${I18N.t("ins_owner")}</label><input id="ins-owner" maxlength="120"></div>
+          <div class="field"><label>${I18N.t("ins_driver")}</label><input id="ins-driver" maxlength="120"></div>
+          <div class="field"><label>${I18N.t("ins_expert")}</label><input id="ins-expert" maxlength="120"></div>
+          <div class="field"><label>${I18N.t("ins_expert_no")}</label><input id="ins-expert-no" maxlength="60" dir="ltr"></div>
         </div>
         <div class="form-grid">
           <div class="field"><label>${I18N.t("wo_priority")}</label>
@@ -53,8 +63,13 @@ UI.page("work-order-new", async function () {
   var elVehicle = document.getElementById("vehicle");
   var elTech = document.getElementById("tech");
 
+  var QUICK = "__quick__", WALKIN = "__walkin__";
   function renderVehicles() {
     var cid = elCustomer.value;
+    var quick = cid === QUICK;
+    document.getElementById("quick-fields").style.display = quick ? "" : "none";
+    elVehicle.parentNode.style.display = quick ? "none" : "";
+    if (quick) return;
     var list = vehicles.filter(function (v) { return v.customer_id === cid; });
     elVehicle.disabled = !cid;
     elVehicle.innerHTML = html`<option value="">— ${I18N.t("choose")} —</option>${list.map(function (v) {
@@ -67,7 +82,7 @@ UI.page("work-order-new", async function () {
     customers = data[0];
     vehicles = data[1];
     techs = data[2];
-    elCustomer.innerHTML = html`<option value="">— ${I18N.t("choose")} —</option>${customers.map(function (c) {
+    elCustomer.innerHTML = html`<option value="">— ${I18N.t("choose")} —</option><option value="__quick__">${I18N.t("quick_customer")}</option>${customers.filter(function (c) { return c.notes !== WALKIN; }).map(function (c) {
       return UI.option(c.id, c.name + " — " + c.phone);
     })}`;
     elTech.innerHTML = html`<option value="">— ${I18N.t("none")} —</option>${techs.map(function (t) {
@@ -84,8 +99,9 @@ UI.page("work-order-new", async function () {
 
   document.getElementById("form").addEventListener("submit", async function (e) {
     e.preventDefault();
-    if (!elCustomer.value || !elVehicle.value) {
-      UI.flash(I18N.t("wo_new_pick"));
+    var quick = elCustomer.value === QUICK;
+    if (quick ? !document.getElementById("q-plate").value.trim() : (!elCustomer.value || !elVehicle.value)) {
+      UI.flash(I18N.t(quick ? "quick_plate_required" : "wo_new_pick"));
       return;
     }
     var payer = document.getElementById("payer").value;
@@ -98,9 +114,22 @@ UI.page("work-order-new", async function () {
     var btn = document.getElementById("save");
     btn.disabled = true;
     try {
+      var custId = elCustomer.value, vehId = elVehicle.value;
+      if (quick) {
+        // «عميل سريع»: عميل واحد ثابت للورشة (علامته notes = __walkin__) بيشيل السيارات اللي اتسجّلت من غير عميل
+        var wk = customers.filter(function (c) { return c.notes === WALKIN; })[0];
+        if (!wk) wk = await DB.insert("customers", { name: I18N.t("quick_customer_name"), phone: "", notes: WALKIN });
+        var plate = document.getElementById("q-plate").value.trim();
+        var veh = vehicles.filter(function (v) { return v.customer_id === wk.id && v.plate === plate; })[0];
+        if (!veh) veh = await DB.insert("vehicles", {
+          customer_id: wk.id, plate: plate,
+          make: document.getElementById("q-make").value.trim(), model: document.getElementById("q-model").value.trim(),
+        });
+        custId = wk.id; vehId = veh.id;
+      }
       var row = await DB.insert("work_orders", {
-        customer_id: elCustomer.value,
-        vehicle_id: elVehicle.value,
+        customer_id: custId,
+        vehicle_id: vehId,
         technician_id: elTech.value || null,
         status: "received",
         priority: document.getElementById("priority").value,
@@ -110,6 +139,10 @@ UI.page("work-order-new", async function () {
         payer_type: payer,
         insurance_company: payer === "insurance" ? company : "",
         insurance_claim_no: payer === "insurance" ? document.getElementById("ins-claim").value.trim() : "",
+        insurance_owner_name: payer === "insurance" ? document.getElementById("ins-owner").value.trim() : "",
+        insurance_driver_name: payer === "insurance" ? document.getElementById("ins-driver").value.trim() : "",
+        insurance_expert_name: payer === "insurance" ? document.getElementById("ins-expert").value.trim() : "",
+        insurance_expert_no: payer === "insurance" ? document.getElementById("ins-expert-no").value.trim() : "",
       });
       UI.go("work-order.html?id=" + encodeURIComponent(row.id));
     } catch (err) {

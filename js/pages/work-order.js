@@ -199,7 +199,12 @@ UI.page("work-order", async function () {
           ${ins ? html`<span class="badge ${settled ? "ready" : "draft"}">${I18N.t(settled ? "ins_status_settled" : "ins_status_pending")}</span>` : ""}
         </div>
         ${ins ? html`<p style="margin:0"><b>${I18N.t("ins_company")}:</b> ${o.insurance_company}
-          ${o.insurance_claim_no ? html` · <b>${I18N.t("ins_claim_no")}:</b> ${o.insurance_claim_no}` : ""}</p>` : ""}
+          ${o.insurance_claim_no ? html` · <b>${I18N.t("ins_claim_no")}:</b> ${o.insurance_claim_no}` : ""}</p>
+          ${o.insurance_owner_name || o.insurance_driver_name || o.insurance_expert_name || o.insurance_expert_no ? html`<p style="margin:0">
+            ${o.insurance_owner_name ? html`<b>${I18N.t("ins_owner")}:</b> ${o.insurance_owner_name} · ` : ""}
+            ${o.insurance_driver_name ? html`<b>${I18N.t("ins_driver")}:</b> ${o.insurance_driver_name} · ` : ""}
+            ${o.insurance_expert_name ? html`<b>${I18N.t("ins_expert")}:</b> ${o.insurance_expert_name} · ` : ""}
+            ${o.insurance_expert_no ? html`<b>${I18N.t("ins_expert_no")}:</b> ${o.insurance_expert_no}` : ""}</p>` : ""}` : ""}
         ${Insurance.isDeliveredPending(o) ? html`<div class="notice">${I18N.t("ins_hanging_notice")}</div>` : ""}
 
         <div class="no-print form-grid" style="align-items:end">
@@ -212,6 +217,14 @@ UI.page("work-order", async function () {
             <input id="ins-company" maxlength="120" value="${o.insurance_company || ""}"></div>
           <div class="field" id="ins-claim-wrap" style="${ins ? "" : "display:none"}"><label>${I18N.t("ins_claim_no")}</label>
             <input id="ins-claim" maxlength="60" value="${o.insurance_claim_no || ""}"></div>
+          <div class="field" id="ins-owner-wrap" style="${ins ? "" : "display:none"}"><label>${I18N.t("ins_owner")}</label>
+            <input id="ins-owner" maxlength="120" value="${o.insurance_owner_name || ""}"></div>
+          <div class="field" id="ins-driver-wrap" style="${ins ? "" : "display:none"}"><label>${I18N.t("ins_driver")}</label>
+            <input id="ins-driver" maxlength="120" value="${o.insurance_driver_name || ""}"></div>
+          <div class="field" id="ins-expert-wrap" style="${ins ? "" : "display:none"}"><label>${I18N.t("ins_expert")}</label>
+            <input id="ins-expert" maxlength="120" value="${o.insurance_expert_name || ""}"></div>
+          <div class="field" id="ins-expert-no-wrap" style="${ins ? "" : "display:none"}"><label>${I18N.t("ins_expert_no")}</label>
+            <input id="ins-expert-no" maxlength="60" dir="ltr" value="${o.insurance_expert_no || ""}"></div>
           <button type="button" data-ins="save">${I18N.t("save")}</button>
         </div>
 
@@ -416,6 +429,7 @@ UI.page("work-order", async function () {
     if (e.target.id === "ins-payer") {
       var show = e.target.value === "insurance" ? "" : "none";
       $("ins-company-wrap").style.display = show;
+      ["ins-owner-wrap", "ins-driver-wrap", "ins-expert-wrap", "ins-expert-no-wrap"].forEach(function (w) { $(w).style.display = show; });
       $("ins-claim-wrap").style.display = show;
       if (!show) $("ins-company").focus();
     }
@@ -438,6 +452,10 @@ UI.page("work-order", async function () {
           payer_type: payer,
           insurance_company: payer === "insurance" ? company : "",
           insurance_claim_no: payer === "insurance" ? $("ins-claim").value.trim() : "",
+          insurance_owner_name: payer === "insurance" ? $("ins-owner").value.trim() : "",
+          insurance_driver_name: payer === "insurance" ? $("ins-driver").value.trim() : "",
+          insurance_expert_name: payer === "insurance" ? $("ins-expert").value.trim() : "",
+          insurance_expert_no: payer === "insurance" ? $("ins-expert-no").value.trim() : "",
           // الرجوع لـ "العميل بيدفع" بيمسح حالة التسوية (قيد في الداتابيز)
           insurance_settled_at: payer === "insurance" ? S.order.insurance_settled_at || null : null,
         });
